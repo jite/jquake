@@ -65,7 +65,6 @@
 #include <X11/Xatom.h>
 #include <X11/xpm.h>
 
-#include <X11/extensions/Xxf86dga.h>
 #include <X11/extensions/xf86vmode.h>
 
 #include "ezquake.xpm"
@@ -93,10 +92,8 @@ static cvar_t vid_flashonactivity = {"vid_flashonactivity", "1"};
 typedef enum
 {
 	RSERR_OK,
-
 	RSERR_INVALID_FULLSCREEN,
 	RSERR_INVALID_MODE,
-
 	RSERR_UNKNOWN
 } rserr_t;
 
@@ -109,22 +106,12 @@ static GLXContext ctx = NULL;
 
 Atom wm_delete_window_atom; //LordHavoc
 
-// bk001206 - not needed anymore
-// static qbool autorepeaton = true;
-
 #define KEY_MASK   ( KeyPressMask | KeyReleaseMask )
 #define MOUSE_MASK ( ButtonPressMask | ButtonReleaseMask | PointerMotionMask | ButtonMotionMask )
-#define X_MASK     ( KEY_MASK | MOUSE_MASK | VisibilityChangeMask | StructureNotifyMask | FocusChangeMask )
+#define X_MASK     ( VisibilityChangeMask | StructureNotifyMask | FocusChangeMask )
 
 qbool mouseinitialized = false; // unfortunately non static, lame...
 static qbool mouse_active = false;
-static int mwx, mwy;
-static int amx = 0, amy = 0; // Zzzz hard to explain why we have amx and mx, for us that almost the same
-int mx, my;
-
-// Time mouse was reset, we ignore the first 50ms of the mouse to allow settling of events
-static double mouseResetTime = 0;
-#define MOUSE_RESET_DELAY 0.050 // 50 ms
 
 static int mouse_accel_numerator;
 static int mouse_accel_denominator;
@@ -286,86 +273,10 @@ static Cursor CreateNullCursor(Display *display, Window root)
 
 static void install_grabs(void)
 {
-	// inviso cursor
-	XWarpPointer(dpy, None, win,
-			0, 0, 0, 0,
-			glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-	XSync(dpy, False);
-
-	XDefineCursor(dpy, win, CreateNullCursor(dpy, win));
-
-	XGrabPointer(dpy, win, // bk010108 - do this earlier?
-			False,
-			MOUSE_MASK,
-			GrabModeAsync, GrabModeAsync,
-			win,
-			None,
-			CurrentTime);
-
-	XGetPointerControl(dpy, &mouse_accel_numerator, &mouse_accel_denominator,
-			&mouse_threshold);
-
-	XChangePointerControl(dpy, True, True, 1, 1, 0);
-
-	XSync(dpy, False);
-
-	mouseResetTime = Sys_DoubleTime();
-
-	if (in_mouse.integer == mt_dga)
-	{
-		int MajorVersion, MinorVersion;
-
-		if (!XF86DGAQueryVersion(dpy, &MajorVersion, &MinorVersion))
-		{
-			// unable to query, probalby not supported, force the setting to normal mouse
-			ST_Printf( PRINT_ALL, "Failed to detect XF86DGA Mouse\n" );
-			// thought no need for restart here
-			Cvar_LatchedSetValue( &in_mouse, mt_normal );
-		} else
-		{
-			if (developer.value)
-				ST_Printf( PRINT_ALL, "DGA Mouse - Enabling DGA DirectVideo\n" );
-
-			XF86DGADirectVideo(dpy, DefaultScreen(dpy), XF86DGADirectMouse);
-			XWarpPointer(dpy, None, win, 0, 0, 0, 0, 0, 0);
-		}
-	}
-	else
-	{
-		mwx = glConfig.vidWidth / 2;
-		mwy = glConfig.vidHeight / 2;
-		amx = amy = 0;
-	}
-
-	XGrabKeyboard(dpy, win,
-			False,
-			GrabModeAsync, GrabModeAsync,
-			CurrentTime);
-
-	XSync(dpy, False);
 }
 
 static void uninstall_grabs(void)
 {
-	if (in_mouse.integer == mt_dga)
-	{
-		if (developer.value)
-			ST_Printf( PRINT_ALL, "DGA Mouse - Disabling DGA DirectVideo\n" );
-		XF86DGADirectVideo(dpy, DefaultScreen(dpy), 0);
-	}
-
-	XChangePointerControl(dpy, true, true, mouse_accel_numerator,
-			mouse_accel_denominator, mouse_threshold);
-
-	XUngrabPointer(dpy, CurrentTime);
-	XUngrabKeyboard(dpy, CurrentTime);
-
-	XWarpPointer(dpy, None, win,
-			0, 0, 0, 0,
-			glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-
-	// inviso cursor
-	XUndefineCursor(dpy, win);
 }
 
 #ifdef WITH_JOYSTICK
@@ -388,20 +299,12 @@ void IN_StartupMouse(void) {
 	Cvar_Register (&in_nograb);
 	Cvar_ResetCurrentGroup();
 
-	// force dga mouse to normal mouse if using nograb
-	if (in_mouse.integer == mt_dga && in_nograb.integer)
-	{
-		Com_Printf("Mouse forsed from dga to normal due to %s\n", in_nograb.name);
-		Cvar_LatchedSetValue( &in_mouse, mt_normal );
-	}
-
 	switch (in_mouse.integer) {
 		case mt_none:   mouseinitialized = false; break;
-		case mt_dga:		mouseinitialized = true;  break;
 		case mt_normal: mouseinitialized = true;  break;
 		default:
-				Com_Printf("Unknow value %d of %s, using normal mouse\n", in_mouse.integer, in_mouse.name);
-				Cvar_LatchedSetValue( &in_mouse, mt_normal );
+				Com_Printf("Unknow value %d of %s, using XInput2 mouse\n", in_mouse.integer, in_mouse.name);
+				Cvar_LatchedSetValue(&in_mouse, mt_normal);
 				mouseinitialized = true;
 				break;
 	}
@@ -437,19 +340,16 @@ void IN_DeactivateMouse( void )
 
 void IN_Frame (void) {
 
-	if ( key_dest != key_game || cls.state != ca_active )
+	if (r_fullscreen.integer == 0 && (key_dest != key_game || cls.state != ca_active))
 	{
 		// temporarily deactivate if not in the game and
 		// running on the desktop
-		// voodoo always counts as full screen
-		if (r_fullscreen.integer == 0 && strcmp( r_glDriver.string, _3DFX_DRIVER_NAME ) )
-		{
-			IN_DeactivateMouse ();
-			return;
-		}
+		IN_DeactivateMouse ();
 	}
-
-	IN_ActivateMouse();
+	else
+	{
+		IN_ActivateMouse();
+	}
 }
 
 void IN_Restart_f(void)
@@ -460,7 +360,7 @@ void IN_Restart_f(void)
 	IN_Init();
 
 	// if mouse was active before restart, try to re-activate it
-	if ( old_mouse_active )
+	if (old_mouse_active)
 		IN_ActivateMouse();
 }
 
@@ -706,55 +606,6 @@ static void HandleEvents(void)
 			case MotionNotify:
 				if (mouse_active)
 				{
-					if (in_mouse.integer == mt_dga)
-					{
-						if (abs(event.xmotion.x_root) > 1)
-							amx += event.xmotion.x_root * 2;
-						else
-							amx += event.xmotion.x_root;
-						if (abs(event.xmotion.y_root) > 1)
-							amy += event.xmotion.y_root * 2;
-						else
-							amy += event.xmotion.y_root;
-						if (Sys_DoubleTime() - mouseResetTime > MOUSE_RESET_DELAY )
-						{
-							mx += amx;
-							my += amy;
-						}
-						amx = amy = 0;
-					}
-					else if (in_mouse.integer == mt_normal)
-					{
-						// If it's a center motion, we've just returned from our warp
-						if (event.xmotion.x == glConfig.vidWidth/2 &&
-								event.xmotion.y == glConfig.vidHeight/2)
-						{
-							mwx = glConfig.vidWidth/2;
-							mwy = glConfig.vidHeight/2;
-							if (Sys_DoubleTime() - mouseResetTime > MOUSE_RESET_DELAY )
-							{
-								mx += amx;
-								my += amy;
-							}
-							amx = amy = 0;
-							break;
-						}
-
-						dx = ((int)event.xmotion.x - mwx);
-						dy = ((int)event.xmotion.y - mwy);
-						if (abs(dx) > 1)
-							amx += dx * 2;
-						else
-							amx += dx;
-						if (abs(dy) > 1)
-							amy += dy * 2;
-						else
-							amy += dy;
-
-						mwx = event.xmotion.x;
-						mwy = event.xmotion.y;
-						dowarp = true;
-					}
 				}
 				break;
 
@@ -1494,34 +1345,6 @@ void GLimp_Init( void )
 	// to be overridden when testing driver fixes, etc. but only sets
 	// them to their default state when the hardware is first installed/run.
 	//
-#if 0 /* qqshka: sad, that good for q3, but not for ezquake cfg managment */
-	if ( strcasecmp( lastValidRenderer.string, glConfig.renderer_string ) )
-	{
-		glConfig.hardwareType = GLHW_GENERIC;
-
-		Cvar_Set( &r_texturemode, "GL_LINEAR_MIPMAP_NEAREST" );
-
-		// VOODOO GRAPHICS w/ 2MB
-		if ( Q_stristr( buf, "voodoo graphics/1 tmu/2 mb" ) )
-		{
-			Cvar_Set( &r_picmip, "2" );
-		} else
-		{
-			Cvar_Set( &r_picmip, "1" );
-
-			if ( Q_stristr( buf, "rage 128" ) || Q_stristr( buf, "rage128" ) )
-			{
-				Cvar_Set( &r_finish, "0" );
-			}
-			// Savage3D and Savage4 should always have trilinear enabled
-			else if ( Q_stristr( buf, "savage3d" ) || Q_stristr( buf, "s3 savage4" ) )
-			{
-				Cvar_Set( &r_texturemode, "GL_LINEAR_MIPMAP_LINEAR" );
-			}
-		}
-	}
-#endif
-
 	//
 	// this is where hardware specific workarounds that should be
 	// detected/initialized every startup should go.
@@ -1538,11 +1361,7 @@ void GLimp_Init( void )
 	} else if ( Q_stristr( buf, "riva 128" ) )
 	{
 		glConfig.hardwareType = GLHW_RIVA128;
-	} else if ( Q_stristr( buf, "riva tnt " ) )
-	{
 	}
-
-	//  Cvar_Set( &r_lastValidRenderer, glConfig.renderer_string );
 
 	// initialize extensions
 	GLW_InitExtensions();
@@ -1608,9 +1427,6 @@ void GL_EndRendering (void) {
 void GLimp_EndFrame (void)
 {
 	qglXSwapBuffers(dpy, win);
-
-	// check logging
-	//  QGL_EnableLogging( (qbool)r_logFile.integer ); // bk001205 - was ->value
 }
 
 /************************************* Window related *******************************/
