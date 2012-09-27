@@ -112,6 +112,7 @@ Atom wm_delete_window_atom; //LordHavoc
 
 qbool mouseinitialized = false; // unfortunately non static, lame...
 static qbool mouse_active = false;
+int mx, my;
 
 static int mouse_accel_numerator;
 static int mouse_accel_denominator;
@@ -279,15 +280,7 @@ static void uninstall_grabs(void)
 {
 }
 
-#ifdef WITH_JOYSTICK
-// from in_linux.c
-extern void IN_CommandsJoystick (void);        
-#endif // WITH_JOYSTICK
-
 void IN_Commands (void) {
-#ifdef WITH_JOYSTICK
-	IN_CommandsJoystick ();
-#endif // WITH_JOYSTICK
 }
 
 void IN_StartupMouse(void) {
