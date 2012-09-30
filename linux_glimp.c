@@ -63,9 +63,11 @@
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>
+#include <X11/XKBlib.h>
 #include <X11/xpm.h>
 
 #include <X11/extensions/xf86vmode.h>
+#include <X11/extensions/XInput2.h>
 
 #include "ezquake.xpm"
 #include "quakedef.h"
@@ -79,9 +81,9 @@
 // cvars
 //
 
-typedef enum { mt_none = 0, mt_dga, mt_normal } mousetype_t;
+typedef enum { mt_none = 0, mt_normal } mousetype_t;
 
-cvar_t in_mouse           = { "in_mouse",    "1", CVAR_ARCHIVE | CVAR_LATCH }; // NOTE: "1" is mt_dga
+cvar_t in_mouse           = { "in_mouse",    "1", CVAR_ARCHIVE | CVAR_LATCH }; // NOTE: "1" is mt_normal
 cvar_t in_nograb          = { "in_nograb",   "0", CVAR_LATCH }; // this is strictly for developers
 
 cvar_t r_allowSoftwareGL  = { "vid_allowSoftwareGL", "0", CVAR_LATCH };   // don't abort out if the pixelformat claims software
@@ -104,7 +106,9 @@ static int scrnum;
 static Window win = 0;
 static GLXContext ctx = NULL;
 
-Atom wm_delete_window_atom; //LordHavoc
+static Atom wm_delete_window_atom; //LordHavoc
+
+static int shift_down;
 
 #define KEY_MASK   ( KeyPressMask | KeyReleaseMask )
 #define MOUSE_MASK ( ButtonPressMask | ButtonReleaseMask | PointerMotionMask | ButtonMotionMask )
@@ -114,14 +118,8 @@ qbool mouseinitialized = false; // unfortunately non static, lame...
 static qbool mouse_active = false;
 int mx, my;
 
-static int mouse_accel_numerator;
-static int mouse_accel_denominator;
-static int mouse_threshold;
-
 qbool vidmode_ext = false;
 static int vidmode_MajorVersion = 0, vidmode_MinorVersion = 0; // major and minor of XF86VidExtensions
-
-static int win_x, win_y;
 
 static XF86VidModeModeInfo **vidmodes;
 //static int default_dotclock_vidmode; // bk001204 - unused
@@ -130,6 +128,8 @@ static qbool vidmode_active = false;
 
 qbool ActiveApp = true;
 qbool Minimized = false;
+
+static int xi_opcode;
 
 //
 // function declaration
@@ -274,10 +274,78 @@ static Cursor CreateNullCursor(Display *display, Window root)
 
 static void install_grabs(void)
 {
+	XDefineCursor(dpy, win, CreateNullCursor(dpy, win));
+        XIEventMask mask;
+
+        mask.deviceid = XIAllMasterDevices;
+        mask.mask_len = XIMaskLen(XI_LASTEVENT);
+        mask.mask = calloc(mask.mask_len, sizeof(char));
+        XISetMask(mask.mask, XI_KeyPress);
+        XISetMask(mask.mask, XI_KeyRelease);
+        XISetMask(mask.mask, XI_ButtonPress);
+        XISetMask(mask.mask, XI_ButtonRelease);
+        XISelectEvents(dpy, win, &mask, 1);
+        XISetMask(mask.mask, XI_Enter);
+        XISetMask(mask.mask, XI_Leave);
+        XISetMask(mask.mask, XI_ButtonPress);
+        XISetMask(mask.mask, XI_ButtonRelease);
+
+        int i;
+        int num_devices;
+        XIDeviceInfo *info;
+        info = XIQueryDevice(dpy, XIAllDevices, &num_devices);
+        for(i = 0; i < num_devices; i++) {
+                int id = info[i].deviceid;
+                if(info[i].use == XISlavePointer) {
+                        mask.deviceid = id;
+                        XIGrabDevice(dpy, id, win, CurrentTime, None, GrabModeSync,
+                                        GrabModeSync, True, &mask);
+                }
+                else if(info[i].use == XIMasterPointer) {
+                        /* FIXME: Ugly hack, XIWarpPointer is fucking with me if using fullscreen.. I get 
+                         *        like "scrolling of screen" like cursor window is bigger than the gl window */
+                        if (r_fullscreen.integer)
+                                XIWarpPointer(dpy, id, None, win, 0, 0, 0, 0, 0, 0);
+                        else
+                                XIWarpPointer(dpy, id, None, win, 0, 0, 0, 0, (double)glConfig.vidWidth/2, (double)glConfig.vidHeight/2);
+                }
+                else if(info[i].use == XIMasterKeyboard)
+                {
+                        Con_DPrintf("input: grabbing master keyboard...\n");
+                        XIGrabDevice(dpy, id, win, CurrentTime, None, GrabModeAsync, GrabModeAsync, False, &mask);
+                }
+        }
+        XIFreeDeviceInfo(info);
+
+        mask.deviceid = XIAllDevices;
+        memset(mask.mask, 0, mask.mask_len);
+        XISetMask(mask.mask, XI_RawMotion);
+
+        XISelectEvents(dpy, DefaultRootWindow(dpy), &mask, 1);
+
+        free(mask.mask);
+
+        XSync(dpy, True);
 }
 
 static void uninstall_grabs(void)
 {
+        XUndefineCursor(dpy, win);
+        int i;
+        int num_devices;
+        XIDeviceInfo *info;
+        info = XIQueryDevice(dpy, XIAllDevices, &num_devices);
+
+        for(i = 0; i < num_devices; i++) {
+                if(info[i].use == XIFloatingSlave || info[i].use == XIMasterKeyboard) {
+                        XIUngrabDevice(dpy, info[i].deviceid, CurrentTime);
+                }
+                else if(info[i].use == XIMasterPointer) {
+                        XIWarpPointer(dpy, info[i].deviceid, None, win, 0, 0, 0, 0,
+                                        glConfig.vidWidth / 2, glConfig.vidHeight / 2);
+                }
+        }
+        XIFreeDeviceInfo(info);
 }
 
 void IN_Commands (void) {
@@ -305,35 +373,27 @@ void IN_StartupMouse(void) {
 
 void IN_ActivateMouse( void )
 {
-	if (!mouseinitialized || !dpy || !win)
+	if (!mouseinitialized || !dpy || !win || mouse_active)
 		return;
 
-	if (!mouse_active)
-	{
-		if (!in_nograb.value)
-			install_grabs();
-
-		mouse_active = true;
-	}
+	if (!in_nograb.value)
+		install_grabs();
+	mouse_active = true;
 }
 
 void IN_DeactivateMouse( void )
 {
-	if (!mouseinitialized || !dpy || !win)
+	if (!mouseinitialized || !dpy || !win || !mouse_active)
 		return;
 
-	if (mouse_active)
-	{
-		if (!in_nograb.value)
-			uninstall_grabs();
-
-		mouse_active = false;
-	}
+	if (!in_nograb.value)
+		uninstall_grabs();
+	mouse_active = false;
 }
 
 void IN_Frame (void) {
 
-	if (r_fullscreen.integer == 0 && (key_dest != key_game || cls.state != ca_active))
+	if (!r_fullscreen.integer && (key_dest != key_game || cls.state != ca_active))
 	{
 		// temporarily deactivate if not in the game and
 		// running on the desktop
@@ -357,331 +417,311 @@ void IN_Restart_f(void)
 		IN_ActivateMouse();
 }
 
-static char *XLateKey(XKeyEvent *ev, int *key) {
-	static char buf[64];
-	int kp;
-	KeySym keysym;
-	memset(buf, 0, sizeof(buf));
+static char *XLateKey(int keycode, int *key) {
+        KeySym keysym;
 
-	*key = 0;
-	kp = (int) cl_keypad.value;
+        keysym = XkbKeycodeToKeysym(dpy, keycode, 0, 0); /* Don't care about shift state for in game keycode, but... */
+        int kp = cl_keypad.value;
 
-	keysym = XLookupKeysym (ev, 0);
-	XLookupString(ev, buf, sizeof (buf), &keysym, 0);
-	Com_DPrintf ("[XLateKey] len %i: {%i %i %i}: [%s]\n", strlen(buf), (byte)buf[0], (byte)buf[1], (byte)buf[2], buf);
+        switch(keysym) {
+                case XK_Print:                  *key = K_PRINTSCR; break;
+                case XK_Scroll_Lock:            *key = K_SCRLCK; break;
 
-	// keysym without modifiers
-	ev->state = 0;
-	keysym = XLookupKeysym (ev, 0);
+                case XK_Caps_Lock:              *key = K_CAPSLOCK; break;
 
-	switch(keysym) {
-		case XK_Print:			*key = K_PRINTSCR; break;
-		case XK_Scroll_Lock:	*key = K_SCRLCK; break;
+                case XK_Num_Lock:               *key = kp ? KP_NUMLOCK : K_PAUSE; break;
 
-		case XK_Caps_Lock:		*key = K_CAPSLOCK; break;
+                case XK_KP_Page_Up:             *key = kp ? KP_PGUP : K_PGUP; break;
+                case XK_Page_Up:                *key = K_PGUP; break;
 
-		case XK_Num_Lock:		*key = kp ? KP_NUMLOCK : K_PAUSE; break;
+                case XK_KP_Page_Down:           *key = kp ? KP_PGDN : K_PGDN; break;
+                case XK_Page_Down:              *key = K_PGDN; break;
 
-		case XK_KP_Page_Up:		*key = kp ? KP_PGUP : K_PGUP; break;
-		case XK_Page_Up:		*key = K_PGUP; break;
+                case XK_KP_Home:                *key = kp ? KP_HOME : K_HOME; break;
+                case XK_Home:                   *key = K_HOME; break;
 
-		case XK_KP_Page_Down:	*key = kp ? KP_PGDN : K_PGDN; break;
-		case XK_Page_Down:		*key = K_PGDN; break;
+                case XK_KP_End:                 *key = kp ? KP_END : K_END; break;
+                case XK_End:                    *key = K_END; break;
 
-		case XK_KP_Home:		*key = kp ? KP_HOME : K_HOME; break;
-		case XK_Home:			*key = K_HOME; break;
+                case XK_KP_Left:                *key = kp ? KP_LEFTARROW : K_LEFTARROW; break;
+                case XK_Left:                   *key = K_LEFTARROW; break;
 
-		case XK_KP_End:			*key = kp ? KP_END : K_END; break;
-		case XK_End:			*key = K_END; break;
+                case XK_KP_Right:               *key = kp ? KP_RIGHTARROW : K_RIGHTARROW; break;
+                case XK_Right:                  *key = K_RIGHTARROW; break;
 
-		case XK_KP_Left:		*key = kp ? KP_LEFTARROW : K_LEFTARROW; break;
-		case XK_Left:			*key = K_LEFTARROW; break;
+                case XK_KP_Down:                *key = kp ? KP_DOWNARROW : K_DOWNARROW; break;
 
-		case XK_KP_Right:		*key = kp ? KP_RIGHTARROW : K_RIGHTARROW; break;
-		case XK_Right:			*key = K_RIGHTARROW; break;
+                case XK_Down:                   *key = K_DOWNARROW; break;
 
-		case XK_KP_Down:		*key = kp ? KP_DOWNARROW : K_DOWNARROW; break;
+                case XK_KP_Up:                  *key = kp ? KP_UPARROW : K_UPARROW; break;
 
-		case XK_Down:			*key = K_DOWNARROW; break;
+                case XK_Up:                     *key = K_UPARROW; break;
 
-		case XK_KP_Up:			*key = kp ? KP_UPARROW : K_UPARROW; break;
+                case XK_Escape:                 *key = K_ESCAPE; break;
 
-		case XK_Up:				*key = K_UPARROW; break;
+                case XK_KP_Enter:               *key = kp ? KP_ENTER : K_ENTER; break;
 
-		case XK_Escape:			*key = K_ESCAPE; break;
+                case XK_Return:                 *key = K_ENTER; break;
 
-		case XK_KP_Enter:		*key = kp ? KP_ENTER : K_ENTER; break;
+                case XK_Tab:                    *key = K_TAB; break;
 
-		case XK_Return:			*key = K_ENTER; break;
+                case XK_F1:                     *key = K_F1; break;
+                case XK_F2:                     *key = K_F2; break;
+                case XK_F3:                     *key = K_F3; break;
+                case XK_F4:                     *key = K_F4; break;
+                case XK_F5:                     *key = K_F5; break;
+                case XK_F6:                     *key = K_F6; break;
+                case XK_F7:                     *key = K_F7; break;
+                case XK_F8:                     *key = K_F8; break;
+                case XK_F9:                     *key = K_F9; break;
+                case XK_F10:                    *key = K_F10; break;
+                case XK_F11:                    *key = K_F11; break;
+                case XK_F12:                    *key = K_F12; break;
 
-		case XK_Tab:			*key = K_TAB; break;
+                case XK_BackSpace:              *key = K_BACKSPACE; break;
 
-		case XK_F1:				*key = K_F1; break;
+                case XK_KP_Delete:              *key = kp ? KP_DEL : K_DEL; break;
+                case XK_Delete:                 *key = K_DEL; break;
 
-		case XK_F2:				*key = K_F2; break;
+                case XK_Pause:                  *key = K_PAUSE; break;
 
-		case XK_F3:				*key = K_F3; break;
+                case XK_Shift_L:                *key = K_LSHIFT; break;
+                case XK_Shift_R:                *key = K_RSHIFT; break;
 
-		case XK_F4:				*key = K_F4; break;
+                case XK_Execute:
+                case XK_Control_L:              *key = K_LCTRL; break;
+                case XK_Control_R:              *key = K_RCTRL; break;
 
-		case XK_F5:				*key = K_F5; break;
+                case XK_Alt_L:
+                case XK_Meta_L:                 *key = K_LALT; break;
+                case XK_Alt_R:
+                case XK_ISO_Level3_Shift:
+                case XK_Meta_R:                 *key = K_RALT; break;
+                case XK_Super_L:                *key = K_LWIN; break;
+                case XK_Super_R:                *key = K_RWIN; break;
+                case XK_Multi_key:              *key = K_RWIN; break;
+                case XK_Menu:                   *key = K_MENU; break;
 
-		case XK_F6:				*key = K_F6; break;
+                case XK_section:                *key = K_SECTION; break;
+                case XK_acute:
+                case XK_dead_acute:             *key = K_ACUTE; break;
+                case XK_diaeresis:
+                case XK_dead_diaeresis:         *key = K_DIAERESIS; break;
 
-		case XK_F7:				*key = K_F7; break;
+                case XK_aring:                  *key = K_ARING; break;
+                case XK_adiaeresis:             *key = K_ADIAERESIS; break;
+                case XK_odiaeresis:             *key = K_ODIAERESIS; break;
 
-		case XK_F8:				*key = K_F8; break;
+                case XK_KP_Begin:               *key = kp ? KP_5 : '5'; break;
 
-		case XK_F9:				*key = K_F9; break;
+                case XK_KP_Insert:              *key = kp ? KP_INS : K_INS; break;
+                case XK_Insert:                 *key = K_INS; break;
 
-		case XK_F10:			*key = K_F10; break;
+                case XK_KP_Multiply:            *key = kp ? KP_STAR : '*'; break;
 
-		case XK_F11:			*key = K_F11; break;
+                case XK_KP_Add:                 *key = kp ? KP_PLUS : '+'; break;
 
-		case XK_F12:			*key = K_F12; break;
+                case XK_KP_Subtract:            *key = kp ? KP_MINUS : '-'; break;
 
-		case XK_BackSpace:		*key = K_BACKSPACE; break;
-
-		case XK_KP_Delete:		*key = kp ? KP_DEL : K_DEL; break;
-		case XK_Delete:			*key = K_DEL; break;
-
-		case XK_Pause:			*key = K_PAUSE; break;
-
-		case XK_Shift_L:		*key = K_LSHIFT; break;
-		case XK_Shift_R:		*key = K_RSHIFT; break;
-
-		case XK_Execute:
-		case XK_Control_L:		*key = K_LCTRL; break;
-		case XK_Control_R:		*key = K_RCTRL; break;
-
-		case XK_Alt_L:
-		case XK_Meta_L:			*key = K_LALT; break;
-		case XK_Alt_R:
-		case XK_ISO_Level3_Shift:
-		case XK_Meta_R:			*key = K_RALT; break;
-
-		case XK_Super_L:		*key = K_LWIN; break;
-		case XK_Super_R:		*key = K_RWIN; break;
-		case XK_Multi_key:		*key = K_RWIN; break;
-		case XK_Menu:			*key = K_MENU; break;
-
-		case XK_section:		*key = K_SECTION; break;
-		case XK_acute:
-		case XK_dead_acute:		*key = K_ACUTE; break;
-		case XK_diaeresis:
-		case XK_dead_diaeresis:	*key = K_DIAERESIS; break;
-
-		case XK_aring:			*key = K_ARING; break;
-		case XK_adiaeresis:		*key = K_ADIAERESIS; break;
-		case XK_odiaeresis:		*key = K_ODIAERESIS; break;
-
-		case XK_KP_Begin:		*key = kp ? KP_5 : '5'; break;
-
-		case XK_KP_Insert:		*key = kp ? KP_INS : K_INS; break;
-		case XK_Insert:			*key = K_INS; break;
-
-		case XK_KP_Multiply:	*key = kp ? KP_STAR : '*'; break;
-
-		case XK_KP_Add:			*key = kp ? KP_PLUS : '+'; break;
-
-		case XK_KP_Subtract:	*key = kp ? KP_MINUS : '-'; break;
-
-		case XK_KP_Divide:		*key = kp ? KP_SLASH : '/'; break;
+                case XK_KP_Divide:              *key = kp ? KP_SLASH : '/'; break;
 
 
-		default:
-						if (keysym >= 32 && keysym <= 126) {
-							*key = keysym;
-						}
-						break;
-	}
-	return buf;
+                default:
+                        if (keysym >= 32 && keysym <= 126) {
+                                *key = keysym;
+                        }
+                        break;
+        }
+        /* ... if we're in console or chatting, please activate SHIFT */
+        keysym = XkbKeycodeToKeysym(dpy, keycode, 0, shift_down);
+
+        /* this is stupid, there must exist a better way */
+        switch(keysym) {
+                case XK_bracketleft:  return "[";
+                case XK_bracketright: return "]";
+                case XK_parenleft:    return "(";
+                case XK_parenright:   return ")";
+                case XK_braceleft:    return "{";
+                case XK_braceright:   return "}";
+                case XK_space:        return " ";
+                case XK_asciitilde:   return "~";
+                case XK_grave:        return "`";
+                case XK_exclam:       return "!";
+                case XK_at:           return "@";
+                case XK_numbersign:   return "#";
+                case XK_dollar:       return "$";
+                case XK_percent:      return "%";
+                case XK_asciicircum:  return "^";
+                case XK_ampersand:    return "&";
+                case XK_asterisk:     return "*";
+                case XK_minus:        return "-";
+                case XK_underscore:   return "_";
+                case XK_equal:        return "=";
+                case XK_plus:         return "+";
+                case XK_semicolon:    return ";";
+                case XK_colon:        return ":";
+                case XK_apostrophe:   return "'";
+                case XK_quotedbl:     return "\"";
+                case XK_backslash:    return "\\";
+                case XK_bar:          return "|";
+                case XK_comma:        return ",";
+                case XK_period:       return ".";
+                case XK_less:         return "<";
+                case XK_greater:      return ">";
+                case XK_slash:        return "/";
+                case XK_question:     return "?";
+                default:              if (XKeysymToString(keysym))
+		                              return XKeysymToString(keysym);
+		                      else
+		                              return "";
+        }
+
 }
 
-static qbool X11_PendingInput( void )
+static void handle_button(XGenericEventCookie *cookie)
 {
-	assert( dpy );
+        int down = cookie->evtype == XI_ButtonPress;
+        int button = ((XIDeviceEvent *)cookie->data)->detail;
+        int k_button;
 
-	// Flush the display connection and look to see if events are queued
-	XFlush( dpy );
-	if( XEventsQueued( dpy, QueuedAlready ) )
-		return true;
+        switch(button) {
+        case 1:  k_button = K_MOUSE1;      break;
+        case 2:  k_button = K_MOUSE3;      break;
+        case 3:  k_button = K_MOUSE2;      break;
+        case 4:  k_button = K_MWHEELUP;    break;
+        case 5:  k_button = K_MWHEELDOWN;  break;
+        /* Switch place of MOUSE4-5 with MOUSE6-7 */
+        case 6:  k_button = K_MOUSE6;      break;
+        case 7:  k_button = K_MOUSE7;      break;
+        case 8:  k_button = K_MOUSE4;      break;
+        case 9:  k_button = K_MOUSE5;      break;
+        /* End switch */
+        case 10: k_button = K_MOUSE8;      break;
+        default: return;
+        }
 
-	{ // More drastic measures are required -- see if X is ready to talk
-		static struct timeval zero_time;
-		int x11_fd;
-		fd_set fdset;
-
-		x11_fd = ConnectionNumber( dpy );
-		FD_ZERO( &fdset );
-		FD_SET( x11_fd, &fdset );
-		if( select( x11_fd+1, &fdset, NULL, NULL, &zero_time ) == 1 )
-			return ( XPending( dpy ) );
-	}
-
-	// Oh well, nothing is ready ..
-	return false;
+        Key_Event(k_button, down);
 }
 
-// filters repeated KeyRelease events
-static qbool repeated_press( XEvent *event )
+static void handle_key(XGenericEventCookie *cookie)
 {
-	XEvent peekevent;
-	qbool repeated = false;
+        int down = cookie->evtype == XI_KeyPress;
+        int keycode = ((XIDeviceEvent *)cookie->data)->detail;
 
-	assert( dpy );
+        int key = 0;
 
-	if (event->type != KeyRelease)
-		return false;
+        const char *name = XLateKey(keycode, &key);
 
-	if( X11_PendingInput() )
-	{
-		XPeekEvent( dpy, &peekevent );
+        if (key == K_SHIFT || key == K_LSHIFT || key == K_RSHIFT)
+                shift_down = down;
 
-		if( ( peekevent.type == KeyPress ) &&
-				( peekevent.xkey.keycode == event->xkey.keycode ) &&
-				( peekevent.xkey.time == event->xkey.time ) )
-		{
-			repeated = true;
-		}
-	}
+        Key_EventEx(key, strlen(name) == 1 ? name[0] : 0, down);
 
-	return repeated;
 }
 
-extern void IN_Keycode_Print_f( XKeyEvent *ev, qbool ext, qbool down, int key );
+static void handle_raw_motion(XIRawEvent *ev)
+{
+        if(!mouse_active)
+                return;
+
+        double *raw_valuator = ev->raw_values;
+
+        if(XIMaskIsSet(ev->valuators.mask, 0)) {
+                mx += *raw_valuator++;
+        }
+
+        if(XIMaskIsSet(ev->valuators.mask, 1)) {
+                my += *raw_valuator++;
+        }
+
+}
+
+static void handle_cookie(XGenericEventCookie *cookie)
+{
+        switch(cookie->evtype) {
+        case XI_RawMotion:
+                handle_raw_motion(cookie->data);
+                break;
+        case XI_Enter:
+        case XI_Leave:
+                break;
+        case XI_ButtonPress:
+        case XI_ButtonRelease:
+                handle_button(cookie);
+                break;
+        case XI_KeyPress:
+        case XI_KeyRelease:
+                handle_key(cookie);
+                break;
+        default:
+                break;
+        }
+}
+
 static void HandleEvents(void)
 {
-	extern int ctrlDown, shiftDown, altDown;
-	int key;
-	char *text;
-	XEvent event;
-	qbool dowarp = false;
-	int dx, dy;
+        XEvent event;
 
-	if (!dpy)
-		return;
+        if (!dpy)
+                return;
 
-	while (XPending(dpy))
-	{
-		XNextEvent(dpy, &event);
-		switch (event.type)
-		{
-			case KeyPress:
-			case KeyRelease:
-				if (repeated_press(&event))
-					break;
-				text = XLateKey(&event.xkey, &key);
-				if (key == K_CTRL  || key == K_LCTRL  || key == K_RCTRL)
-					ctrlDown  = event.type == KeyPress;
-				if (key == K_SHIFT || key == K_LSHIFT || key == K_RSHIFT)
-					shiftDown = event.type == KeyPress;
-				if (key == K_ALT   || key == K_LALT   || key == K_RALT)
-					altDown   = event.type == KeyPress;
 
-#ifdef WITH_KEYMAP
-				// if set, print the current Key information
-				if (cl_showkeycodes.value > 0)
-					IN_Keycode_Print_f (&event.xkey, false, event.type == KeyPress, key);
-#endif // WITH_KEYMAP
+        while (XPending(dpy))
+        {
+                XGenericEventCookie *cookie = &event.xcookie;
+                XNextEvent(dpy, &event);
 
-				if (strlen(text) == 1) {
-					Key_EventEx(key, text[0], event.type == KeyPress);
-				} else if (strlen(text) == 2 &&
-						((byte)text[0] & 0xE0) == 0xC0 && ((byte)text[1] & 0xC0) == 0x80
-					  ) { // valid 2-byte UTF-8 sequence?
-					Key_EventEx(key, (((byte)text[0] & 0x1F) << 6) | ((byte)text[1] & 0x3F), event.type == KeyPress);
-				} else {
-					Key_EventEx(key, 0, event.type == KeyPress);
-				}
-				break;
+                if(cookie->type == GenericEvent && cookie->extension == xi_opcode
+                                && XGetEventData(dpy, cookie)) {
+                        handle_cookie(cookie);
+                        XFreeEventData(dpy, cookie);
+                        continue;
+                }
 
-			case MotionNotify:
-				if (mouse_active)
-				{
-				}
-				break;
+                switch (event.type)
+                {
+                        case DestroyNotify:
+                                // window has been destroyed
+                                Host_Quit();
+                                break;
 
-			case ButtonPress:
-			case ButtonRelease:
+                        case ClientMessage:
+                                // window manager messages
+                                if ((event.xclient.format == 32) && ((unsigned int)event.xclient.data.l[0] == wm_delete_window_atom))
+                                        Host_Quit();
+                                break;
 
-				switch (event.xbutton.button) {
-					case 1:
-						Key_Event(K_MOUSE1, event.type == ButtonPress); break;
-					case 2:
-						Key_Event(K_MOUSE3, event.type == ButtonPress); break;
-					case 3:
-						Key_Event(K_MOUSE2, event.type == ButtonPress); break;
-					case 4:
-						Key_Event(K_MWHEELUP, event.type == ButtonPress); break;
-					case 5:
-						Key_Event(K_MWHEELDOWN, event.type == ButtonPress); break;
-					case 6:
-						Key_Event(K_MOUSE4, event.type == ButtonPress); break;
-					case 7:
-						Key_Event(K_MOUSE5, event.type == ButtonPress); break;
-				}
+                        case FocusIn:
+                                if (!ActiveApp)
+                                {
+                                        XWMHints wmhints;
+                                        ActiveApp = true;
+                                        // CLear urgency bit
+                                        wmhints.flags = 0;
+                                        XSetWMHints( dpy, win, &wmhints );
+                                }
+                                break;
 
-				break;
+                        case FocusOut:
+                                if (ActiveApp)
+                                {
+                                        Key_ClearStates();
+                                        ActiveApp = false;
+                                        shift_down = 0;
+                                }
+                                break;
 
-			case DestroyNotify:
-				// window has been destroyed
-				Host_Quit();
-				break;
+                        case MapNotify:
+                                Minimized = false;
+                                break;
 
-			case ClientMessage:
-				// window manager messages
-				if ((event.xclient.format == 32) && ((unsigned int)event.xclient.data.l[0] == wm_delete_window_atom))
-					Host_Quit();
-				break;
+                        case UnmapNotify:
+                                Minimized = true;
+                                break;
 
-			case CreateNotify :
-				win_x = event.xcreatewindow.x;
-				win_y = event.xcreatewindow.y;
-				break;
+                }
+        }
 
-			case ConfigureNotify :
-				win_x = event.xconfigure.x;
-				win_y = event.xconfigure.y;
-				break;
-
-			case FocusIn:
-				if (!ActiveApp)
-				{
-					XWMHints wmhints;
-					ActiveApp = true;
-					// CLear urgency bit
-					wmhints.flags = 0;
-					XSetWMHints( dpy, win, &wmhints );
-				}
-				break;
-
-			case FocusOut:
-				if (ActiveApp)
-				{
-					Key_ClearStates();
-					ActiveApp = false;
-				}
-				break;
-
-			case MapNotify:
-				Minimized = false;
-				GLW_CheckNeedSetDeviceGammaRamp();
-				break;
-
-			case UnmapNotify:
-				Minimized = true;
-				GLW_CheckNeedSetDeviceGammaRamp();
-				break;
-
-		}
-	}
-
-	if (dowarp)
-	{
-		XWarpPointer(dpy,None,win,0,0,0,0,
-				(glConfig.vidWidth/2),(glConfig.vidHeight/2));
-	}
 }
 
 void Sys_SendKeyEvents (void) {
@@ -799,6 +839,8 @@ static qbool GLW_StartDriverAndSetMode( const char *drivername,
 		case RSERR_INVALID_MODE:
 			ST_Printf( PRINT_ALL, "...WARNING: could not set the given mode (%d)\n", mode );
 			return false;
+		case RSERR_UNKNOWN:
+			return false;
 		default:
 			break;
 	}
@@ -835,8 +877,8 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
 	unsigned long mask;
 	int colorbits, depthbits, stencilbits;
 	int tcolorbits, tdepthbits, tstencilbits;
-	int dga_MajorVersion, dga_MinorVersion;
 	int actualWidth, actualHeight;
+	int event, error;
 	int i;
 	const char*   glstring; // bk001130 - from cvs1.17 (mkv)
 
@@ -872,24 +914,6 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
 		ST_Printf(PRINT_ALL, "Using XFree86-VidModeExtension Version %d.%d\n",
 				vidmode_MajorVersion, vidmode_MinorVersion);
 		vidmode_ext = true;
-	}
-
-	// Check for DGA
-	dga_MajorVersion = 0, dga_MinorVersion = 0;
-	if (in_mouse.integer == mt_dga)
-	{
-		if (!XF86DGAQueryVersion(dpy, &dga_MajorVersion, &dga_MinorVersion))
-		{
-			// unable to query, probalby not supported
-			ST_Printf( PRINT_ALL, "Failed to detect XF86DGA Mouse\n" );
-			// mouse must not be active here, so no need for restart I thought
-			// mouse will be activated with install grabs
-			Cvar_LatchedSetValue( &in_mouse, mt_normal );
-		} else
-		{
-			ST_Printf( PRINT_ALL, "XF86DGA Mouse (Version %d.%d) initialized\n",
-					dga_MajorVersion, dga_MinorVersion);
-		}
 	}
 
 	if (vidmode_ext)
@@ -1138,6 +1162,16 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
 
 	glConfig.isFullscreen	= fullscreen; // qqshka: this line absent in q3, dunno is this correct...
 
+	if(!XQueryExtension(dpy, "XInputExtension", &xi_opcode, &event, &error))
+	{
+		ST_Printf(PRINT_ALL, "ERROR: XInput Extension not available.\n");
+		return RSERR_UNKNOWN;
+	}
+
+	install_grabs();
+
+	mouse_active = true; /* ?? */
+
 	return RSERR_OK;
 }
 
@@ -1251,7 +1285,6 @@ void GLimp_Init( void )
 	extern void InitSig(void);
 
 	qbool attemptedlibGL = false;
-	qbool attempted3Dfx = false;
 	qbool success = false;
 	char  buf[1024];
 	//  cvar_t *lastValidRenderer = ri.Cvar_Get( "vid_lastValidRenderer", "(uninitialized)", CVAR_ARCHIVE );
@@ -1274,26 +1307,7 @@ void GLimp_Init( void )
 		if ( !strcasecmp( r_glDriver.string, OPENGL_DRIVER_NAME ) )
 		{
 			attemptedlibGL = true;
-		} else if ( !strcasecmp( r_glDriver.string, _3DFX_DRIVER_NAME ) )
-		{
-			attempted3Dfx = true;
 		}
-
-#if 0
-		// TTimo
-		// https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=455
-		// old legacy load code, was confusing people who had a bad OpenGL setup
-		if ( !attempted3Dfx && !success )
-		{
-			attempted3Dfx = true;
-			if ( GLW_LoadOpenGL( _3DFX_DRIVER_NAME ) )
-			{
-				Cvar_Set( &r_glDriver, _3DFX_DRIVER_NAME );
-				r_glDriver.modified = false;
-				success = true;
-			}
-		}
-#endif
 
 		// try ICD before trying 3Dfx standalone driver
 		if ( !attemptedlibGL && !success )
@@ -1308,8 +1322,7 @@ void GLimp_Init( void )
 		}
 
 		if (!success)
-			ST_Printf( PRINT_ERR_FATAL, "GLimp_Init() - could not load OpenGL subsystem\n" );
-
+			ST_Printf(PRINT_ERR_FATAL, "GLimp_Init() - could not load OpenGL subsystem\n");
 	}
 
 	// This values force the UI to disable driver selection
