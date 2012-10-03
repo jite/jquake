@@ -21,7 +21,7 @@ OS = $(shell uname -s | tr A-Z a-z)
 
 # add special architecture based flags
 ifeq ($(ARCH),x86_64)
-	ARCH_CFLAGS = -march=nocona -m64
+	ARCH_CFLAGS = -march=native -m64
 endif
 ifeq ($(ARCH),x86)
 	ARCH_CFLAGS = -march=i686 -mtune=generic -mmmx -Did386
@@ -32,7 +32,7 @@ endif
 
 ifeq ($(OS),linux)
 	DEFAULT_TARGET = glx
-	OS_GL_CFLAGS = -DWITH_DGA -DWITH_EVDEV -DWITH_VMODE -DWITH_JOYSTICK -DWITH_PULSEAUDIO
+	OS_GL_CFLAGS = -DWITH_VMODE -DWITH_PULSEAUDIO
 endif
 ifeq ($(OS),darwin)
 	ARCH_CFLAGS = -arch i686 -arch ppc -msse2
@@ -147,7 +147,7 @@ include Makefile.list
 GLX_C_OBJS = $(addprefix $(GLX_DIR)/, $(addsuffix .o, $(GLX_C_FILES)))
 GLX_S_OBJS = $(addprefix $(GLX_DIR)/, $(addsuffix .o, $(GLX_S_FILES)))
 GLX_CFLAGS = $(CFLAGS) $(GLCFLAGS)
-GLX_LDFLAGS = $(LDFLAGS) -lGL -lXxf86dga -lXxf86vm -lXpm
+GLX_LDFLAGS = $(LDFLAGS) -lGL -lXxf86dga -lXxf86vm -lXpm -lXi
 
 glx: _DIR = $(GLX_DIR)
 glx: _OBJS = $(GLX_C_OBJS) $(GLX_S_OBJS) $(COMMON_LIBS) $(GL_LIBS)
