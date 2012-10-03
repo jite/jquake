@@ -115,8 +115,6 @@ void Modules_Init (void)
 
 #if defined (_Soft_X11)
 	renderer = "Soft(x11)";
-#elif defined (_Soft_SVGA)
-	renderer = "Soft(svga)";
 #else
 	renderer = QW_RENDERER;
 #endif
