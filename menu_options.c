@@ -1372,7 +1372,7 @@ setting settsystem_arr[] = {
 	ADDSET_BASIC_SECTION(),
 #endif
 
-#if !defined(__APPLE__) && !defined(_Soft_X11) && !defined(_Soft_SVGA)
+#if !defined(__APPLE__) && !defined(_Soft_X11)
 	ADDSET_SEPARATOR("Screen Settings"),
 #ifdef GLQUAKE
 	ADDSET_CUSTOM("Resolution", ResolutionRead, ResolutionToggle, "Change your screen resolution."),

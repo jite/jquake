@@ -2,7 +2,6 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.83 2007-10-26 07:55:44 dkure Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -63,7 +62,7 @@ MKDIR = $(_E)mkdir -p $@
 
 ################
 
-$(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR) $(WIN_DIR):
+$(GLX_DIR) $(X11_DIR) $(MAC_DIR) $(WIN_DIR):
 	$(MKDIR)
 
 # compiler flags
@@ -167,7 +166,7 @@ $(WIN_S_OBJS): $(WIN_DIR)/%.o: %.s
 #################
 clean:
 	@echo [CLEAN]
-	@-rm -rf $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR) $(WIN_DIR)
+	@-rm -rf $(GLX_DIR) $(X11_DIR) $(MAC_DIR) $(WIN_DIR)
 
 help:
 	@echo "all     - make all the targets possible"
@@ -175,7 +174,6 @@ help:
 	@echo "clean   - removes all output"
 	@echo "glx     - GLX GL client"
 	@echo "x11     - X11 software client"
-	@echo "svga    - SVGA software client"
 	@echo "mac     - Mac client"
 	@echo "win     - Win32 MinGW OpenGL client"
 
@@ -185,7 +183,5 @@ install:
 	@cp $(GLX_TARGET) 			$(QUAKE_DIR)
 #	@echo [CP] $(X11_TARGET) 	$(QUAKE_DIR)
 #	@cp $(X11_TARGET)			$(QUAKE_DIR)
-#	@echo [CP] $(SVGA_TARGET) 	$(QUAKE_DIR)
-#	@cp $(SVGA_TARGET)			$(QUAKE_DIR)
 #	@echo [CP] $(MAC_TARGET) 	$(QUAKE_DIR)
 #	@cp $(MAC_TARGET)			$(QUAKE_DIR)
