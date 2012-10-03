@@ -13,8 +13,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-	$Id: in_linux.c,v 1.12 2007-10-04 13:48:11 dkure Exp $
 */
 
 #include "quakedef.h"
@@ -22,10 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 
 #include <sys/time.h>
-
-#ifdef _Soft_SVGA
-#include <vgamouse.h>
-#endif
 
 #ifdef NDEBUG
 #define win_mouse	"1"
@@ -40,7 +34,6 @@ cvar_t	m_showrate      = {"m_showrate",     "0", CVAR_SILENT};
 
 extern int mx, my;
 extern qbool mouseinitialized;
-
 
 void IN_StartupMouse( void );
 
@@ -57,12 +50,6 @@ void IN_MouseMove (usercmd_t *cmd)
 
 	if (!mouseinitialized)
 		return;
-
-#ifdef _Soft_SVGA
-	// poll mouse values
-	while (mouse_update())
-		; // FIXME: is there was missed ; or it was ok ?
-#endif
 
 	//
 	// Do not move the player if we're in HUD editor or menu mode.
@@ -148,9 +135,7 @@ void IN_Init (void)
 	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_MOUSE);
 	Cvar_Register (&m_filter);
 	Cvar_Register (&m_showrate);
-#ifndef _Soft_SVGA
 	Cvar_Register (&_windowed_mouse);
-#endif
 
 	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_KEYBOARD);
 	Cvar_Register (&cl_keypad);
@@ -180,20 +165,10 @@ void IN_Init (void)
 
 void IN_Shutdown(void)
 {
-//#if defined  (_Soft_X11) || defined (_Soft_SVGA)
-
-#ifdef _Soft_SVGA
-	if (mouseinitialized)
-		mouse_close();
-#endif
-
 #ifdef GLQUAKE
-  IN_DeactivateMouse(); // btw we trying de init this in video shutdown too...
+	IN_DeactivateMouse(); // btw we trying de init this in video shutdown too...
 #endif
-
 	mouseinitialized = false;
-
-//#endif
 }
 
 int ctrlDown = 0;
