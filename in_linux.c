@@ -115,6 +115,7 @@ void IN_Move (usercmd_t *cmd)
 	struct timeval tv;
 	static long old_mouserate = 0;
 	long usec, mouserate;
+	/* Yeah, not really USB polling rate here... It shows how often (or somewhat) ezQuakes updates it... */
 	if (m_showrate.value && (mx || my)) {
 		gettimeofday(&tv, NULL);
 		usec = (tv.tv_sec - old_tv.tv_sec) * 1000000L + (tv.tv_usec - old_tv.tv_usec);

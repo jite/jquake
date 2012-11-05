@@ -72,12 +72,14 @@ extern cvar_t	sv_speedcheck; //bliP: 24/9
 
 static qbool IsLocalIP(netadr_t a)
 {
-	return a.ip[0] == 10 || (a.ip[0] == 172 && (a.ip[1] & 0xF0) == 16)
-	       || (a.ip[0] == 192 && a.ip[1] == 168) || a.ip[0] >= 224;
+	/* FIXME IPv6 */
+	return a.address.ip[0] == 10 || (a.address.ip[0] == 172 && (a.address.ip[1] & 0xF0) == 16)
+	       || (a.address.ip[0] == 192 && a.address.ip[1] == 168) || a.address.ip[0] >= 224;
 }
 static qbool IsInetIP(netadr_t a)
 {
-	return a.ip[0] != 127 && !IsLocalIP(a);
+	/* FIXME IPv6 */
+	return a.address.ip[0] != 127 && !IsLocalIP(a);
 }
 /*
 ============================================================
@@ -122,13 +124,13 @@ static void Cmd_New_f (void)
 	}
 
 	// do not proceed if realip is unknown
-    if (sv_client->state == cs_preconnected && !sv_client->realip.ip[0] && (int)sv_getrealip.value)
+    if (sv_client->state == cs_preconnected && !sv_client->realip.address.ip[0] && (int)sv_getrealip.value)
 	{
 		char *server_ip = sv_serverip.string[0] ? sv_serverip.string : NET_AdrToString(net_local_sv_ipadr);
 
 		if (!((IsLocalIP(net_local_sv_ipadr) && IsLocalIP(sv_client->netchan.remote_address))  ||
 		        (IsInetIP (net_local_sv_ipadr) && IsInetIP (sv_client->netchan.remote_address))) &&
-		        sv_client->netchan.remote_address.ip[0] != 127 && !sv_serverip.string[0])
+		        sv_client->netchan.remote_address.address.ip[0] != 127 && !sv_serverip.string[0])
 		{
 			Sys_Printf ("WARNING: Incorrect server ip address: %s\n"
 			            "Set hostname in your operation system or set correctly sv_serverip cvar.\n",
@@ -3204,7 +3206,8 @@ qbool SV_ExecutePRCommand (void)
 				Cbuf_AddText(va("say \"ATTENTION: Attempt to use ktpro bug: id '%d', name '%s', address '%s', realip '%s'!\"\n",
 							sv_client->userid, sv_client->name,
 							NET_BaseAdrToString(sv_client->netchan.remote_address),
-							sv_client->realip.ip[0] ?
+							/* FIXME IPv6 */
+							sv_client->realip.address.ip[0] ?
 								NET_BaseAdrToString(sv_client->realip) : "not detected"));
 				return true /* suppress bad command warning */;
 			}

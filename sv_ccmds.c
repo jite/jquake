@@ -1088,6 +1088,7 @@ void SV_ListPenalty_f (void)
 		default: strlcpy(s, "Unknown", sizeof(s)); break;
 		}
 		Con_Printf ("%i: %s for %i.%i.%i.%i (remaining: %d)\n", i, s,
+		/* FIXME IPv6 */
 		            penfilters[i].ip[0],
 		            penfilters[i].ip[1],
 		            penfilters[i].ip[2],
@@ -1208,7 +1209,7 @@ void SV_Status_f (void)
 								(int)(1000 * cl->netchan.frame_rate),
 								(int)SV_CalcPing (cl),
 								100.0 * cl->netchan.drop_count / cl->netchan.incoming_sequence,
-								cl->realip.ip[0] ? NET_BaseAdrToString (cl->realip) : "",
+								cl->realip.address.ip[0] ? NET_BaseAdrToString (cl->realip) : "",
 								cl->spectator ? "(s)" : "");
 				}
 				break;
@@ -1223,7 +1224,7 @@ void SV_Status_f (void)
 				s = NET_BaseAdrToString(cl->netchan.remote_address);
 				Con_Printf ("%-16s %4i %5i %6i %-22s ", cl->name, (int)SV_CalcPing(cl),
 						(int)cl->edict->v.frags, cl->userid, (int)sv_use_dns.value ? SV_Resolve(s) : s);
-				if (cl->realip.ip[0])
+				if (cl->realip.address.ip[0])
 					Con_Printf ("%-15s", NET_BaseAdrToString (cl->realip));
 				Con_Printf (cl->spectator ? (char *) "(s)" : (char *) "");
 
@@ -1260,7 +1261,7 @@ void SV_Status_f (void)
 							(int)cl->edict->v.frags, Q_yelltext((unsigned char*)va("%d", cl->userid)),
 							cl->spectator ? " (s)" : "", (int)sv_use_dns.value ? SV_Resolve(s) : s);
 
-				if (cl->realip.ip[0])
+				if (cl->realip.address.ip[0])
 					Con_Printf ("%-36s\n", NET_BaseAdrToString (cl->realip));
 
 				switch (cl->state)

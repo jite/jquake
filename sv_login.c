@@ -171,7 +171,8 @@ void SV_LoadAccounts(void)
 
 		for (i = 0, acc = accounts; i < num_accounts; i++, acc++)
 			if ( (acc->use == use_log && !strncmp(acc->login, cl->login, CLIENT_LOGIN_LEN))
-			        || (acc->use == use_ip && !strcmp(acc->login, va("%d.%d.%d.%d", cl->realip.ip[0], cl->realip.ip[1], cl->realip.ip[2], cl->realip.ip[3]))) )
+				/* FIXME IPv6 */
+			        || (acc->use == use_ip && !strcmp(acc->login, va("%d.%d.%d.%d", cl->realip.address.ip[0], cl->realip.address.ip[1], cl->realip.address.ip[2], cl->realip.address.ip[3]))) )
 				break;
 
 		if (i < num_accounts && acc->state == a_ok)
@@ -537,7 +538,8 @@ qbool SV_Login(client_t *cl)
 	}
 
 	// check for account for ip
-	ip = va("%d.%d.%d.%d", cl->realip.ip[0], cl->realip.ip[1], cl->realip.ip[2], cl->realip.ip[3]);
+	/* FIXME IPv6 */
+	ip = va("%d.%d.%d.%d", cl->realip.address.ip[0], cl->realip.address.ip[1], cl->realip.address.ip[2], cl->realip.address.ip[3]);
 	if ((cl->logged = checklogin(ip, ip, cl - svs.clients + 1, use_ip)) > 0)
 	{
 		strlcpy(cl->login, accounts[cl->logged-1].pass, CLIENT_LOGIN_LEN);

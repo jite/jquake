@@ -389,7 +389,7 @@ server_data * Create_Server (char *ip)
 		s->address.port = htons(27500);
 
 	snprintf (s->display.ip, sizeof (s->display.ip), "%d.%d.%d.%d:%d",
-			s->address.ip[0], s->address.ip[1], s->address.ip[2], s->address.ip[3],
+			s->address.address.ip[0], s->address.address.ip[1], s->address.address.ip[2], s->address.address.ip[3],
 			ntohs(s->address.port));
 
 	return s;
@@ -613,10 +613,10 @@ void Serverinfo_Start (server_data *s)
     {
 		char buf[256];
 		snprintf(buf, sizeof (buf), "%d.%d.%d.%d",
-				show_serverinfo->address.ip[0],
-				show_serverinfo->address.ip[1],
-				show_serverinfo->address.ip[2],
-				show_serverinfo->address.ip[3]);
+				show_serverinfo->address.address.ip[0],
+				show_serverinfo->address.address.ip[1],
+				show_serverinfo->address.address.ip[2],
+				show_serverinfo->address.address.ip[3]);
 		SB_Test_Init(buf);
 		testing_connection = 1;
 	}
@@ -632,10 +632,10 @@ void Serverinfo_Change (server_data *s)
     {
         char buf[256];
         snprintf (buf, sizeof (buf), "%d.%d.%d.%d",
-            show_serverinfo->address.ip[0],
-            show_serverinfo->address.ip[1],
-            show_serverinfo->address.ip[2],
-            show_serverinfo->address.ip[3]);
+            show_serverinfo->address.address.ip[0],
+            show_serverinfo->address.address.ip[1],
+            show_serverinfo->address.address.ip[2],
+            show_serverinfo->address.address.ip[3]);
         SB_Test_Change(buf);
         testing_connection = 1;
     }
@@ -2223,10 +2223,10 @@ void Serverinfo_Key(int key)
             {
                 char buf[256];
                 snprintf(buf, sizeof (buf), "%d.%d.%d.%d",
-                        show_serverinfo->address.ip[0],
-                        show_serverinfo->address.ip[1],
-                        show_serverinfo->address.ip[2],
-                        show_serverinfo->address.ip[3]);
+                        show_serverinfo->address.address.ip[0],
+                        show_serverinfo->address.address.ip[1],
+                        show_serverinfo->address.address.ip[2],
+                        show_serverinfo->address.address.ip[3]);
                 SB_Test_Init(buf);
                 testing_connection = 1;
              }
@@ -2776,7 +2776,7 @@ int Servers_Compare_Func(const void * p_s1, const void * p_s2)
             case '1':
                 d = funcmp(s1->display.name, s2->display.name); break;
             case '2':
-                d = memcmp(&(s1->address.ip), &(s2->address.ip), 4);
+                d = memcmp(&(s1->address.address.ip), &(s2->address.address.ip), 4);
                 if (!d)
                     d = ntohs(s1->address.port) - ntohs(s2->address.port);
                 break;
@@ -2892,7 +2892,7 @@ int All_Players_Compare_Func(const void * p_p1, const void * p_p2)
             case '1':
                 d = funcmp(s1->display.name, s2->display.name); break;
             case '2':
-                d = memcmp(&(s1->address.ip), &(s2->address.ip), 4);
+                d = memcmp(&(s1->address.address.ip), &(s2->address.address.ip), 4);
                 if (!d)
                     d = ntohs(s1->address.port) - ntohs(s2->address.port);
                 break;
@@ -3117,8 +3117,9 @@ void SB_Serverlist_Unserialize_f(void)
 
 void SB_ProxyDumpPing(netadr_t adr, short dist)
 {
+	/* FIXME Use NET function! IPv6 */
 	Com_Printf("%3d.%3d.%3d.%3d:%5d   %d\n",
-		adr.ip[0], adr.ip[1], adr.ip[2], adr.ip[3], (int) adr.port, dist);
+		adr.address.ip[0], adr.address.ip[1], adr.address.ip[2], adr.address.ip[3], (int) adr.port, dist);
 }
 
 void SB_ProxyGetPings_f(void)

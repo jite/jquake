@@ -313,10 +313,10 @@ static vfsfile_t *QTVList_Cache_File_Open(char *mode)
 static void QTVList_Resolve_Hostnames(void)
 {
 	sb_qtventry_t *cur = sb_qtvlist_cache.sb_qtventries;
-
+/* FIXME IPv6 */
 	while (cur) {
 		NET_StringToAdr(va("%s:%d", cur->hostname, cur->port), &cur->addr);
-		cur->addr.type = NA_IP;
+		cur->addr.type = NA_IPv4;
 		cur = cur->next;
 	}
 }
@@ -543,23 +543,21 @@ void QTVList_Observeqtv_f(void)
 		NET_StringToAdr(Cmd_Argv(1), &addr);
 	}
 
-	if (addr.type == NA_IP) {
+/* FIXME IPv6 */
+	if (addr.type == NA_IPv4) {
 		cur = sb_qtvlist_cache.sb_qtventries;
 
 		while (cur) {
-			if (cur->addr.port == addr.port && memcmp(cur->addr.ip, addr.ip, sizeof (addr.ip)) == 0) {
+			if (cur->addr.port == addr.port && memcmp(cur->addr.address.ip, addr.address.ip, sizeof (addr.address.ip)) == 0) {
 				Cbuf_AddText(va("qtvplay %s\n", cur->link));
 				return;
 			}
-
 			cur = cur->next;
 		}
-
 		Com_Printf("Cannot find current server on any QTV\n");
 	}
-	else {
+	else
 		Com_Printf("Can't observe current server via QTV\n");
-	}
 }
 
 void QTVList_Init(void)

@@ -1597,9 +1597,10 @@ void CL_ConnectionlessPacket (void)
 			// Remote command from gui front end
 			Com_Printf ("%s: client command\n", NET_AdrToString (net_from));
 
+			/* FIXME? IPv6...? */
 			if (net_from.type != net_local_cl_ipadr.type
-				|| ((*(unsigned *)net_from.ip != *(unsigned *)net_local_cl_ipadr.ip)
-				&& (*(unsigned *)net_from.ip != htonl(INADDR_LOOPBACK))))
+				|| ((*(unsigned *)net_from.address.ip != *(unsigned *)net_local_cl_ipadr.address.ip)
+				&& (*(unsigned *)net_from.address.ip != htonl(INADDR_LOOPBACK))))
 			{
 				Com_Printf ("Command packet from remote host.  Ignored.\n");
 				return;

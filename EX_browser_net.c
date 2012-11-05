@@ -508,10 +508,10 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
                 SockadrToNetadr (&hostaddr, &from);
 
                 for (i=0; i < serversn; i++)
-                    if (from.ip[0] == servers[i]->address.ip[0] &&
-                        from.ip[1] == servers[i]->address.ip[1] &&
-                        from.ip[2] == servers[i]->address.ip[2] &&
-                        from.ip[3] == servers[i]->address.ip[3] &&
+                    if (from.address.ip[0] == servers[i]->address.address.ip[0] &&
+                        from.address.ip[1] == servers[i]->address.address.ip[1] &&
+                        from.address.ip[2] == servers[i]->address.address.ip[2] &&
+                        from.address.ip[3] == servers[i]->address.address.ip[3] &&
                         from.port == servers[i]->address.port)
                     {
                         hosts[i].phase = (int)sb_inforetries.value;
@@ -538,10 +538,10 @@ void GetServerPing(server_data *serv)
     int p;
     char buf[32];
     snprintf (buf, sizeof (buf), "%d.%d.%d.%d",
-        serv->address.ip[0],
-        serv->address.ip[1],
-        serv->address.ip[2],
-        serv->address.ip[3]);
+        serv->address.address.ip[0],
+        serv->address.address.ip[1],
+        serv->address.address.ip[2],
+        serv->address.address.ip[3]);
 
     p = useNewPing
 			// new ping = UPD QW Packet

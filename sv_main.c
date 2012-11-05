@@ -1765,7 +1765,7 @@ static void SVC_IP(void)
 		return;
 
 	// don't override previously set ip
-	if (client->realip.ip[0])
+	if (client->realip.address.ip[0])
 		return;
 
 	client->realip = net_from;
@@ -2249,7 +2249,8 @@ qbool SV_FilterPacket (void)
 	int		i;
 	unsigned	in;
 
-	in = *(unsigned *)net_from.ip;
+	/* FIXME IPv6 */
+	in = *(unsigned *)net_from.address.ip;
 
 	for (i=0 ; i<numipfilters ; i++)
 		if ( ipfilters[i].type == ipft_ban && (in & ipfilters[i].mask) == ipfilters[i].compare )
@@ -2604,7 +2605,8 @@ int SV_VIPbyIP (netadr_t adr)
 	int		i;
 	unsigned	in;
 
-	in = *(unsigned *)adr.ip;
+	/* FIXME IPv6 */
+	in = *(unsigned *)adr.address.ip;
 
 	for (i=0 ; i<numipvips ; i++)
 		if ( (in & ipvip[i].mask) == ipvip[i].compare)
@@ -2799,7 +2801,7 @@ void SV_SavePenaltyFilter (client_t *cl, filtertype_t type, double pentime)
 		return;
 
 	for (i = 0; i < numpenfilters; i++)
-		if (SV_IPCompare (penfilters[i].ip, cl->realip.ip)	&& penfilters[i].type == type)
+		if (SV_IPCompare (penfilters[i].ip, cl->realip.address.ip)	&& penfilters[i].type == type)
 		{
 			return;
 		}
@@ -2809,7 +2811,7 @@ void SV_SavePenaltyFilter (client_t *cl, filtertype_t type, double pentime)
 		return;
 	}
 
-	SV_IPCopy (penfilters[numpenfilters].ip, cl->realip.ip);
+	SV_IPCopy (penfilters[numpenfilters].ip, cl->realip.address.ip);
 	penfilters[numpenfilters].time = pentime;
 	penfilters[numpenfilters].type = type;
 	numpenfilters++;
@@ -2823,7 +2825,7 @@ double SV_RestorePenaltyFilter (client_t *cl, filtertype_t type)
 	// search for existing penalty filter of same type
 	for (i = 0; i < numpenfilters; i++)
 	{
-		if (type == penfilters[i].type && SV_IPCompare (cl->realip.ip, penfilters[i].ip))
+		if (type == penfilters[i].type && SV_IPCompare (cl->realip.address.ip, penfilters[i].ip))
 		{
 			time1 = penfilters[i].time;
 			SV_RemoveIPFilter (i);
