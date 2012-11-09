@@ -72,10 +72,6 @@ static qbool FS_RemovePak (const char *pakfile);
 //============================================================================
 #include "q_shared.h"
 
-#ifndef CLIENTONLY
-#include "server.h"
-#endif // CLIENTONLY
-
 // To include pak3 support add this define
 //#define WITH_PK3
 

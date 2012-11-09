@@ -21,9 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sbar.c -- status bar code
 
 #include "quakedef.h"
-#ifndef CLIENTONLY
-#include "server.h"
-#endif
 #include "hud.h"
 #include "hud_common.h"
 #include "vx_stuff.h"
@@ -1055,9 +1052,6 @@ void Sbar_SoloScoreboard (void)
 	sprintf (str,"Secrets: %i/%i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
 	Sbar_DrawString (312 - strlen(str)*8, 12, str);
 
-	sprintf (str,"skill %i", (int)(skill.value + 0.5));
-	Sbar_DrawString (160 - strlen(str)*4, 12, str);
-
 	strlcpy(str, cl.levelname, sizeof(str));
 	strlcat(str, " (", sizeof(str));
 	strlcat(str, host_mapname.string, sizeof(str));
@@ -1112,13 +1106,6 @@ static void Sbar_DeathmatchOverlay (int start) {
     offset = 8 * scr_scoreboard_drawfps;
     if (!start && hud_faderankings.value)
 		Draw_FadeScreen(hud_faderankings.value);
-
-#ifndef CLIENTONLY
-	// FIXME
-	// check number of connections instead?
-	if (cl.gametype == GAME_COOP && com_serveractive && !coop.value)
-		return;
-#endif
 
 	if (cls.state == ca_active && !cls.demoplayback) {
 		// request new ping times every two seconds
@@ -1470,13 +1457,6 @@ static void Sbar_TeamOverlay (void) {
 
 	if (key_dest == key_console)
 		return;
-
-#ifndef CLIENTONLY
-	// FIXME
-	// check number of connections instead?
-	if (cl.gametype == GAME_COOP && com_serveractive && !coop.value)
-		return;
-#endif
 
 	if (!cl.teamplay) {
 		Sbar_DeathmatchOverlay(0);

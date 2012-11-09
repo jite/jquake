@@ -743,7 +743,6 @@ void GL_DrawAliasShadow (aliashdr_t *paliashdr, int posenum) {
 //VULT COLOURED MODEL LIGHTING
 vec3_t dlight_color;
 extern float bubblecolor[NUM_DLIGHTTYPES][4];
-extern cvar_t maxclients;
 void R_AliasSetupLighting(entity_t *ent) {
 	int minlight, lnum;
 	float add, fbskins;
@@ -921,7 +920,7 @@ void R_AliasSetupLighting(entity_t *ent) {
 	}
 	else if (
 		!((clmodel->modhint == MOD_EYES || clmodel->modhint == MOD_BACKPACK) && strncasecmp(Rulesets_Ruleset(), "default", 7)) &&
-		(gl_fb_models.integer == 1 && clmodel->modhint != MOD_GIB && clmodel->modhint != MOD_VMODEL && !(com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1))
+		(gl_fb_models.integer == 1 && clmodel->modhint != MOD_GIB && clmodel->modhint != MOD_VMODEL)
 	) {
 		ambientlight = shadelight = 4096;
 	}
@@ -1914,9 +1913,6 @@ void CI_Init (void);
 void R_Init (void) {
 	Cmd_AddCommand ("loadsky", R_LoadSky_f);
 	Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);
-#ifndef CLIENTONLY
-	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);
-#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register (&r_bloom);

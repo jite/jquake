@@ -633,11 +633,6 @@ typedef struct
 
 //============================================================================
 
-extern	cvar_t	sv_paused; // 1 - normal, 2 - auto (single player), 3 - both
-
-extern	cvar_t	sv_mintic, sv_maxtic, sv_ticrate;
-extern	cvar_t	sv_maxspeed;
-
 extern	int current_skill;
 
 extern	cvar_t	spawn;
@@ -667,9 +662,6 @@ extern  ctxinfo_t _localinfo_;
 
 extern	int		host_hunklevel;
 
-extern	qbool		sv_error;
-
-extern qbool		server_cfg_done;
 extern char		master_rcon_password[128];
 
 extern qbool is_ktpro;
@@ -710,32 +702,6 @@ typedef struct
 } penfilter_t;
 //<-
 
-//void SV_Shutdown (void);
-void SV_Frame (double time);
-void SV_FinalMessage (const char *message);
-void SV_DropClient (client_t *drop);
-
-int SV_CalcPing (client_t *cl);
-void SV_FullClientUpdate (client_t *client, sizebuf_t *buf);
-void SV_FullClientUpdateToClient (client_t *client, client_t *cl);
-
-qbool SV_CheckBottom (edict_t *ent);
-qbool SV_movestep (edict_t *ent, vec3_t move, qbool relink);
-
-qbool SV_CloseEnough (edict_t *ent, edict_t *goal, float dist);
-qbool SV_StepDirection (edict_t *ent, float yaw, float dist);
-void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist);
-
-void SV_WriteClientdataToMessage (client_t *client, sizebuf_t *msg);
-
-void SV_MoveToGoal (void);
-
-void SV_InitOperatorCommands (void);
-
-void SV_SendServerinfo (client_t *client);
-void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged);
-int SV_BoundRate (qbool dl, int rate);
-
 typedef struct
 {
 	int sec;
@@ -747,242 +713,13 @@ typedef struct
 	char str[128];
 } date_t;
 
-void SV_TimeOfDay(date_t *date);
 
-
-//bliP: init ->
-void SV_ListFiles_f (void);
-void SV_RemoveFile_f (void);
-void SV_RemoveDirectory_f (void);
-
-#define	MAX_PENFILTERS 512
-void SV_RemoveIPFilter (int i);
-//static qbool SV_IPCompare (byte *a, byte *b);
-//static void SV_IPCopy (byte *dest, byte *src);
-void SV_SavePenaltyFilter (client_t *cl, filtertype_t type, double pentime);
-double SV_RestorePenaltyFilter (client_t *cl, filtertype_t type);
-
-qbool SV_FilterPacket (void);
-void SV_SendBan (void);
 qbool GameStarted(void);
 //<-
-void SV_Script_f (void);
 int SV_GenerateUserID (void);
 
 char *Q_normalizetext (char *name); //bliP: red to white text
 unsigned char *Q_redtext (unsigned char *str); //bliP: white to red text
 unsigned char *Q_yelltext (unsigned char *str); //VVD: white to red text and yellow numbers
-
-//
-// sv_init.c
-//
-int SV_ModelIndex (char *name);
-void SV_FlushSignon (void);
-void SV_SpawnServer (char *server, qbool devmap);
-
-
-//
-// sv_phys.c
-//
-void SV_ProgStartFrame (void);
-void SV_Physics (void);
-void SV_CheckVelocity (edict_t *ent);
-void SV_AddGravity (edict_t *ent, float scale);
-qbool SV_RunThink (edict_t *ent);
-void SV_Physics_Toss (edict_t *ent);
-void SV_RunNewmis (void);
-void SV_RunNQNewmis (void);
-void SV_Impact (edict_t *e1, edict_t *e2);
-void SV_SetMoveVars(void);
-
-//
-// sv_send.c
-//
-typedef enum {RD_NONE, RD_CLIENT, RD_PACKET, RD_MOD} redirect_t;
-void SV_BeginRedirect (redirect_t rd);
-void SV_EndRedirect (void);
-
-void SV_Multicast (vec3_t origin, int to);
-void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count,
-					   int replacement_te, int replacement_count);
-void SV_StartSound (edict_t *entity, int channel, char *sample, int volume,
-    float attenuation);
-void SV_ClientPrintf (client_t *cl, int level, char *fmt, ...);
-void SV_ClientPrintf2 (client_t *cl, int level, char *fmt, ...);
-void SV_BroadcastPrintf (int level, char *fmt, ...);
-#define BPRINT_IGNOREINDEMO  (1<<0) // broad cast print will be not put in demo
-#define BPRINT_IGNORECLIENTS (1<<1) // broad cast print will not be seen by clients, but may be seen in demo
-#define BPRINT_QTVONLY       (1<<2) // if broad cast print goes to demo, then it will be only qtv sream, but not file
-#define BPRINT_IGNORECONSOLE (1<<3) // broad cast print will not be put in server console
-void SV_BroadcastPrintfEx (int level, int flags, char *fmt, ...);
-void SV_BroadcastCommand (char *fmt, ...);
-void SV_SendClientMessages (void);
-void SV_SendDemoMessage(void);
-void SV_SendMessagesToAll (void);
-void SV_FindModelNumbers (void);
-
-
-//
-// sv_user.c
-//
-void SV_ExecuteClientMessage (client_t *cl);
-void SV_UserInit (void);
-void SV_TogglePause (const char *msg, int bit);
-
-#ifdef FTE_PEXT2_VOICECHAT
-void SV_VoiceInitClient(client_t *client);
-void SV_VoiceSendPacket(client_t *client, sizebuf_t *buf);
-#endif
-
-//
-// sv_ccmds.c
-//
-void SV_Status_f (void);
-void SV_SendServerInfoChange (char *key, char *value);
-
-//
-// sv_ents.c
-//
-void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder);
-
-//
-// sv_nchan.c
-//
-void ClientReliableCheckBlock(client_t *cl, int maxsize);
-void ClientReliable_FinishWrite(client_t *cl);
-void ClientReliableWrite_Begin(client_t *cl, int c, int maxsize);
-void ClientReliableWrite_Angle(client_t *cl, float f);
-void ClientReliableWrite_Angle16(client_t *cl, float f);
-void ClientReliableWrite_Byte(client_t *cl, int c);
-void ClientReliableWrite_Char(client_t *cl, int c);
-void ClientReliableWrite_Float(client_t *cl, float f);
-void ClientReliableWrite_Coord(client_t *cl, float f);
-void ClientReliableWrite_Long(client_t *cl, int c);
-void ClientReliableWrite_Short(client_t *cl, int c);
-void ClientReliableWrite_String(client_t *cl, char *s);
-void ClientReliableWrite_SZ(client_t *cl, void *data, int len);
-void SV_ClearReliable (client_t *cl); // clear cl->netchan.message and backbuf
-
-//
-// sv_demo.c
-//
-
-void MVD_MSG_WriteChar   (const int c);
-void MVD_MSG_WriteByte   (const int c);
-void MVD_MSG_WriteShort  (const int c);
-void MVD_MSG_WriteLong   (const int c);
-void MVD_MSG_WriteFloat  (const float f);
-void MVD_MSG_WriteString (const char *s);
-void MVD_MSG_WriteCoord  (const float f);
-void MVD_MSG_WriteAngle  (const float f);
-void MVD_SZ_Write        (const void *data, int length);
-
-qbool MVDWrite_Begin(byte type, int to, int size);
-
-void SV_MVD_Record_f (void);
-void SV_MVDEasyRecord_f (void);
-
-void SV_MVDStop (int reason, qbool mvdonly);
-void SV_MVDStop_f (void);
-qbool SV_MVDWritePackets (int num);
-void SV_MVD_SendInitialGamestate(mvddest_t *dest);
-qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange);
-
-mvddest_t	*DestByName (char *name);
-void		DestClose (mvddest_t *d, qbool destroyfiles);
-
-int DemoWriteDest (void *data, int len, mvddest_t *d);
-
-extern demo_t	demo; // server demo struct
-
-extern cvar_t	sv_demoUseCache;
-extern cvar_t	sv_demoCacheSize;
-extern cvar_t	sv_demoMaxDirSize;
-extern cvar_t	sv_demoClearOld;
-extern cvar_t	sv_demoDir;
-extern cvar_t	sv_demofps;
-extern cvar_t	sv_demoPings;
-extern cvar_t	sv_demoNoVis;
-extern cvar_t	sv_demoMaxSize;
-extern cvar_t	sv_demoExtraNames;
-
-extern cvar_t	sv_demoPrefix;
-extern cvar_t	sv_demoSuffix;
-extern cvar_t	sv_demotxt;
-extern cvar_t	sv_onrecordfinish;
-
-extern cvar_t	sv_ondemoremove;
-extern cvar_t	sv_demoRegexp;
-
-void SV_MVDInit (void);
-char *SV_MVDNum(int num);
-
-//
-// sv_demo_misc.c
-//
-
-char	*SV_PrintTeams (void);
-void	Run_sv_demotxt_and_sv_onrecordfinish (const char *dest_name, const char *dest_path, qbool destroyfiles);
-qbool	SV_DirSizeCheck (void);
-char	*SV_CleanName (unsigned char *name);
-int		Dem_CountPlayers ();
-char	*Dem_Team (int num);
-char	*Dem_PlayerName (int num);
-char	*Dem_PlayerNameTeam (char *t);
-int		Dem_CountTeamPlayers (char *t);
-char	*quote (char *str);
-void	CleanName_Init ();
-void	SV_LastScores_f (void);
-void	SV_DemoList_f (void);
-void	SV_DemoListRegex_f (void);
-void	SV_MVDRemove_f (void);
-void	SV_MVDRemoveNum_f (void);
-void	SV_MVDInfoAdd_f (void);
-void	SV_MVDInfoRemove_f (void);
-void	SV_MVDInfo_f (void);
-void	SV_LastScores_f (void);
-
-//
-// sv_demo_qtv.c
-//
-
-extern cvar_t	qtv_streamport;
-extern cvar_t	qtv_maxstreams;
-extern cvar_t	qtv_password;
-extern cvar_t	qtv_pendingtimeout;
-extern cvar_t	qtv_streamtimeout;
-
-
-void SV_MVDStream_Poll(void);
-void SV_MVDCloseStreams(void);
-void SV_QTV_Init(void);
-
-void DemoWriteQTV (sizebuf_t *msg);
-void QTVsv_FreeUserList(mvddest_t *d);
-
-//
-// sv_login.c
-//
-
-void SV_LoadAccounts(void);
-void SV_CreateAccount_f(void);
-void SV_RemoveAccount_f(void);
-void SV_ListAccount_f (void);
-void Login_Init (void);
-qbool SV_Login(client_t *cl);
-void SV_Logout(client_t *cl);
-void SV_ParseLogin(client_t *cl);
-void SV_LoginCheckTimeOut(client_t *cl);
-
-// sv_master.c
-void SV_SetMaster_f (void);
-void SV_Heartbeat_f (void);
-void Master_Shutdown (void);
-void Master_Heartbeat (void);
-
-// sv_save.c 
-void SV_SaveGame_f (void); 
-void SV_LoadGame_f (void); 
-
 
 #endif /* !__SERVER_H__ */

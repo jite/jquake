@@ -83,9 +83,6 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
-#ifndef CLIENTONLY
-#include "server.h"
-#endif
 #include "fs.h"
 #include "help.h"
 #include "irc.h"
@@ -740,29 +737,6 @@ void CL_CheckForResend (void)
 {
 	char data[2048];
 	double t1, t2;
-
-	if (cls.state == ca_disconnected && com_serveractive) 
-	{
-		// if the local server is running and we are not, then connect
-		strlcpy (cls.servername, "local", sizeof(cls.servername));
-		NET_StringToAdr("local", &cls.server_adr);
-
-		// We don't need a challenge on the local server.
-		CL_SendConnectPacket(
-#ifdef PROTOCOL_VERSION_FTE
-				svs.fteprotocolextensions
-	#ifdef PROTOCOL_VERSION_FTE2
-				,
-	#endif // PROTOCOL_VERSION_FTE2
-#endif // PROTOCOL_VERSION_FTE
-#ifdef PROTOCOL_VERSION_FTE2
-				svs.fteprotocolextensions2
-#endif // PROTOCOL_VERSION_FTE
-				);
-		
-		// FIXME: cls.state = ca_connecting so that we don't send the packet twice?
-		return;
-	}
 
 	if (cls.state != ca_disconnected || !connect_time)
 		return;
@@ -1497,7 +1471,6 @@ void CL_Reconnect_f (void)
 
 extern double qstat_senttime;
 extern void CL_PrintQStatReply (char *s);
-int Plug_ConnectionlessClientPacket(byte *buffer, int size);
 
 // Responses to broadcasts, etc
 void CL_ConnectionlessPacket (void) 
@@ -1514,9 +1487,6 @@ void CL_ConnectionlessPacket (void)
 
     MSG_BeginReading();
     MSG_ReadLong();	// Skip the -1
-
-	if (Plug_ConnectionlessClientPacket(net_message.data+4, net_message.cursize-4))
-		return;
 
 	c = MSG_ReadByte();
 
@@ -2073,7 +2043,6 @@ void ReloadPaletteAndColormap(void)
 }
 
 void EX_FileList_Init(void);
-void Plug_Init(void);
 
 void CL_Init (void) 
 {
@@ -2171,7 +2140,6 @@ void CL_Init (void)
 	Sys_InitIPC();
 
 	Rulesets_Init();
-	Plug_Init();
 }
 
 //============================================================================
@@ -2213,22 +2181,6 @@ void CL_BeginLocalConnection (void)
 // automatically pause the game when going into the menus in single player
 static void CL_CheckAutoPause (void) 
 {
-	#ifndef CLIENTONLY
-
-	extern cvar_t maxclients;
-
-	if (com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1
-		&& (key_dest == key_menu /*|| key_dest == key_console*/))
-	{
-		if (!(sv.paused & 2))
-			SV_TogglePause (NULL, 2);
-	}
-	else 
-	{
-		if (sv.paused & 2)
-			SV_TogglePause (NULL, 2);
-	}
-	#endif // CLIENTONLY
 }
 
 
@@ -2265,7 +2217,7 @@ static double CL_MinFrameTime (void)
 		if (cl_independentPhysics.value == 0)
 		{
 			fpscap = cl.maxfps ? max (30.0, cl.maxfps) : Rulesets_MaxFPS();
-			fps = cl_maxfps.value ? bound (30.0, cl_maxfps.value, fpscap) : com_serveractive ? fpscap : bound (30.0, rate.value / 80.0, fpscap);
+			fps = cl_maxfps.value ? bound (30.0, cl_maxfps.value, fpscap) : bound (30.0, rate.value / 80.0, fpscap);
 		}
 		else
 			fps = cl_maxfps.value ? max(cl_maxfps.value, 30) : 99999; //#fps:
@@ -2373,7 +2325,6 @@ qbool VSyncLagFix (void)
 }
 
 void CL_QTVPoll (void);
-void Plug_Tick(void);
 
 qbool physframe;
 double physframetime;
@@ -2483,8 +2434,6 @@ void CL_Frame (double time)
 		host_skipframe = false;
 	}
 
-	Plug_Tick();
-
 	cls.realtime += cls.frametime;
 
 	if (!ISPAUSED) 
@@ -2517,9 +2466,6 @@ void CL_Frame (double time)
 		// process console commands
 		Cbuf_Execute();
 		CL_CheckAutoPause();
-
-//		if (com_serveractive)
-			SV_Frame(cls.frametime);
 
 		// fetch results from server
 		CL_ReadPackets();
@@ -2562,9 +2508,6 @@ void CL_Frame (double time)
 			// process console commands
 			Cbuf_Execute();
 			CL_CheckAutoPause ();
-
-//			if (com_serveractive)
-				SV_Frame (physframetime);
 
 			// Fetch results from server
 			CL_ReadPackets();

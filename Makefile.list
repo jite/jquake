@@ -72,7 +72,6 @@ CLIENT_C_FILES := \
 	mvd_utils \
 	mvd_xmlstats \
 	parser \
-	plugin \
 	pmove \
 	pmovetst \
 	qtv \
