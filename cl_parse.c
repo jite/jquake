@@ -2622,8 +2622,6 @@ static char *SkipQTVLeadingProxies(char *s)
 extern qbool TP_SuppressMessage (wchar *);
 extern cvar_t cl_chatsound, msg_filter;
 extern cvar_t ignore_qizmo_spec;
-qbool Plug_ChatMessage(char *buffer, int talkernum, int tpflags);
-qbool Plug_ServerMessage(char *buffer, int messagelevel);
 
 void CL_ParsePrint ()
 {
@@ -2697,10 +2695,6 @@ void CL_ParsePrint ()
 		Auth_CheckResponse (s, flags, offset);
 
 		s0 = wcs2str (s); // Auth_CheckResponse may modify the source string, so s0 should be updated
-
-		if (!Plug_ChatMessage(s0 + offset, -1, flags)) {
-			return;
-		}
 
 		if (Ignore_Message(s0, flags, offset)) {
 			Com_DPrintf("Ignoring message: %s\n", s0);
@@ -2824,9 +2818,6 @@ void CL_ParsePrint ()
 			}
 		}
 	}
-
-	if (!Plug_ServerMessage(s0, level))
-		return;
 
 	if (cl.sprint_buf[0] && (level != cl.sprint_level || s[0] == 1 || s[0] == 2)) 
 	{
@@ -3231,7 +3222,6 @@ void CL_ParseQizmoVoice (void)
 }
 
 #define SHOWNET(x) {if (cl_shownet.value == 2) Com_Printf ("%3i:%s\n", msg_readcount - 1, x);}
-qbool Plug_CenterPrintMessage(char *buffer, int clientnum);
 
 void CL_ParseServerMessage (void) 
 {
@@ -3358,11 +3348,9 @@ void CL_ParseServerMessage (void)
 				
 				if (!cls.demoseeking)
 				{
-					if (Plug_CenterPrintMessage(s, 0)) {
-						if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
-							SCR_CenterPrint(s);
-						Print_flags[Print_current] = 0;
-					}
+					if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
+						SCR_CenterPrint(s);
+					Print_flags[Print_current] = 0;
 				}
 				break;
 			}

@@ -44,9 +44,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "version.h"
 #include "demo_controls.h"
 #include "mvd_utils.h"
-#ifndef CLIENTONLY
-#include "server.h"
-#endif
 
 // TODO: Create states for demo_recording, demo_playback, and so on and put all related vars into these. Right now with global vars for everything is a mess. Also renaming some of the time vars to be less confusing is probably good. demotime, olddemotime, nextdemotime, prevtime...
 typedef struct demo_state_s
@@ -2275,12 +2272,6 @@ static void CL_StopRecording (void)
 //
 void CL_Stop_f (void)
 {
-	if (com_serveractive && strcmp(Cmd_Argv(0), "stop") == 0)
-	{
-		SV_MVDStop_f();
-		return;
-	}
-
 	if (!cls.demorecording)
 	{
 		Com_Printf ("Not recording a demo\n");
@@ -2322,12 +2313,6 @@ char *CL_DemoDirectory(void)
 void CL_Record_f (void)
 {
 	char nameext[MAX_OSPATH * 2], name[MAX_OSPATH * 2];
-
-	if (com_serveractive && strcmp(Cmd_Argv(0), "record") == 0)
-	{
-		SV_MVD_Record_f();
-		return;
-	}
 
 	if (	(cls.fteprotocolextensions &~ (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES)) // that OK.
 		||  (cls.fteprotocolextensions2 & ~FTE_PEXT2_VOICECHAT) // that not OK since if you receive VOIP packet demo will be non compatible, but this warning is annoying.
@@ -2527,12 +2512,6 @@ static qbool CL_MatchRecordDemo(char *dir, char *name, qbool autorecord)
 void CL_EasyRecord_f (void)
 {
 	char *name;
-
-	if ( com_serveractive )
-	{
-		SV_MVDEasyRecord_f();
-		return;
-	}
 
 	if (cls.state != ca_active)
 	{

@@ -258,67 +258,6 @@ void Classic_ClearParticles (void) {
 	particles[r_numparticles - 1].next = NULL;
 }
 
-#ifndef CLIENTONLY
-void R_ReadPointFile_f (void) {
-	vfsfile_t *v;
-	char line[1024];
-    char *s;
-	vec3_t org;
-	int c;
-	particle_t *p;
-	char name[MAX_OSPATH];
-
-	if (!com_serveractive)
-		return;
-
-	snprintf (name, sizeof(name), "maps/%s.pts", host_mapname.string);
-
-	if (!(v = FS_OpenVFS(name, "rb", FS_ANY))) {
-		Com_Printf ("couldn't open %s\n", name);
-		return;
-	}
-
-	Com_Printf ("Reading %s...\n", name);
-	c = 0;
-	while (1) {
-		VFS_GETS(v, line, sizeof(line));
-		s = COM_Parse(line);
-		org[0] = atof(com_token);
-
-		s = COM_Parse(s);
-		if (!s) 
-			break;
-		org[1] = atof(com_token);
-
-		s = COM_Parse(s);
-		if (!s)
-			break;
-		org[2] = atof(com_token);
-		if (COM_Parse(s))
-			break;
-
-		c++;
-		if (!free_particles) {
-			Com_Printf ("Not enough free particles\n");
-			break;
-		}
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
-		
-		p->die = 99999;
-		p->color = (-c)&15;
-		p->type = pt_static;
-		VectorClear (p->vel);
-		VectorCopy (org, p->org);
-	}
-
-	VFS_CLOSE(v);
-	Com_Printf ("%i points read\n", c);
-}
-#endif
-
 void Classic_ParticleExplosion (vec3_t org) {
 	int	i, j;
 	particle_t	*p;

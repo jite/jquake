@@ -873,14 +873,6 @@ void CL_Windows_f (void)
 
 void CL_Serverinfo_f (void) 
 {
-	#ifndef CLIENTONLY
-	if (cls.state < ca_connected || com_serveractive) 
-	{
-		SV_Serverinfo_f();
-		return;
-	}
-	#endif // CLIENTONLY
-
 	if (cls.state >= ca_onserver && cl.serverinfo)
 		Info_Print (cl.serverinfo);
 	else		

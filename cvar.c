@@ -31,7 +31,6 @@ $Id: cvar.c,v 1.59 2007-10-18 05:28:23 dkure Exp $
 #include "parser.h"
 
 extern void CL_UserinfoChanged (char *key, char *value);
-extern void SV_ServerinfoChanged (char *key, char *value);
 extern void Help_DescribeCvar (cvar_t *v);
 
 extern cvar_t r_fullbrightSkins;
@@ -324,11 +323,6 @@ void Cvar_Set (cvar_t *var, char *value)
 	StringToRGB_W(var->string, var->color);
 	var->modified = true;
 
-#ifndef CLIENTONLY
-	if (var->flags & CVAR_SERVERINFO)
-		SV_ServerinfoChanged (var->name, var->string);
-#endif
-
 	if (var->flags & CVAR_USERINFO)
 		CL_UserinfoChanged (var->name, var->string);
 }
@@ -577,11 +571,6 @@ void Cvar_Register (cvar_t *var)
 #endif
 
 	Cvar_AddCvarToGroup(var);
-
-#ifndef CLIENTONLY
-	if (var->flags & CVAR_SERVERINFO)
-		SV_ServerinfoChanged (var->name, var->string);
-#endif
 
 	if (var->flags & CVAR_USERINFO)
 		CL_UserinfoChanged (var->name, var->string);

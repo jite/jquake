@@ -59,10 +59,6 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "qtv.h"
 #include "demo_controls.h"
 
-#ifndef CLIENTONLY
-#include "server.h"
-#endif
-
 #ifdef FTE_PEXT2_VOICECHAT
 #include "qsound.h"
 #endif
@@ -911,11 +907,6 @@ void SCR_DrawPause (void) {
 
 	if (!cl.paused)
 		return;
-
-#ifndef CLIENTONLY
-	if (sv.paused == 2)
-		return; // auto-paused in single player
-#endif
 
 	pic = Draw_CachePic ("gfx/pause.lmp");
 	Draw_Pic ((vid.width - pic->width) / 2, (vid.height - 48 - pic->height) / 2, pic);
@@ -3418,8 +3409,6 @@ static void SCR_VoiceMeter(void)
 #endif // FTE_PEXT2_VOICECHAT
 }
 
-void Plug_SBar(void);
-
 void SCR_DrawElements(void) 
 {
   extern qbool  sb_showscores,  sb_showteamscores;
@@ -3428,7 +3417,6 @@ void SCR_DrawElements(void)
 	if (scr_drawloading) 
 	{
 		SCR_DrawLoading ();
-		Plug_SBar();
 		Sbar_Draw ();
 		HUD_Draw ();		// HUD -> hexum
 	}
@@ -3537,7 +3525,6 @@ void SCR_DrawElements(void)
 						SCR_DrawMultiviewBorders();
 					}
 
-					Plug_SBar();
 					Sbar_Draw();
 					HUD_Draw();
 					HUD_Editor_Draw();

@@ -253,11 +253,6 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 	else
 		chan->cleartime += send.cursize * chan->rate;
 
-#ifndef CLIENTONLY
-	if (chan->sock == NS_SERVER && sv.paused)
-		chan->cleartime = curtime;
-#endif
-
 	if (showpackets.value) {
 		Print_flags[Print_current] |= PR_TR_SKIP;
 		Com_Printf ("--> s=%i(%i) a=%i(%i) %i\n"

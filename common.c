@@ -836,9 +836,6 @@ void Info_SetValueForStarKeyEx (char *s, char *key, char *value, int maxsize, qb
 {
 	char new[1024], *v;
 	int c;
-#ifndef CLIENTONLY
-//	extern cvar_t sv_highchars;
-#endif
 
 	if (strstr (key, "\\") || strstr (value, "\\") ) {
 		Com_Printf ("Can't use keys or values with a \\\n");
@@ -882,26 +879,12 @@ void Info_SetValueForStarKeyEx (char *s, char *key, char *value, int maxsize, qb
 	// only copy ascii values
 	s += strlen(s);
 	v = new;
-#ifndef CLIENTONLY
-//	if (!sv_highchars.value) {
-//		while (*v) {
-//			c = (unsigned char)*v++;
-//			if (c == ('\\'|128))
-//				continue;
-//			c &= 127;
-//			if (c >= 32)
-//				*s++ = c;
-//		}
-//	} else
-#endif
-	{
-		while (*v) {
-			c = (unsigned char)*v++;
-			if (c > 13)
-				*s++ = c;
-		}
-		*s = 0;
+	while (*v) {
+		c = (unsigned char)*v++;
+		if (c > 13)
+			*s++ = c;
 	}
+	*s = 0;
 }
 
 void Info_SetValueForStarKey (char *s, char *key, char *value, int maxsize)
