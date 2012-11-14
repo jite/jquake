@@ -40,7 +40,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_GROUP_SERVER_BROWSER			"Server Browser"
 #define CVAR_GROUP_NETWORK					"Network Settings"
 #define CVAR_GROUP_INPUT_MISC				"Input - Misc"
-#define CVAR_GROUP_INPUT_JOY				"Input - Joystick"
 #define CVAR_GROUP_INPUT_MOUSE				"Input - Mouse"
 #define CVAR_GROUP_INPUT_KEYBOARD			"Input - Keyboard"
 #define CVAR_GROUP_MP3						"MP3 Settings"
@@ -95,7 +94,6 @@ char *cvar_groups_list[] = {
 	CVAR_GROUP_SERVER_BROWSER,
 	CVAR_GROUP_NETWORK,
 	CVAR_GROUP_INPUT_MISC,
-	CVAR_GROUP_INPUT_JOY,
 	CVAR_GROUP_INPUT_MOUSE,
 	CVAR_GROUP_INPUT_KEYBOARD,
 	CVAR_GROUP_MP3,
