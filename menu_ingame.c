@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Ctrl.h"
 #include "settings.h"
 #include "settings_page.h"
-#include "server.h"
+#include "qtv.h"
 
 #define TOPMARGIN (6*LETTERWIDTH)
 
