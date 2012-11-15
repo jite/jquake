@@ -1300,19 +1300,19 @@ static void Sbar_DeathmatchOverlay (int start) {
 
 		// draw pl
 		p = s->pl;
-		if (p < 2) {	// pl of 0-1 white
+		if (p == 0) {	// pl of 0 white
 			snprintf (num, sizeof(num), "%3i", p);
 			Draw_ColoredString (x, y, num, 0);
 		}
-		else if (p < 10) {	// pl of 2-9 yellow
+		else if (p < 3) {	// pl of 1-2 yellow
 			snprintf (num, sizeof(num), "&cdd2%3i", p);
 			Draw_ColoredString (x, y, num, 1);
 		}
-		else if (p < 20) {	// pl of 10-19 orange
+		else if (p < 6) {	// pl of 3-5 orange
 			snprintf (num, sizeof(num), "&cf50%3i", p);
 			Draw_ColoredString (x, y, num, 1);
 		}
-		else {	// pl >19 red
+		else {	// pl >= 6 red
 			snprintf (num, sizeof(num), "&cf00%3i", p);
 			Draw_ColoredString (x, y, num, 1);
 		}
