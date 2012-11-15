@@ -320,7 +320,8 @@ byte *Skin_Cache (skin_t *skin, qbool no_baseskin)
 		}
 		else if (!skin->warned)
 		{
-			Com_Printf ("Couldn't load skin %s\n", name);
+			/* SKIN COLOR */
+			Com_Printf ("&cf22Couldn't load skin:&r %s\n", name);
 		}
 
 		skin->warned = true;
