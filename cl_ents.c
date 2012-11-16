@@ -992,16 +992,6 @@ void CL_LinkPacketEntities(void)
 			if (cl_rocket2grenade.value && cl_modelindices[mi_grenade] != -1)
 				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
 		}
-		else if (state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame)
-				&& cl.vw_model_precache[0] && r_drawvweps.value)
-		{
-			#ifndef GLQUAKE
-			// This currently triggers a bug in GL renderer
-			// where world is not drawn, producing a hall of mirrors effect
-			ent.model = cl.vw_model_precache[0];
-			ent.renderfx |= RF_PLAYERMODEL;
-			#endif
-		}
 
 		ent.skinnum = state->skinnum;
 

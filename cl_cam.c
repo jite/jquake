@@ -1011,11 +1011,7 @@ void CL_Autotrack_f(void)
 int Cam_TrackNum(void) 
 {
 	// What does this do?!?! mvlatch... /Cokeman 
-	if (cl_multiview.value && !locked 
-#ifndef GLQUAKE
-		&& CURRVIEW == 2
-#endif
-		) 
+	if (cl_multiview.value && !locked) 
 	{
 		mvlatch = cl_multiview.value;
 		cl_multiview.value = 0;

@@ -542,36 +542,13 @@ void BitDepthToggle(qbool back) {
 }
 void FullScreenToggle(qbool back) { mss_selected.fullscreen = mss_selected.fullscreen ? 0 : 1; }
 
-#else
-#ifdef _WIN32
-
-qbool mss_software_change_resolution_mode = false;
-
-static void System_ChangeResolution(void)
-{
-	mss_software_change_resolution_mode = true;
-}
-#endif
 #endif
 
 settings_page settsystem;
 
 void CT_Opt_System_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
 {
-#ifndef GLQUAKE	// SOFT
-#ifdef _WIN32
-	if(mss_software_change_resolution_mode)
-	{
-		(*vid_menudrawfn) ();
-	}
-	else
-	{
-		Settings_Draw(x,y,w,h, &settsystem);
-	}
-#else
-	Settings_Draw(x,y,w,h, &settsystem);
-#endif
-#else	// GL
+	// GL
 	#define ASKBOXWIDTH 300
 	if(mss_askmode)
 	{
@@ -583,34 +560,11 @@ void CT_Opt_System_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *pa
 	{
 		Settings_Draw(x,y,w,h, &settsystem);
 	}
-#endif
 }
 
 int CT_Opt_System_Key (int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 {
-#ifndef GLQUAKE	// SOFT
-#ifdef _WIN32
-	if(mss_software_change_resolution_mode)
-	{
-
-		if(key == K_ESCAPE || key == K_MOUSE2)
-		{
-			mss_software_change_resolution_mode = false;
-		}
-
-		(*vid_menukeyfn) (key);
-		// i was too lazy&scared to change vid_menukeyfn functions out there
-		// so because i know what keys have some function in there, i list them here:
-		return key == K_ESCAPE || key == K_MOUSE2 || key == K_LEFTARROW || key == K_RIGHTARROW || key == K_DOWNARROW || key == K_UPARROW || key == K_ENTER || key == 'd';
-	}
-	else
-	{
-		return Settings_Key(&settsystem, key, unichar);
-	}
-#else
-	return Settings_Key(&settsystem, key, unichar);
-#endif
-#else	// GL
+	// GL
 	if (mss_askmode)
 	{
 
@@ -628,14 +582,11 @@ int CT_Opt_System_Key (int key, wchar unichar, CTab_t *tab, CTabPage_t *page)
 	{
 		return Settings_Key(&settsystem, key, unichar);
 	}
-#endif
 }
 
 void OnShow_SettSystem(void)
 {
-#ifdef GLQUAKE
 	StoreCurrentVideoSettings(&mss_selected);
-#endif
 	Settings_OnShow(&settsystem);
 }
 

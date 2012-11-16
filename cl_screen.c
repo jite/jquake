@@ -976,42 +976,15 @@ void SCR_SetUpToDrawConsole (void) {
 
 	if (clearconsole++ < vid.numpages)
 	{
-#ifndef GLQUAKE
-		scr_copytop = 1;
-
-		// Multiview (software)
-		if (!(cl_multiview.value && cls.mvdplayback))
-		{
-			Draw_TileClear (0, (int) scr_con_current, vid.width, vid.height - (int) scr_con_current);
-		}
-#endif
-		Sbar_Changed ();
 	}
 	else if (clearnotify++ < vid.numpages)
 	{
-#ifndef GLQUAKE
-		scr_copytop = 1;
-
-		// Multiview (software)
-		if (!(cl_multiview.value && cls.mvdplayback))
-		{
-			Draw_TileClear (0, 0, vid.width, con_notifylines);
-		}
-#endif
 	}
 	else
 	{
 		con_notifylines = 0;
 	}
 
-#ifndef GLQUAKE
-	{
-		extern cvar_t scr_conalpha;
-		if (!scr_conalpha.value && scr_con_current) {
-			Draw_TileClear(0, 0, vid.width, scr_con_current);
-		}
-	}
-#endif
 }
 
 void SCR_DrawConsole (void) {

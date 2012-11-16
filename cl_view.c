@@ -243,8 +243,6 @@ cshift_t	cshift_water = { {130,80,50}, 128 };
 cshift_t	cshift_slime = { {0,25,5}, 150 };
 cshift_t	cshift_lava = { {255,80,0}, 150 };
 
-#ifdef	GLQUAKE
-
 cvar_t		gl_cshiftpercent = {"gl_cshiftpercent", "100"};
 cvar_t		gl_hwblend = {"gl_hwblend", "1"};
 float		v_blend[4];		// rgba 0.0 - 1.0
@@ -256,51 +254,6 @@ cvar_t		v_gamma = {"gl_gamma", "1.0"};
 cvar_t		v_contrast = {"gl_contrast", "1.0"};
 #endif
 unsigned short	ramps[3][256];
-
-#else
-
-byte		gammatable[256];	// palette is sent through this
-byte		current_pal[768];	// Tonik: used for screenshots
-cvar_t		v_gamma = {"sw_gamma", "1"};
-cvar_t		v_contrast = {"sw_contrast", "1"};
-
-#endif
-
-#ifndef GLQUAKE
-void BuildGammaTable (float g, float c) {
-	int i, inf;
-
-	g = bound (0.1, g, 3);
-	c = bound (1, c, 3);
-
-	if (g == 1 && c == 1) {
-		for (i = 0; i < 256; i++)
-			gammatable[i] = i;
-		return;
-	}
-
-	for (i = 0; i < 256; i++) {
-		inf = 255 * pow ((i + 0.5) / 255.5 * c, g) + 0.5;
-		inf = bound (0, inf, 255);
-		gammatable[i] = inf;
-	}
-}
-
-qbool V_CheckGamma (void) {
-	static float old_gamma;
-	static float old_contrast;
-	
-	if (v_gamma.value == old_gamma && v_contrast.value == old_contrast)
-		return false;
-	old_gamma = v_gamma.value;
-	old_contrast = v_contrast.value;
-	
-	BuildGammaTable (v_gamma.value, v_contrast.value);
-	vid.recalc_refdef = 1;				// force a surface cache flush
-	
-	return true;
-}
-#endif	// !GLQUAKE
 
 void V_ParseDamage (void)
 {
@@ -1220,11 +1173,9 @@ void V_Init (void) {
 	Cvar_Register (&v_pentcshift);
 	Cvar_Register (&cl_demoplay_flash); // from QW262
 
-#ifdef GLQUAKE
 	Cvar_Register (&v_dlightcshift);
 	Cvar_Register (&gl_cshiftpercent);
 	Cvar_Register (&gl_hwblend);
-#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&v_gamma);
@@ -1235,7 +1186,4 @@ void V_Init (void) {
 	Cmd_AddLegacyCommand ("gamma", v_gamma.name);
 	Cmd_AddLegacyCommand ("contrast", v_contrast.name);
 
-#ifndef GLQUAKE
-	BuildGammaTable (v_gamma.value, v_contrast.value);
-#endif
 }

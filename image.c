@@ -47,12 +47,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define IMAGE_MAX_DIMENSIONS 4096
 
-#ifndef GLQUAKE
-// Dither from 24-bit pictures to the 8-bit quake palette instead of
-// just getting the nearest color (make a smother transition) when loading a PNG in software.
-cvar_t image_png_dither_onload = {"image_png_dither_onload", "1"}; 
-#endif // !GLQUAKE
-
 cvar_t image_png_compression_level = {"image_png_compression_level", "1"};
 cvar_t image_jpeg_quality_level = {"image_jpeg_quality_level", "75"};
 
@@ -1096,31 +1090,6 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 			png_set_strip_16(png_ptr);
 		}
 
-		// 
-		// Dither the image using the 8-bit quake pallete for software.
-		// 
-		#ifndef GLQUAKE
-		if (image_png_dither_onload.integer)
-		{
-			png_uint_16p histogram;
-			png_colorp quake_pal = (png_colorp)host_basepal;
-			png_color_16 bg;
-			
-			// Set the background color to the transparent quake color.
-			bg.red		= host_basepal[(255 * 3)];
-			bg.green	= host_basepal[(255 * 3) + 1];
-			bg.blue		= host_basepal[(255 * 3) + 2];
-
-			png_set_background(png_ptr, &bg, PNG_BACKGROUND_GAMMA_SCREEN, 0, 1.0);
-
-			// Check if the image contains a histogram, use it in that case.
-			if (!png_get_hIST(png_ptr, pnginfo, &histogram))
-				histogram = NULL;
-
-			png_set_dither(png_ptr, quake_pal, 256, 256, histogram, true);
-		}
-		#endif // !GLQUAKE
-
 		// Update the pnginfo structure with our transformation changes.
 		png_read_update_info(png_ptr, pnginfo);
 	}
@@ -1220,24 +1189,9 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 	// Gather up the return data.
 	png_return_val = (png_data *)Q_malloc(sizeof(png_data));	
 
-	#ifndef GLQUAKE
-	if (!image_png_dither_onload.integer)
-	{
-		// SOFTWARE - Convert to the 8-bit quake palette by taking the nearest color.
-
-		byte *Draw_Convert24bitTo8bit(byte *src, int bytes_per_pixel, int width, int height, qbool dither);
-		byte *data_8bit = Draw_Convert24bitTo8bit(data, 4, width, height, false);
-		Q_free(data);
-
-		png_return_val->data = data_8bit;
-	}
-	else
-	#endif // !GLQUAKE
-	{
-		// If in GLQuake or dithering is turned on when in software
-		// pnglib has done the palette conversion for us already.
-		png_return_val->data = data;
-	}
+	// If in GLQuake or dithering is turned on when in software
+	// pnglib has done the palette conversion for us already.
+	png_return_val->data = data;
 	png_return_val->textchunks = textchunks;
 	png_return_val->text_count = n_textcount;
 
@@ -2466,11 +2420,6 @@ void Image_Init(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREENSHOTS);
 
-	// Software.
-	#ifndef GLQUAKE
-	Cvar_Register (&image_png_dither_onload);
-	#endif // !GLQUAKE
-	
 	#ifdef WITH_PNG
 	#ifndef WITH_PNG_STATIC
 	if (PNG_LoadLibrary())
