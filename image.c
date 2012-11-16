@@ -52,8 +52,6 @@ cvar_t image_jpeg_quality_level = {"image_jpeg_quality_level", "75"};
 
 /***************************** IMAGE RESAMPLING ******************************/
 
-#ifdef GLQUAKE
-
 static void Image_Resample32LerpLine (byte *in, byte *out, int inwidth, int outwidth) 
 {
 	int j, xi, oldx = 0, f, fstep, endx, lerp;
@@ -510,8 +508,6 @@ void Image_MipReduce (const byte *in, byte *out, int *width, int *height, int bp
 	}
 }
 
-#endif
-
 /************************************ PNG ************************************/
 #ifdef WITH_PNG
 
@@ -847,15 +843,9 @@ int Image_WritePNG (char *filename, int compression, byte *pixels, int width, in
 }
 
 int Image_WritePNGPLTE (char *filename, int compression,
-#ifdef GLQUAKE
 	byte *pixels, int width, int height, byte *palette)
-#else
-	byte *pixels, int width, int height, int rowbytes, byte *palette)
-#endif
 {
-#ifdef GLQUAKE
 	int rowbytes = width;
-#endif
 	int i;
 	char name[MAX_PATH];
 	vfsfile_t *fp;
@@ -1293,15 +1283,9 @@ int Image_WritePNG (char *filename, int compression, byte *pixels, int width, in
 }
 
 int Image_WritePNGPLTE (char *filename, int compression,
-#ifdef GLQUAKE
 	byte *pixels, int width, int height, byte *palette)
-#else // SOFTWARE
-	byte *pixels, int width, int height, int rowbytes, byte *palette)
-#endif // GLQUAKE
 {
-	#ifdef GLQUAKE
 	int rowbytes = width;
-	#endif // GLQUAKE
 
 	int i;
 	char name[MAX_PATH];
@@ -2318,7 +2302,6 @@ byte *Image_LoadPCX (vfsfile_t *fin, const char *filename, int matchwidth, int m
 	return data;
 }
 
-#ifdef GLQUAKE
 
 // This does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture.
 byte *Image_LoadPCX_As32Bit (vfsfile_t *fin, char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
@@ -2348,17 +2331,9 @@ byte *Image_LoadPCX_As32Bit (vfsfile_t *fin, char *filename, int matchwidth, int
 	return (byte*) out;
 }
 
-#endif
-
-#ifdef GLQUAKE
 int Image_WritePCX (char *filename, byte *data, int width, int height, byte *palette)
-#else // SOFTWARE
-int Image_WritePCX (char *filename, byte *data, int width, int height, int rowbytes, byte *palette)
-#endif // GLQUAKE
 {
-	#ifdef GLQUAKE
 	int rowbytes = width;
-	#endif // GLQUAKE
 	
 	int i, j, length;
 	byte *pack;

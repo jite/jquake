@@ -23,13 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "winquake.h"
 #include "sha1.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "config_manager.h"
 #include "rulesets.h"
@@ -850,8 +845,6 @@ void CL_Userdir_f (void)
 #ifdef _WIN32
 void CL_Windows_f (void) 
 {
-	#ifdef GLQUAKE
-
 	//
 	// WIN OpenGL version
 	//
@@ -859,15 +852,6 @@ void CL_Windows_f (void)
 		return; // alredy not active
 
 	ShowWindow(mainwindow, SW_MINIMIZE);
-
-	#else // Software
-
-	//
-	// software version
-	//
-	SendMessage(mainwindow, WM_SYSKEYUP, VK_TAB, 1 | (0x0F << 16) | (1<<29));
-
-	#endif // GLQUAKE else
 }
 #endif // WIN32
 

@@ -20,13 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "vx_stuff.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "rulesets.h"
 #include "utils.h"
@@ -83,9 +78,7 @@ cvar_t	v_quadcshift = {"v_quadcshift", "0.5"};
 cvar_t	v_suitcshift = {"v_suitcshift", "0.5"};
 cvar_t	v_ringcshift = {"v_ringcshift", "0.5"};
 cvar_t	v_pentcshift = {"v_pentcshift", "0.5"};
-#ifdef GLQUAKE
 cvar_t	v_dlightcshift = {"v_dlightcshift", "1"};
-#endif
 
 cvar_t	v_bonusflash = {"cl_bonusflash", "0"};
 
@@ -427,9 +420,7 @@ void V_SetContentsColor (int contents) {
 
 	if (!v_contentblend.value) {
 		cl.cshifts[CSHIFT_CONTENTS] = cshift_empty;
-#ifdef GLQUAKE
 		cl.cshifts[CSHIFT_CONTENTS].percent *= 100;
-#endif
 		return;
 	}
 
@@ -452,7 +443,6 @@ void V_SetContentsColor (int contents) {
 	if (v_contentblend.value > 0 && v_contentblend.value < 1 && contents != CONTENTS_EMPTY)
 		cl.cshifts[CSHIFT_CONTENTS].percent *= v_contentblend.value;
 
-#ifdef GLQUAKE
 	if (!gl_polyblend.value && !cl.teamfortress) {
 		cl.cshifts[CSHIFT_CONTENTS].percent = 0;
 	} else {
@@ -468,10 +458,8 @@ void V_SetContentsColor (int contents) {
 			cl.cshifts[CSHIFT_CONTENTS].percent *= 100;
 		}
 	}
-#endif
 }
 
-#ifdef GLQUAKE
 void V_AddWaterfog (int contents) {
 	extern cvar_t gl_waterfog_color_water;
 	extern cvar_t gl_waterfog_color_lava;
@@ -516,7 +504,6 @@ void V_AddWaterfog (int contents) {
 	}
 	glEnable(GL_FOG);
 }
-#endif 
 
 void V_CalcPowerupCshift (void) {
 	float fraction;
@@ -550,7 +537,6 @@ void V_CalcPowerupCshift (void) {
 	}
 }
 
-#ifdef	GLQUAKE
 void V_CalcBlend (void) {
 	float r, g, b, a, a2;
 	int j;
@@ -619,9 +605,6 @@ void V_AddLightBlend (float r, float g, float b, float a2) {
 	v_blend[1] = v_blend[1] * (1 - a2) + g * a2;
 	v_blend[2] = v_blend[2] * (1 - a2) + b * a2;
 }
-#endif
-
-#ifdef	GLQUAKE
 
 void V_UpdatePalette (void) {
 	int i, j, c;
@@ -691,76 +674,6 @@ void V_UpdatePalette (void) {
 	}
 	VID_SetDeviceGammaRamp ((unsigned short *) ramps);
 }
-
-#else	// !GLQUAKE
-
-void V_UpdatePalette (void) {
-	int i, j, r,g,b;
-	qbool new, force;
-	byte *basepal, *newpal;
-	static cshift_t	prev_cshifts[NUM_CSHIFTS];
-
-	if (cls.state != ca_active) {
-		cl.cshifts[CSHIFT_CONTENTS] = cshift_empty;
-		cl.cshifts[CSHIFT_POWERUP].percent = 0;
-	} else {
-		V_CalcPowerupCshift ();
-	}
-	
-	new = false;
-	
-	for (i = 0; i < NUM_CSHIFTS; i++)	{
-		if (cl.cshifts[i].percent != prev_cshifts[i].percent) {
-			new = true;
-			prev_cshifts[i].percent = cl.cshifts[i].percent;
-		}
-		for (j = 0; j < 3; j++) {
-			if (cl.cshifts[i].destcolor[j] != prev_cshifts[i].destcolor[j]) {
-				new = true;
-				prev_cshifts[i].destcolor[j] = cl.cshifts[i].destcolor[j];
-			}
-		}
-	}
-
-	// drop the damage value
-	cl.cshifts[CSHIFT_DAMAGE].percent -= cls.frametime*150;
-	if (cl.cshifts[CSHIFT_DAMAGE].percent <= 0)
-		cl.cshifts[CSHIFT_DAMAGE].percent = 0;
-
-	// drop the bonus value
-	cl.cshifts[CSHIFT_BONUS].percent -= cls.frametime*100;
-	if (cl.cshifts[CSHIFT_BONUS].percent <= 0)
-		cl.cshifts[CSHIFT_BONUS].percent = 0;
-
-	force = V_CheckGamma ();
-	if (!new && !force)
-		return;
-			
-	basepal = host_basepal;
-	newpal = current_pal;	// Tonik: so we can use current_pal for screenshots
-
-	for (i = 0; i < 256; i++) {
-		r = basepal[0];
-		g = basepal[1];
-		b = basepal[2];
-		basepal += 3;
-
-		for (j = 0; j < NUM_CSHIFTS; j++) {
-			r += (cl.cshifts[j].percent * (cl.cshifts[j].destcolor[0] - r)) >> 8;
-			g += (cl.cshifts[j].percent * (cl.cshifts[j].destcolor[1] - g)) >> 8;
-			b += (cl.cshifts[j].percent * (cl.cshifts[j].destcolor[2] - b)) >> 8;
-		}
-
-		newpal[0] = gammatable[r];
-		newpal[1] = gammatable[g];
-		newpal[2] = gammatable[b];
-		newpal += 3;
-	}
-
-	VID_ShiftPalette (current_pal);	
-}
-
-#endif	// !GLQUAKE
 
 // BorisU -->
 void V_TF_ClearGrenadeEffects ()
@@ -1031,10 +944,8 @@ void V_CalcRefdef (void) {
 	if (view_message.flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0))
 		r_refdef.viewangles[ROLL] = 80;	// dead view angle
 
-#ifdef GLQUAKE
 	//VULT CAMERAS
 	CameraUpdate(view_message.flags & PF_DEAD);
-#endif
 	V_AddViewWeapon (height_adjustment);
 	
 }
@@ -1067,9 +978,7 @@ void V_RenderView (void) {
 	cl.simangles[ROLL] = 0;	// FIXME @@@ 
 
 	if (cls.state != ca_active) {
-#ifdef GLQUAKE
 		V_CalcBlend ();
-#endif
 		return;
 	}
 
