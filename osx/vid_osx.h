@@ -54,14 +54,10 @@ extern	float				gVidWindowPosX,
 							gVidWindowPosY;
 extern	vid_gamma_t *		gVshOriginalGamma;
 
-#if defined (GLQUAKE)
-
 extern  NSDictionary *		gVidDisplayMode;
 extern	SInt32				gGLMultiSamples;
 extern	vid_gammatable_t *	gVshGammaTable;
 
-#endif /* GLQUAKE */
-        
 //_________________________________________________________________________________________________________fUNCTION_pROTOTYPES
 
 #pragma mark =Function Prototypes=
@@ -73,17 +69,9 @@ extern void	M_DrawCharacter (int, int, int);
 extern void	M_DrawTransPic (int, int, mpic_t *);
 extern void	M_DrawPic (int, int, mpic_t *);
 
-#if defined (GLQUAKE)
-
 BOOL	GL_CheckARBMultisampleExtension (CGDirectDisplayID theDisplay);
 void	GL_SetMiniWindowBuffer (void);
     
-#else
-
-BOOL	VID_HideFullscreen (BOOL);
-
-#endif /* GLQUAKE */
-
 void	VSH_DisableQuartzInterpolation (id theView);
 BOOL	VSH_CaptureDisplays (BOOL theCaptureAllDisplays);
 BOOL	VSH_ReleaseDisplays (BOOL theCaptureAllDisplays);

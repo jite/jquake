@@ -74,14 +74,10 @@ extern void	M_Menu_Quit_f (void);
 
 //______________________________________________________________________________________________________windowWillMiniaturize:
 
-#if defined (GLQUAKE)
-
 - (void) windowWillMiniaturize: (NSNotification *) theNotification
 {
     GL_SetMiniWindowBuffer ();
 }
-
-#endif /* GLQUAKE */
 
 //_______________________________________________________________________________________________________windowDidMiniaturize:
 
@@ -182,14 +178,6 @@ extern void	M_Menu_Quit_f (void);
 - (void) drawRect: (NSRect) theRect
 {
     // required for resizing and deminiaturizing:
-#if !defined (GLQUAKE)
-
-    if (mBitmapBuffer != NULL)
-    {
-        [mBitmapBuffer drawInRect: [self bounds]];
-    }
-
-#else
 
     extern NSOpenGLContext *	gGLContext;
     extern UInt32				gGLDisplayWidth;
@@ -212,7 +200,6 @@ extern void	M_Menu_Quit_f (void);
 		Host_Frame (0.02f);
     }
 
-#endif /* !GLQUAKE */
 }
 
 @end

@@ -23,9 +23,7 @@
 
 #pragma mark =Variables=
 
-#if defined (GLQUAKE)
 vid_gammatable_t *			gVshGammaTable = NULL;
-#endif /* GLQUAKE */
 vid_gamma_t *				gVshOriginalGamma = NULL;
 
 static CGDirectDisplayID	gVshCapturedDisplayList[VID_MAX_DISPLAYS];
@@ -256,7 +254,6 @@ BOOL	VSH_FadeGammaInit (BOOL theFadeOnAllDisplays)
 		 */
     }
 
-#if defined (GLQUAKE)
     // just in case...
     if (gVshGammaTable != NULL)
     {
@@ -277,7 +274,6 @@ BOOL	VSH_FadeGammaInit (BOOL theFadeOnAllDisplays)
             gVshGammaTable = NULL;
         }
     }
-#endif /* GLQUAKE */
     
     myFadeOnAllDisplays = theFadeOnAllDisplays;
 
@@ -294,13 +290,11 @@ void	VSH_FadeGammaRelease (void)
         gVshOriginalGamma = NULL;
     }
 
-#if defined (GLQUAKE)    
     if (gVshGammaTable != NULL)
     {
         free (gVshGammaTable);
         gVshGammaTable = NULL;
     }
-#endif /* GLQUAKE */
 }
 
 //__________________________________________________________________________________________________________VSH_FadeGammaOut()
