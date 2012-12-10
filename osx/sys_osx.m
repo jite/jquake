@@ -399,14 +399,11 @@ void	Sys_Printf (char *theFormat, ...)
 
 void	Sys_Quit (void)
 {
-#ifdef GLQUAKE
 
     extern cvar_t	gl_fsaa;
     NSUserDefaults	*myDefaults = [NSUserDefaults standardUserDefaults];
     NSString		*myString;
     SInt			mySamples = gl_fsaa.value;
-
-#endif /* GLQUAKE */
 
     // shutdown host:
     Host_Shutdown ();
@@ -415,7 +412,6 @@ void	Sys_Quit (void)
     fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~FNDELAY);
     fflush (stdout);
 
-#ifdef GLQUAKE
 
     // save the FSAA setting again [for Radeon users]:
     if (mySamples != 0 && mySamples != 4 && mySamples != 8)
@@ -433,8 +429,6 @@ void	Sys_Quit (void)
     }
     [myDefaults synchronize];
 
-#endif /* GLQUAKE */
-	
     if (iTunesWasPaused)
     {
         NSAppleScript *aps = [[NSAppleScript alloc] initWithSource:
@@ -812,7 +806,6 @@ int	Sys_CheckSpecialKeys (int theKey)
     // check the keys:
     switch (myKey)
     {
-#ifdef GLQUAKE
 	case 'F':
 	    con_suppress = true;
 	    VID_Shutdown();
@@ -824,7 +817,6 @@ int	Sys_CheckSpecialKeys (int theKey)
 
 	    return (1);
 	    break;
-#endif
         case K_TAB:
         case 'H':
             if (gVidDisplayFullscreen == NO)
@@ -837,14 +829,6 @@ int	Sys_CheckSpecialKeys (int theKey)
                     return (1);
                 }
             }
-#if !defined (GLQUAKE)
-            else
-            {
-                [NSApp hide: NULL];
-
-                return (1);
-            }
-#endif /* !GLQUAKE */            
             break;
         case 'M':
             // minimize window [CMD-M]:b

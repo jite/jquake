@@ -37,10 +37,8 @@ extern qbool mouseinitialized;
 
 void IN_StartupMouse( void );
 
-#ifdef GLQUAKE
 void IN_DeactivateMouse( void );
 void IN_Restart_f(void);
-#endif
 
 float mouse_x, mouse_y;
 
@@ -129,9 +127,6 @@ void IN_Move (usercmd_t *cmd)
 
 void IN_Init (void)
 {
-#ifdef GLQUAKE
-#endif
-
 	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_MOUSE);
 	Cvar_Register (&m_filter);
 	Cvar_Register (&m_showrate);
@@ -143,21 +138,17 @@ void IN_Init (void)
 
 	if (!host_initialized)
 	{
-#ifdef GLQUAKE
 		typedef enum {mt_none = 0, mt_normal} mousetype_t;
 		extern cvar_t in_mouse;
 
 		if (COM_CheckParm ("-nomouse"))
 			Cvar_LatchedSetValue (&in_mouse, mt_none);
 
-#endif /* !GLQUAKE */
 
 #ifdef WITH_KEYMAP
 		IN_StartupKeymap();
 #endif // WITH_KEYMAP
-#ifdef GLQUAKE
 		Cmd_AddCommand ("in_restart", IN_Restart_f);
-#endif
 	}
 
 	IN_StartupMouse ();
@@ -165,9 +156,7 @@ void IN_Init (void)
 
 void IN_Shutdown(void)
 {
-#ifdef GLQUAKE
 	IN_DeactivateMouse(); // btw we trying de init this in video shutdown too...
-#endif
 	mouseinitialized = false;
 }
 

@@ -651,7 +651,6 @@ void Sys_Init_ (void)
 			"qwcl");	// Semaphore name
 	}
 
-	#ifdef GLQUAKE
 	// Get information about the current monitor.
 	{
 		// TODO: Maybe put these in some header instead?
@@ -663,7 +662,6 @@ void Sys_Init_ (void)
 		prevMonitor = VID_GetCurrentMonitor();
 		prevMonInfo = VID_GetCurrentMonitorInfo(prevMonitor);
 	}
-	#endif // GLQUAKE
 
 	MaskExceptions ();
 	Sys_SetFPCW ();

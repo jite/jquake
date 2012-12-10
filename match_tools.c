@@ -25,13 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #include <time.h>
 #include "logging.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "utils.h"
 #include <curl/curl.h>
@@ -1380,8 +1375,6 @@ void DumpMapGroups(FILE *f) {
 }
 
 
-#ifdef GLQUAKE
-
 #define MAX_SKYGROUP_MEMBERS	36
 
 typedef struct skygroup_s {
@@ -1638,9 +1631,6 @@ void DumpSkyGroups(FILE *f) {
 		fprintf(f, "\n");
 	}
 }
-
-#endif
-
 
 char *Macro_MatchType(void) {
 	matchinfo_t *matchinfo;

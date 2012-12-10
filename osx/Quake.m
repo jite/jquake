@@ -104,10 +104,8 @@ extern int iTunesWasPaused;
 //__________________________________________________________________________________________iNTERFACE_Quake_(InterfaceActions)
 
 @interface Quake (InterfaceActions)
-#if defined (GLQUAKE)
 - (IBAction) buildResolutionList: (id) theSender;
 - (IBAction) toggleColorsEnabled: (id) theSender;
-#endif /* GLQUAKE */
 - (IBAction) toggleParameterTextField: (id) theSender;
 - (IBAction) toggleMP3Playback: (id) theSender;
 - (IBAction) selectMP3Folder: (id) theSender;
@@ -551,9 +549,6 @@ extern int iTunesWasPaused;
     S_StopAllSounds (YES);
     SNDDMA_Shutdown ();
     CDAudio_Enable (NO);
-#if !defined (GLQUAKE)
-    VID_HideFullscreen (YES);
-#endif /* !GLQUAKE */
     IN_ShowCursor (YES);
     IN_SetF12EjectEnabled (YES);
 
@@ -579,9 +574,6 @@ extern int iTunesWasPaused;
     }
     
     IN_SetF12EjectEnabled (NO);
-#if !defined (GLQUAKE)
-    VID_HideFullscreen (NO);
-#endif /* !GLQUAKE */
     CDAudio_Enable (YES);
     SNDDMA_Init ();
     
@@ -769,9 +761,7 @@ NSLog (@"C!");
 
     [settingsWindow setTitle: [NSString stringWithFormat:
                                                           @"EZQuake"
-#if defined (GLQUAKE)
 														  @"-GL"
-#endif /* GLQUAKE */
                                                           @" (%@)", theTitle]];
 
     myNewHeight = NSHeight ([theView frame]);
@@ -821,8 +811,6 @@ NSLog (@"C!");
 
 @implementation Quake (InterfaceActions)
 
-
-#if defined (GLQUAKE)
 
 - (IBAction) buildResolutionList: (id) theSender
 {
@@ -946,7 +934,6 @@ NSLog (@"C!");
     [colorsPopUp setEnabled: [fullscreenCheckBox state]];
 }
 
-#endif /* GLQUAKE */
 
 //___________________________________________________________________________________________________toggleParameterTextField:
 
@@ -1024,7 +1011,6 @@ NSLog (@"C!");
     {
         NSUserDefaults	*myDefaults = [NSUserDefaults standardUserDefaults];
 
-#if defined (GLQUAKE)
 
         NSString	*myModeStr;
         UInt32		myMode, myColors;
@@ -1037,15 +1023,11 @@ NSLog (@"C!");
             return;
         }
 
-#endif /* GLQUAKE */
-
         // save the display:
         gVidDisplay = [displayPopUp indexOfSelectedItem];
         [self saveString: [NSString stringWithFormat: @"%d", gVidDisplay] initial: DISPLAY_INITIAL
                                                                           default: DISPLAY_DEFAULT
                                                                      userDefaults: myDefaults];
-
-#if defined (GLQUAKE)
 
         // save the display mode:
         myMode = [modePopUp indexOfSelectedItem];
@@ -1072,8 +1054,6 @@ NSLog (@"C!");
         [self saveCheckBox: fullscreenCheckBox initial: INITIAL_GL_FULLSCREEN
                                                default: DEFAULT_GL_FULLSCREEN
                                           userDefaults: myDefaults];
-
-#endif /* GLQUAKE */
 
         // save the state of the "fade all" checkbox:
         [self saveCheckBox: fadeAllCheckBox initial: FADE_ALL_INITIAL default: FADE_ALL_DEFAULT
@@ -1153,12 +1133,8 @@ NSLog (@"C!");
         [myDefaults synchronize];
         [settingsWindow close];
         
-#if defined (GLQUAKE)
-        
         gVidDisplayMode = [mModeList objectAtIndex: myMode];
         gVidDisplayFullscreen = [fullscreenCheckBox state];
-        
-#endif /* GLQUAKE */
         
         gVidFadeAllDisplays = [fadeAllCheckBox state];
         
@@ -1367,15 +1343,11 @@ NSLog (@"C!");
         NSUserDefaults 	*myDefaults = NULL;
         UInt32		myDefaultDisplay;
 
-#if defined (GLQUAKE)
-
         NSString	*myDescriptionStr = NULL,
                         *myDefaultModeStr = NULL;
         UInt32		i = 0,
                         myDefaultColors,
                         myDefaultSamples;
-
-#endif /* GLQUAKE */
 
         // don't allow the "run" AppleScript command to be executed anymore:
         [self enableAppleScriptRun: NO];
@@ -1406,7 +1378,6 @@ NSLog (@"C!");
             [fadeAllCheckBox setEnabled: YES];
         }
 
-#if defined (GLQUAKE)
 
         // set up the colors popup:
         myDefaultColors = [[myDefaults stringForKey: DEFAULT_GL_COLORS] intValue];
@@ -1444,7 +1415,6 @@ NSLog (@"C!");
         [fullscreenCheckBox setState: [myDefaults boolForKey: DEFAULT_GL_FULLSCREEN]];
         [self toggleColorsEnabled: self];
     
-#endif /* GLQUAKE */
         
         [fadeAllCheckBox setState: [myDefaults boolForKey: FADE_ALL_DEFAULT]];
         [iTunesCheckBox setState: [myDefaults boolForKey: DEFAULT_ITUNESPAUSE]];
@@ -1635,11 +1605,7 @@ NSLog (@"C!");
     myParameters.argc = com_argc;
     myParameters.argv = com_argv;
 
-#ifdef GLQUAKE
     myParameters.memsize = 16*1024*1024*2;
-#else
-    myParameters.memsize = 8*1024*1024*2;
-#endif /* GLQUAKE */
     j = COM_CheckParm ("-mem");
     if (j)
     {

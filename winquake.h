@@ -50,11 +50,6 @@ typedef struct {
 
 #endif // !defined(WITHOUT_WINKEYHOOK) && ( !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0400 )
 
-#ifndef GLQUAKE
-// use it for soft only
-#include <ddraw.h>
-#endif
-
 #include <mmsystem.h>
 #include <dsound.h>
 

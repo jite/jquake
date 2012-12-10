@@ -15,8 +15,6 @@ See the included (GNU.txt) GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-	$Id: cl_demo.c,v 1.103 2007/10/25 12:09:18 dkure Exp $
 */
 
 #include <time.h>
@@ -25,14 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "movie.h"
 #include "menu_demo.h"
 #include "qtv.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "pmove.h"
 #include "fs.h"
@@ -3145,15 +3138,12 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 	time_t t = time(&t);
 	struct tm *ptm = localtime(&t);
 	int width = 0, height = 0; 
-	#ifdef GLQUAKE
 	#ifndef __APPLE__
 	float asp = 0;
 	extern cvar_t r_mode;
 
 	R_GetModeInfo(&width, &height, &asp, r_mode.integer);
 	#endif // __APPLE__
-	#endif // GLQUAKE
-
 
 	snprintf(logfile, sizeof(logfile), "%s/timedemo.log", FS_LegacyDir(log_dir.string));
 	f = fopen(logfile, "a");

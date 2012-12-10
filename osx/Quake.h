@@ -64,21 +64,12 @@
 #define	SYS_PARAM_TOOLBARITEM		@"Quake Parameters Toolbaritem"
 #define	SYS_START_TOOLBARITEM		@"Quake Start Toolbaritem"
 
-#if defined (GLQUAKE)
 #define	OPTION_KEY_DEFAULT			DEFAULT_GL_OPTION_KEY
 #define	OPTION_KEY_INITIAL			INITIAL_GL_OPTION_KEY
 #define FADE_ALL_DEFAULT			DEFAULT_GL_FADE_ALL
 #define FADE_ALL_INITIAL			DEFAULT_GL_FADE_ALL
 #define DISPLAY_DEFAULT				DEFAULT_GL_DISPLAY
 #define DISPLAY_INITIAL				INITIAL_GL_DISPLAY
-#else
-#define	OPTION_KEY_DEFAULT			DEFAULT_OPTION_KEY
-#define	OPTION_KEY_INITIAL			INITIAL_OPTION_KEY
-#define FADE_ALL_DEFAULT			DEFAULT_FADE_ALL
-#define FADE_ALL_INITIAL			DEFAULT_FADE_ALL
-#define DISPLAY_DEFAULT				DEFAULT_DISPLAY
-#define DISPLAY_INITIAL				INITIAL_DISPLAY
-#endif /* GLQUAKE */
 
 #pragma mark -
 
@@ -103,14 +94,12 @@
     IBOutlet NSPopUpButton			*displayPopUp;
     IBOutlet NSButton				*fadeAllCheckBox;
     
-#if defined (GLQUAKE)
     IBOutlet NSPopUpButton			*modePopUp;
     IBOutlet NSPopUpButton			*colorsPopUp;
     IBOutlet NSPopUpButton			*samplesPopUp;
     IBOutlet NSButton				*fullscreenCheckBox;
 
     NSMutableArray					*mModeList;
-#endif /* GLQUAKE */
 
     IBOutlet NSButton				*iTunesCheckBox;
     IBOutlet NSButton				*mp3CheckBox;
