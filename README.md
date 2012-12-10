@@ -1,9 +1,9 @@
-# ezQuake — Modern QuakeWorld Client
+# jQuake — QuakeWorld Client
 
 This is the right place to start playing QuakeWorld&reg; — the fastest first
 person shooter action game ever.
 
-Combining the features of all modern QuakeWorld® clients, ezQuake makes
+Combining the features of all modern QuakeWorld® clients, jQuake makes
 QuakeWorld&reg; easier to start and play. The immortal first person shooter
 Quake&reg; in the brand new skin with superb graphics and extremely fast
 gameplay.
@@ -19,7 +19,7 @@ gameplay.
  * Recorded Games Browser
  * Customization of all possible graphics elements of the game including Head Up Display
  * All sorts of scripting possibilities
- * MAC OS X and FreeBSD platforms supported. Software version for computers without 3D graphics accelerators.
+ * MAC OS X and FreeBSD platforms supported.
 
 Note: To play QuakeWorld you need files from original Quake game. Check
 Installation manual page for further info.
@@ -30,13 +30,13 @@ custom configurations, try [nQuake][nQuake].
 
 ## Support
 
-Need help with using ezQuake? Visit us on IRC at QuakeNet, channel #ezQuake:
+Need help with using jQuake? Visit us on IRC at QuakeNet, channel #jQuake:
 [webchat][webchat] or [IRC][IRC].
 
-Sometimes help of other users of ezQuake might be more usefull to you so you
-can also try visiting [ezQuake Forum][forum].
+Sometimes help of other users of jQuake might be more usefull to you so you
+can also try visiting [jQuake Forum][forum].
 
  [nQuake]: http://nquake.com/
- [webchat]: http://webchat.quakenet.org/?channels=#ezquake
- [IRC]: irc://irc.quakenet.org/#ezquake
- [forum]: http://ezquake.sourceforge.net/forum/
+ [webchat]: http://webchat.quakenet.org/?channels=#jquake
+ [IRC]: irc://irc.quakenet.org/#jquake
+ [forum]: http://#
