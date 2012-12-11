@@ -93,14 +93,27 @@ typedef int socket_t;
 
 #define PORT_ANY -1
 
-typedef enum {NA_INVALID, NA_LOOPBACK, NA_IP} netadrtype_t;
+typedef enum
+{
+	NA_INVALID,
+	NA_LOOPBACK,
+	NA_IPv4,
+	NA_IPv6
+} netadrtype_t;
 
-typedef enum {NS_CLIENT, NS_SERVER} netsrc_t;
+typedef enum
+{
+	NS_CLIENT,
+	NS_SERVER
+} netsrc_t;
 
-typedef struct {
+typedef struct
+{
 	netadrtype_t type;
-
-	byte ip[4];
+	union {
+		byte ip[4];
+		byte ip6[16];
+	} address;
 
 	unsigned short port;
 } netadr_t;
