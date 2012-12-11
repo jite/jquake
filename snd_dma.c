@@ -231,7 +231,7 @@ static qbool S_Startup (void)
 			}
 		}
 		else {
-			Com_DPrintf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver);
+			Com_Printf("SNDDMA_Init: Error, unknown s_driver \"%s\"\n", audio_driver);
 		}
 	}
 	if(!retval) {
@@ -244,7 +244,7 @@ static qbool S_Startup (void)
 		free(qsoundhandler);
 		return false;
 	} else {
-		Com_Printf("[sound] %s started....\n", qsoundhandler->name);
+		Com_DPrintf("[sound] %s started....\n", qsoundhandler->name);
 	}
 ////////////////////////////////////////////////////
 #else
@@ -274,7 +274,7 @@ void S_Shutdown (void)
 	S_StopAllSounds (true);
 
 #if defined(__linux__) || defined(__FreeBSD__)
-	Com_Printf("[sound] %s shutdown...\n", qsoundhandler->name);
+	Com_DPrintf("[sound] %s shutdown...\n", qsoundhandler->name);
 	qsoundhandler->Shutdown();
 	free(qsoundhandler);
 	qsoundhandler = NULL;

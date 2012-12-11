@@ -628,9 +628,8 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Com_Printf_State (PRINT_INFO, "Exe: "__DATE__" "__TIME__"\n");
 	Com_Printf_State (PRINT_INFO, "Hunk allocation: %4.1f MB\n", (float) host_memsize / (1024 * 1024));
 
-	Com_Printf ("\nezQuake %s\n\n", VersionString());
-	Com_Printf(Host_PrintBars("ezQuake\x9c" "SourceForge\x9c" "net", 38));
-	Com_Printf(Host_PrintBars("εϊΡυαλε Ιξιτιαμιϊεδ", 38)); // brown "ezQuake Initialized"
+	Com_Printf(Host_PrintBars("&c1e1jQuake Initialized&r", 38));
+	Com_Printf ("\njQuake %s\n\n", VersionStringColored());
 	Com_Printf ("Type /help to access the manual.\nUse /describe for help on commands.\n\n", VersionString());
 
 	if ((vf = FS_OpenVFS("autoexec.cfg", "rb", FS_ANY))) {

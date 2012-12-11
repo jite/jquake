@@ -155,9 +155,27 @@ char *VersionString (void)
 	static char str[64];
 
 #ifdef BUILD_NUMBER
-	snprintf (str, sizeof(str), "%s (build %s)", VERSION_NUMBER, BUILD_NUMBER);
+	snprintf (str, sizeof(str), "%s (%s)", VERSION_NUMBER, BUILD_NUMBER);
 #else
-	snprintf (str, sizeof(str), "%s (build %i)", VERSION_NUMBER, build_number());
+	snprintf (str, sizeof(str), "%s (%i)", VERSION_NUMBER, build_number());
+#endif
+
+	return str;
+}
+
+/*
+=======================
+VersionStringColored
+======================
+*/
+char *VersionStringColored (void)
+{
+	static char str[64];
+
+#ifdef BUILD_NUMBER
+	snprintf (str, sizeof(str), "&c2f2%s&r (%s)", VERSION_NUMBER, BUILD_NUMBER);
+#else
+	snprintf (str, sizeof(str), "&c2f2%s&r (%i)", VERSION_NUMBER, build_number());
 #endif
 
 	return str;

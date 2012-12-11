@@ -1,21 +1,3 @@
-/**
-	\file
-	
-	\brief
-	Main client module - connection-related and other mixed-purpose functions
-**/
-
-/**
-	\mainpage
-	Welcome to the doxygen documentation of the ezQuake QuakeWorld client
-	Majority of the code is not documented with Doxygen markup, therefore
-	you will not find much things in here in the early stages.
-
-	For start this documentation serves as an example how to document the code.
-	See how \link parser.c parser.c \endlink file is documented.
-
-	You may wish to proceed to the <a href="files.html">list of modules</a>
-**/
 /*
 Copyright (C) 1996-1997 Id Software, Inc.
 
@@ -34,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-$Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 */
 // cl_main.c  -- client main loop
 
@@ -320,12 +301,12 @@ qbool CL_CheckIfQWProtocolHandler()
 
 		#if 0
 		// This checks if the current exe is associated with, otherwise it will prompt the user
-		// a bit more "in the face" if the user has more than one ezquake version.
+		// a bit more "in the face" if the user has more than one jquake version.
 		{
 			char exe_path[MAX_PATH];
 		
 			// Get the long path of the current process.
-			// C:\Program Files\Quake\ezquake-gl.exe
+			// C:\Program Files\Quake\jquake-gl.exe
 			Sys_GetFullExePath(exe_path, sizeof(exe_path), true);
 
 			if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
@@ -336,7 +317,7 @@ qbool CL_CheckIfQWProtocolHandler()
 			}
 
 			// Get the short path and check if that matches instead.
-			// C:\Program~1\Quake\ezquake-gl.exe
+			// C:\Program~1\Quake\jquake-gl.exe
 			Sys_GetFullExePath(exe_path, sizeof(exe_path), false);
 
 			if (strstri(reg_path, exe_path) || strstri(expanded_reg_path, exe_path))
@@ -346,11 +327,11 @@ qbool CL_CheckIfQWProtocolHandler()
 			}
 		}
 		#else
-		// Only check if ezquake is in the string that associates with the qw:// protocol
-		// so if you have several ezquake exes it won't bug you if you just switch between those
+		// Only check if jquake is in the string that associates with the qw:// protocol
+		// so if you have several jquake exes it won't bug you if you just switch between those
 		// (Only one will be registered as the protocol handler though ofcourse).
 
-		if (strstri(reg_path, "ezquake"))
+		if (strstri(reg_path, "jquake"))
 		{
 			CloseHandle(hk);
 			return true;
@@ -810,7 +791,7 @@ static void CL_QWURL_ProcessChallenge(const char *parameters)
 
 //
 // Parses a QW-URL of the following format 
-// (this can be associated with ezquake in windows by setting some reg info):
+// (this can be associated with jquake in windows by setting some reg info):
 // qw://server:port/command
 //
 // Supported commands:
@@ -1578,7 +1559,7 @@ void CL_ConnectionlessPacket (void)
 					Com_Printf ("===========================\n");
 					Com_Printf ("Invalid localid on command packet received from local host. "
 						"\n|%s| != |%s|\n"
-						"You may need to reload your server browser and ezQuake.\n",
+						"You may need to reload your server browser and jQuake.\n",
 						s, localid.string);
 					Com_Printf ("===========================\n");
 					Cvar_Set(&localid, "");
@@ -1934,7 +1915,7 @@ void CL_InitLocal (void)
 	Cvar_ForceSet (&cl_cmdline, com_args_original);
 	Cvar_ResetCurrentGroup();
 
-	snprintf(st, sizeof(st), "ezQuake %i", build_number());
+	snprintf(st, sizeof(st), "jQuake %i", build_number());
 
 	if (COM_CheckParm ("-norjscripts") || COM_CheckParm ("-noscripts"))
 		Cvar_SetValue (&allow_scripts, 0);
@@ -2018,8 +1999,8 @@ void EX_FileList_Init(void);
 
 void CL_Init (void) 
 {
-	// When ezquake was launched via a webpage (qtv) the working directory wasn't properly
-	// set. Changing the directory makes sure it starts out in the directory where ezquake 
+	// When jQuake was launched via a webpage (qtv) the working directory wasn't properly
+	// set. Changing the directory makes sure it starts out in the directory where jQuake 
 	// is located.
 	Sys_chdir(com_basedir);
 
@@ -2037,7 +2018,7 @@ void CL_Init (void)
 	ReloadPaletteAndColormap();
 
 	Sys_mkdir(va("%s/qw", com_basedir));
-	Sys_mkdir(va("%s/ezquake", com_basedir));
+	Sys_mkdir(va("%s/jquake", com_basedir));
 
 	History_Init();
 	V_Init ();
@@ -3033,9 +3014,9 @@ void CL_UpdateCaption(qbool force)
 	if (!cl_window_caption.value)
 	{
 		if (!cls.demoplayback && (cls.state == ca_active))
-			snprintf(str, sizeof(str), "ezQuake: %s", cls.servername);
+			snprintf(str, sizeof(str), "jQuake: %s", cls.servername);
 		else
-			snprintf(str, sizeof(str), "ezQuake");
+			snprintf(str, sizeof(str), "jQuake");
 	}
 	else
 	{

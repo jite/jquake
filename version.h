@@ -75,5 +75,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 int build_number (void);
 void CL_Version_f (void);
 char *VersionString (void);
+char *VersionStringColored (void);
 
 #endif /* !__VERSION_H__ */
