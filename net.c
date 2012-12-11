@@ -23,8 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_LOOPBACK 4 // must be a power of two
 
 netadr_t	net_local_cl_ipadr;
-netadr_t	net_local_sv_ipadr;
-netadr_t	net_local_sv_tcpipadr;
 netadr_t	net_from;
 sizebuf_t	net_message;
 byte		net_message_buffer[MSG_BUF_SIZE];
@@ -432,15 +430,8 @@ qbool NET_GetPacketEx (netsrc_t netsrc, qbool delay)
 
 	for (i = 0; i < 1; i++) {
 		if (netsrc == NS_SERVER) {
-	#ifdef CLIENTONLY
 			Sys_Error("NET_GetPacket: Bad netsrc");
 			socket = 0;
-	#else
-			if (i == 0)
-				socket = svs.socketip;
-			else
-				socket = INVALID_SOCKET;
-	#endif
 		} else {
 			if (i == 0)
 				socket = cls.socketip;
@@ -539,136 +530,6 @@ qbool NET_GetPacketEx (netsrc_t netsrc, qbool delay)
 		}
 	}
 
-#ifndef CLIENTONLY
-	if (netsrc == NS_SERVER) {
-		float timeval = Sys_DoubleTime();
-		svtcpstream_t *st;
-		st = svs.tcpstreams;
-
-		while (svs.tcpstreams && svs.tcpstreams->socketnum == INVALID_SOCKET) {
-			st = svs.tcpstreams;
-			svs.tcpstreams = svs.tcpstreams->next;
-			Q_free(st);
-		}
-
-		for (st = svs.tcpstreams; st; st = st->next) {
-			//client receiving only via tcp
-			while (st->next && st->next->socketnum == INVALID_SOCKET) {
-				svtcpstream_t *temp;
-				temp = st->next;
-				st->next = st->next->next;
-				Q_free(temp);
-			}
-
-			//due to the above checks about invalid sockets, the socket is always open for st below.
-
-			if (st->timeouttime < timeval)
-				goto closesvstream;
-	
-			ret = recv(st->socketnum, st->inbuffer+st->inlen, sizeof(st->inbuffer)-st->inlen, 0);
-			if (ret == 0) {
-				goto closesvstream;
-			} else if (ret == -1) {
-				err = qerrno;
-
-				if (err == EWOULDBLOCK) {
-					ret = 0;
-				} else {
-					if (err == ECONNABORTED || err == ECONNRESET) {
-						Com_Printf ("Connection lost or aborted\n"); //server died/connection lost.
-					} else {
-						Com_Printf ("NET_GetPacket: Error (%i): %s\n", err, strerror(err));
-					}
-	
-closesvstream:
-				closesocket(st->socketnum);
-				st->socketnum = INVALID_SOCKET;
-				continue;
-				}
-			}
-			st->inlen += ret;
-	
-			if (st->waitingforprotocolconfirmation) {
-				if (st->inlen < 6)
-					continue;
-
-				if (strncmp(st->inbuffer, "qizmo\n", 6)) {
-					Com_Printf ("Unknown TCP client\n");
-					goto closesvstream;
-				}
-
-				memmove(st->inbuffer, st->inbuffer+6, st->inlen - (6));
-				st->inlen -= 6;
-				st->waitingforprotocolconfirmation = false;
-			}
-
-			if (st->inlen < 2)
-				continue;
-
-			net_message.cursize = BigShort(*(short*)st->inbuffer);
-			if (net_message.cursize >= sizeof(net_message_buffer)) {
-				Com_Printf ("Warning:  Oversize packet from %s\n", NET_AdrToString (net_from));
-				goto closesvstream;
-			}
-
-			if (net_message.cursize+2 > st->inlen) {
-				//not enough buffered to read a packet out of it.
-				continue;
-			}
-
-			memcpy(net_message_buffer, st->inbuffer+2, net_message.cursize);
-			memmove(st->inbuffer, st->inbuffer+net_message.cursize+2, st->inlen - (net_message.cursize+2));
-			st->inlen -= net_message.cursize+2;
-
-			net_from = st->remoteaddr;
-
-			return true;
-		}
-
-		if (svs.sockettcp != INVALID_SOCKET) {
-			socket_t newsock;
-			if ((newsock = accept(svs.sockettcp, (struct sockaddr*)&from, &fromlen)) == INVALID_SOCKET) {
-				// FIXME it is Com_DPrintf because accept reutrns '-1' very often... (always?)
-				Com_DPrintf ("NET_GetPacket: accept: (%i): %s\n", qerrno, strerror(qerrno));
-			}
-
-			if (newsock != INVALID_SOCKET) {
-				u_long _true;
-
-#ifndef _WIN32
-				if ((fcntl (newsock, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
-					Com_Printf ("NET_GetPacket: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
-					//closesocket(newsock);
-				}
-#endif
-				
-				_true = true;
-				if (ioctlsocket (newsock, FIONBIO, &_true) == -1) { // make asynchronous
-					Com_Printf ("NET_GetPacket: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
-					//closesocket(newsock);
-				}
-
-				_true = true;
-
-						
-				if (setsockopt(newsock, IPPROTO_TCP, TCP_NODELAY, (char *)&_true, sizeof(_true)) == -1) {
-					Com_Printf ("NET_GetPacket: setsockopt: (%i): %s\n", qerrno, strerror(qerrno));
-				}
-
-				st = Q_malloc(sizeof(svtcpstream_t));
-				st->waitingforprotocolconfirmation = true;
-				st->next = svs.tcpstreams;
-				svs.tcpstreams = st;
-				st->socketnum = newsock;
-				st->inlen = 0;
-				SockadrToNetadr(&from, &st->remoteaddr);
-				send(newsock, "qizmo\n", 6, 0);
-
-				st->timeouttime = timeval + 30;
-			}
-		}
-	}
-#endif
 // <--TCPCONNECT
 	return false;
 }
@@ -744,33 +605,8 @@ void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbo
 	}
 
 	if (netsrc == NS_SERVER) {
-#ifdef CLIENTONLY
 		Sys_Error("NET_SendPacket: Bad netsrc");
 		socket = 0;
-#else
-
-// TCPCONNECT -->
-		svtcpstream_t *st;
-		for (st = svs.tcpstreams; st; st = st->next)
-		{
-			if (st->socketnum == INVALID_SOCKET)
-				continue;
-
-			if (NET_CompareAdr(to, st->remoteaddr))
-			{
-				unsigned short slen = BigShort((unsigned short)length);
-				send(st->socketnum, (char*)&slen, sizeof(slen), 0);
-				send(st->socketnum, data, length, 0);
-
-				st->timeouttime = Sys_DoubleTime() + 20;
-
-				return;
-			}
-		}
-// <--TCPCONNECT
-
-		socket = svs.socketip;
-#endif
 	} else {
 // TCPCONNECT -->
 		if (cls.sockettcp != INVALID_SOCKET)
@@ -1157,13 +993,6 @@ void NET_Init (void)
 // TCPCONNECT -->
 	cls.sockettcp = INVALID_SOCKET;
 // <--TCPCONNECT
-
-#ifndef CLIENTONLY
-	svs.socketip = INVALID_SOCKET;
-// TCPCONNECT -->
-	svs.sockettcp = INVALID_SOCKET;
-// <--TCPCONNECT
-#endif
 }
 
 void NET_InitClient(void)
@@ -1194,70 +1023,8 @@ void NET_InitClient(void)
 	Com_Printf_State (PRINT_OK, "Client port Initialized\n");
 }
 
-#ifndef CLIENTONLY
-void NET_CloseServer (void)
-{
-	if (svs.socketip != INVALID_SOCKET) {
-		closesocket(svs.socketip);
-		svs.socketip = INVALID_SOCKET;
-	}
-
-// TCPCONNECT -->
-	if (svs.sockettcp != INVALID_SOCKET) {
-		closesocket(svs.sockettcp);
-		svs.sockettcp = INVALID_SOCKET;
-	}
-// <--TCPCONNECT
-
-	net_local_sv_ipadr.type = NA_LOOPBACK;
-}
-
-void NET_InitServer (void)
-{
-	int tcpport = 0;
-	int port = PORT_SERVER;
-	int p;
-
-	p = COM_CheckParm ("-port");
-	if (p && p < COM_Argc()) {
-		port = atoi(COM_Argv(p+1));
-	}
-
-	if (svs.socketip == INVALID_SOCKET) {
-		svs.socketip = UDP_OpenSocket (port);
-		if (svs.socketip != INVALID_SOCKET)
-			NET_GetLocalAddress (svs.socketip, &net_local_sv_ipadr);
-	}
-
-// TCPCONNECT -->
-	p = COM_CheckParm ("-tcpport");
-	if (p && p < COM_Argc()) {
-		tcpport = atoi(COM_Argv(p+1));
-	}
-
-	if (svs.sockettcp == INVALID_SOCKET && tcpport) {
-		svs.sockettcp = TCP_OpenListenSocket (tcpport);
-		if (svs.sockettcp != INVALID_SOCKET)
-			NET_GetLocalAddress (svs.sockettcp, &net_local_sv_tcpipadr);
-		else
-			Com_Printf("Failed to open TCP port %i\n", tcpport);
-	}
-// <-- TCPCONNECT
-
-	if (svs.socketip == INVALID_SOCKET) {
-		Com_Printf ("WARNING: Couldn't allocate server socket\n");
-	}
-
-	// init the message buffer
-	SZ_Init (&net_message, net_message_buffer, sizeof(net_message_buffer));
-}
-#endif
-
 void NET_Shutdown (void)
 {
-#ifndef CLIENTONLY
-	NET_CloseServer();
-#endif
 	if (cls.socketip != INVALID_SOCKET) {
 	closesocket(cls.socketip);
 		cls.socketip = INVALID_SOCKET;
