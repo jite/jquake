@@ -19,8 +19,6 @@ along with Foobar; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 
-$Id: win_glimp.c,v 1.26 2007-10-27 20:23:36 tonik Exp $
-
 */
 /*
 ** WIN_GLIMP.C
