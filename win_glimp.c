@@ -31,7 +31,6 @@ $Id: win_glimp.c,v 1.26 2007-10-27 20:23:36 tonik Exp $
 **
 ** GLimp_EndFrame
 ** GLimp_Init
-** GLimp_LogComment
 ** GLimp_Shutdown
 **
 ** Note that the GLW_xxx functions are Windows specific GL-subsystem
@@ -1740,16 +1739,6 @@ void GLimp_Shutdown( void )
 	QGL_Shutdown();
 
 	memset( &glConfig, 0, sizeof( glConfig ) );
-}
-
-/*
-** GLimp_LogComment
-*/
-void GLimp_LogComment( char *comment ) 
-{
-	if ( glw_state.log_fp ) {
-		fprintf( glw_state.log_fp, "%s", comment );
-	}
 }
 
 /******************************************************************************/
