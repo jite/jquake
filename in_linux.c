@@ -159,7 +159,7 @@ void IN_Shutdown(void)
 	IN_DeactivateMouse(); // btw we trying de init this in video shutdown too...
 	mouseinitialized = false;
 }
-
+/* FIXME Need to fix this. ctrl/shift/alt is never reported down now .. */
 int ctrlDown = 0;
 int shiftDown = 0;
 int altDown = 0;
