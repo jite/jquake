@@ -15,8 +15,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-    $Id: common.h,v 1.76 2007-10-13 15:36:56 cokeman1982 Exp $
 */
 // common.h  -- general definitions
 
@@ -43,7 +41,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // per-level limits
 #define	CL_MAX_EDICTS		2048	// FIXME: ouch! ouch! ouch!
-//#define	SV_MAX_EDICTS		1024	// FIXME: ouch! ouch! ouch!
 #define	MAX_EDICTS			512		// FIXME: ouch! ouch! ouch! - trying to fix...
 #define	MAX_LIGHTSTYLES		64
 #define	MAX_MODELS			512		// these are sent over the net as bytes
@@ -422,12 +419,6 @@ void CL_Disconnect ();
 void CL_BeginLocalConnection (void);
 void CL_UpdateCaption(qbool force);
 void Con_Init (void);
-
-void SV_Init (void);
-void SV_Shutdown (char *finalmsg);
-void SV_Frame (double time);
-
-void SV_Error (char *error, ...);
 
 void COM_ParseIPCData(const char *buf, unsigned int bufsize);
 

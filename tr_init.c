@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #ifdef GLSL
@@ -35,7 +34,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 #include "tr_types.h"
 #endif // _WIN32 || __linux__ || __FreeBSD__
-#endif
 
 glconfig_t	glConfig;
 //glstate_t	glState;
@@ -322,7 +320,6 @@ static void R_ModeList_f( void )
 //============================================================================
 
 int nonwideconheight = 0;  // Store original conheight if vid_wideaspect is used
-void Plug_ResChanged(void);
 
 /// Parses the value vid_conaspect cvar.
 ///
@@ -452,8 +449,6 @@ void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel) {
 	Draw_AdjustConback ();
 	vid.recalc_refdef = 1;
 	
-	Plug_ResChanged();
-
 	*cancel = true;
 }
 

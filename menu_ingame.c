@@ -31,14 +31,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Ctrl.h"
 #include "settings.h"
 #include "settings_page.h"
-#include "server.h"
+#include "qtv.h"
 
 #define TOPMARGIN (6*LETTERWIDTH)
 
 settings_page single_menu;
 settings_page ingame_menu;
 settings_page democtrl_menu;
-settings_page botmatch_menu;
 settings_page qtv_menu;
 
 #define MENU_ALIAS(func,command,leavem) static void func(void) { Cbuf_AddText(command "\n"); if (leavem) M_LeaveMenus(); }
@@ -53,10 +52,6 @@ MENU_ALIAS(MIng_Observe,"observe",true);
 MENU_ALIAS(MIng_Disconnect,"disconnect",true);
 MENU_ALIAS(MIng_Ready, "ready",true);
 MENU_ALIAS(MIng_Break, "break",true);
-MENU_ALIAS(MIng_SkillUp, "skillup",false);
-MENU_ALIAS(MIng_SkillDown, "skilldown",false);
-MENU_ALIAS(MIng_AddBot, "addbot",false);
-MENU_ALIAS(MIng_RemoveBot, "removebot",false);
 MENU_ALIAS(MIng_TeamBlue, "team blue;color 13",true);
 MENU_ALIAS(MIng_TeamRed, "team red;color 4",true);
 MENU_ALIAS(MDemoCtrl_DemoBrowser,"menu_demos",false);
@@ -70,9 +65,6 @@ MENU_ALIAS(MQTV_Reconnect, "qtvreconnect", true);
 
 setting single_menu_entries[] = {
 	ADDSET_SEPARATOR("In-game Menu"),
-	ADDSET_ACTION("Load Game", MSP_Load, ""),
-	ADDSET_ACTION("Save Game", MSP_Save, ""),
-	ADDSET_BLANK(),
 	ADDSET_ACTION("Options", MIng_Options, ""),
 	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
 	ADDSET_BLANK(),
@@ -123,39 +115,12 @@ setting qtv_menu_entries[] = {
 	ADDSET_ACTION("Return To Game", MIng_Back, ""),
 };
 
-setting botmatch_menu_entries[] = {
-	ADDSET_SEPARATOR("Botmatch Menu"),
-	ADDSET_ACTION("Ready", MIng_Ready, ""),
-	ADDSET_ACTION("Break", MIng_Break, ""),
-	ADDSET_ACTION("Team Blue", MIng_TeamBlue, ""),
-	ADDSET_ACTION("Team Red", MIng_TeamRed, ""),
-	ADDSET_ACTION("Add Bot", MIng_AddBot, ""),
-	ADDSET_ACTION("Remove Bot", MIng_RemoveBot, ""),
-	ADDSET_ACTION("Increase Bot Skill", MIng_SkillUp, ""),
-	ADDSET_ACTION("Decrease Bot Skill", MIng_SkillDown, ""),
-	ADDSET_ACTION("Disconnect", MIng_Disconnect, ""),
-	ADDSET_BLANK(),
-	ADDSET_ACTION("Options", MIng_Options, ""),
-	ADDSET_ACTION("Main Menu", MIng_MainMenu, ""),
-	ADDSET_BLANK(),
-	ADDSET_ACTION("Return To Game", MIng_Back, ""),
-};
-
 #define DEMOPLAYBACK() (cls.demoplayback && cls.mvdplayback != QTV_PLAYBACK)
-#define BOTMATCH() (!strcmp(cls.gamedirfile, "fbca"))
-#define SINGLEPLAYER() (com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1)
 #define QTVPLAYBACK() (cls.mvdplayback == 2)
 
 static settings_page *M_Ingame_Current(void) {
 	if (DEMOPLAYBACK()) {
 		return &democtrl_menu;
-	}
-	else if (BOTMATCH()) {
-		return &botmatch_menu;
-	}
-	else if (SINGLEPLAYER())
-	{
-		return &single_menu;
 	}
 	else if (QTVPLAYBACK()) {
 		return &qtv_menu;
@@ -193,8 +158,6 @@ void Menu_Ingame_Init(void)
 	Settings_Page_SetMinit(ingame_menu);
 	Settings_Page_Init(democtrl_menu, democtrl_menu_entries);
 	Settings_Page_SetMinit(democtrl_menu);
-	Settings_Page_Init(botmatch_menu, botmatch_menu_entries);
-	Settings_Page_SetMinit(botmatch_menu);
 	Settings_Page_Init(qtv_menu, qtv_menu_entries);
 	Settings_Page_SetMinit(qtv_menu);
 }

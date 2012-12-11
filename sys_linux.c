@@ -51,7 +51,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <dlfcn.h>
 
 #include "quakedef.h"
-#include "server.h"
 #include "pcre.h"
 
 
@@ -60,6 +59,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #  define O_NDELAY	FNDELAY
 #endif
 
+
+void PR_CleanLogText_Init (void);
 
 /* needed for RTC timer */
 #define RTC_RATE 1024.00
@@ -409,7 +410,9 @@ int main (int argc, char **argv) {
 	#ifdef id386
 		Sys_SetFPCW();
 	#endif
-
+	
+	/* Ugly insert here to initialize the array for Q_normalizetext bla bla shit */
+	PR_CleanLogText_Init();
 
     Host_Init (argc, argv, 32 * 1024 * 1024);
 
@@ -825,3 +828,112 @@ void *Sys_GetAddressForName(dllhandle_t *module, const char *exportname)
 		return NULL;
 	return dlsym(module, exportname);
 }
+
+/* COPY FROM sv_main.c */
+
+char *Q_normalizetext (char *str)
+{
+        extern char chartbl2[];
+        char    *i;
+
+        for (i = str; *i; i++)
+                *i = chartbl2[(unsigned char) *i];
+        return str;
+}
+
+/*
+==================
+Q_redtext
+returns extended quake names
+==================
+*/
+unsigned char *Q_redtext (unsigned char *str)
+{
+        unsigned char *i;
+        for (i = str; *i; i++)
+                if (*i > 32 && *i < 128)
+                        *i |= 128;
+        return str;
+}
+//<-
+
+/*
+==================
+Q_yelltext
+returns extended quake names (yellow numbers)
+==================
+*/
+unsigned char *Q_yelltext (unsigned char *str)
+{
+        unsigned char *i;
+        for (i = str; *i; i++)
+        {
+                if (*i >= '0' && *i <= '9')
+                        *i += (unsigned char) (18 - '0');
+                else if (*i > 32 && *i < 128)
+                        *i |= 128;
+                else if (*i == 13)
+                        *i = ' ';
+        }
+        return str;
+}
+
+/*
+============
+Sys_compare_by functions for sort files in list
+============
+*/
+int Sys_compare_by_date (const void *a, const void *b)
+{
+        return (int)(((file_t *)a)->time - ((file_t *)b)->time);
+}
+
+int Sys_compare_by_name (const void *a, const void *b)
+{
+        return strncmp(((file_t *)a)->name, ((file_t *)b)->name, MAX_DEMO_NAME);
+}
+
+char chartbl2[256];
+
+void PR_CleanLogText_Init (void)
+{
+        int i;
+
+        for (i = 0; i < 32; i++)
+                chartbl2[i] = chartbl2[i + 128] = '#';
+        for (i = 32; i < 128; i++)
+                chartbl2[i] = chartbl2[i + 128] = i;
+
+        // special cases
+        chartbl2[10] = 10;
+        chartbl2[13] = 13;
+
+        // dot
+        chartbl2[5      ] = chartbl2[14      ] = chartbl2[15      ] = chartbl2[28      ] = chartbl2[46      ] = '.';
+        chartbl2[5 + 128] = chartbl2[14 + 128] = chartbl2[15 + 128] = chartbl2[28 + 128] = chartbl2[46 + 128] = '.';
+
+        // numbers
+        for (i = 18; i < 28; i++)
+                chartbl2[i] = chartbl2[i + 128] = i + 30;
+
+        // brackets
+        chartbl2[16] = chartbl2[16 + 128]= '[';
+        chartbl2[17] = chartbl2[17 + 128] = ']';
+        chartbl2[29] = chartbl2[29 + 128] = chartbl2[128] = '(';
+        chartbl2[31] = chartbl2[31 + 128] = chartbl2[130] = ')';
+
+        // left arrow
+        chartbl2[127] = '>';
+        // right arrow
+        chartbl2[141] = '<';
+
+        // '='
+        chartbl2[30] = chartbl2[129] = chartbl2[30 + 128] = '=';
+}
+
+void PR_CleanText(unsigned char *text)
+{
+        for ( ; *text; text++)
+                *text = chartbl2[*text];
+}
+

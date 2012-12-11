@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #include "resource.h"
 #include "keys.h"
-#include "server.h"
+#include "qtv.h"
 #include "pcre.h"
 
 
@@ -651,7 +651,6 @@ void Sys_Init_ (void)
 			"qwcl");	// Semaphore name
 	}
 
-	#ifdef GLQUAKE
 	// Get information about the current monitor.
 	{
 		// TODO: Maybe put these in some header instead?
@@ -663,7 +662,6 @@ void Sys_Init_ (void)
 		prevMonitor = VID_GetCurrentMonitor();
 		prevMonInfo = VID_GetCurrentMonitorInfo(prevMonitor);
 	}
-	#endif // GLQUAKE
 
 	MaskExceptions ();
 	Sys_SetFPCW ();

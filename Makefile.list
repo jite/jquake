@@ -18,7 +18,6 @@ CLIENT_C_FILES := \
 	ez_slider \
 	ez_button \
 	ez_window \
-	auth \
 	cl_cam \
 	cl_cmd \
 	cl_demo \
@@ -72,7 +71,8 @@ CLIENT_C_FILES := \
 	mvd_utils \
 	mvd_xmlstats \
 	parser \
-	plugin \
+	pmove \
+	pmovetst \
 	qtv \
 	r_part \
 	rulesets \
@@ -96,34 +96,6 @@ CLIENT_C_FILES := \
 	xsd_command \
 	xsd_document \
 	xsd_variable 
-
-SERVER_C_FILES := \
-	pmove \
-	pmovetst \
-	pr_cmds \
-	pr_edict \
-	pr_exec \
-	pr2_cmds \
-	pr2_edict \
-	pr2_exec \
-	pr2_vm \
-	sv_ccmds \
-	sv_ents \
-	sv_init \
-	sv_main \
-	sv_master \
-	sv_move \
-	sv_nchan \
-	sv_phys \
-	sv_save \
-	sv_send \
-	sv_user \
-	sv_world \
-	sv_demo \
-	sv_demo_misc \
-	sv_demo_qtv \
-	sv_login \
-	sv_mod_frags
 
 COMMON_C_FILES := \
 	cmodel \
@@ -175,34 +147,6 @@ GL_C_FILES := \
 	vx_vertexlights \
 	vid_common_gl 
 
-SW_C_FILES := \
-	d_edge \
-	d_fill \
-	d_init \
-	d_modech \
-	d_polyse \
-	d_scan \
-	d_sky \
-	d_sprite \
-	d_surf \
-	d_vars \
-	d_zpoint \
-	r_aclip \
-	r_alias \
-	r_bsp \
-	r_draw \
-	r_edge \
-	r_efrag \
-	r_light \
-	r_main \
-	r_misc \
-	r_model \
-	r_rast \
-	r_sky \
-	r_sprite \
-	r_surf \
-	r_vars \
-
 LINUX_C_FILES := \
 	cd_linux \
 	in_linux \
@@ -217,7 +161,7 @@ LINUX_C_FILES := \
 	snd_oss_legacy \
 	sys_linux
 
-WIN_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(GL_C_FILES) \
+WIN_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(GL_C_FILES) \
 	localtime_win \
 	sys_win \
 	win_glimp \
@@ -230,18 +174,12 @@ WIN_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(GL_C_FILE
 	movie_avi \
 	keymap
 
-GLX_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(GL_C_FILES) $(LINUX_C_FILES) \
+GLX_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(GL_C_FILES) $(LINUX_C_FILES) \
 	linux_glimp \
 	tr_init \
 	linux_signals
 
-X11_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(SW_C_FILES) $(LINUX_C_FILES) \
-	vid_x11
-
-SVGA_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(SW_C_FILES) $(LINUX_C_FILES) \
-	vid_svgalib
-
-MAC_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(SERVER_C_FILES) $(GL_C_FILES) \
+MAC_C_FILES := $(COMMON_C_FILES) $(CLIENT_C_FILES) $(GL_C_FILES) \
 	CarbonSndPlayDB \
 	cd_null \
 	in_mac \
@@ -259,27 +197,9 @@ COMMON_S_FILES := \
 	sys_x86 \
 	worlda
 
-SW_S_FILES := \
-	d_copy \
-	d_draw \
-	d_draw16 \
-	d_parta \
-	d_polysa \
-	d_scana \
-	d_spr8 \
-	d_varsa \
-	r_aclipa \
-	r_aliasa \
-	r_drawa \
-	r_edgea \
-	r_varsa \
-	surf8
-
 GL_S_FILES :=
 endif
 
 GLX_S_FILES := $(COMMON_S_FILES) $(GL_S_FILES)
-X11_S_FILES := $(COMMON_S_FILES) $(SW_S_FILES)
-SVGA_S_FILES := $(COMMON_S_FILES) $(SW_S_FILES)
 MAC_S_FILES :=
 WIN_S_FILES := $(COMMON_S_FILES) $(GL_S_FILES)

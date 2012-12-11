@@ -43,16 +43,11 @@ $Id: win_glimp.c,v 1.26 2007-10-27 20:23:36 tonik Exp $
 #include "resource.h"
 #include "winquake.h"
 #include "input.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 #include "tr_types.h"
 #endif // _WIN32 || __linux__ || __FreeBSD__
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "rulesets.h"
 #include "sbar.h"
 #include "keys.h"

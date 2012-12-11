@@ -956,7 +956,6 @@ void CM_InvalidateMap (void)
 /*
 ** CM_LoadMap
 */
-extern cvar_t sv_halflifebsp;
 cmodel_t *CM_LoadMap (char *name, qbool clientload, unsigned *checksum, unsigned *checksum2)
 {
 	unsigned int i;
@@ -986,8 +985,6 @@ cmodel_t *CM_LoadMap (char *name, qbool clientload, unsigned *checksum, unsigned
 		Host_Error ("CM_LoadMap: %s has wrong version number (%i should be %i)", name, i, Q1_BSPVERSION);
 
 	map_halflife = (i == HL_BSPVERSION);
-
-	Cvar_ForceSet (&sv_halflifebsp, i == HL_BSPVERSION ? "1" : "0");
 
 	// swap all the lumps
 	cmod_base = (byte *)header;

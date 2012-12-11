@@ -23,13 +23,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <time.h>
 
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 #include "tr_types.h"
 #endif // _WIN32 || __linux__ || __FreeBSD__
-#endif
 #include "cdaudio.h"
 #ifdef WITH_KEYMAP
 #include "keymap.h"

@@ -2,7 +2,6 @@
 # ezQuake Makefile
 # based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
 #======================================================================
-#	$Id: Makefile,v 1.83 2007-10-26 07:55:44 dkure Exp $
 
 # compilation tool and detection of targets/achitecture
 _E = @
@@ -21,7 +20,7 @@ OS = $(shell uname -s | tr A-Z a-z)
 
 # add special architecture based flags
 ifeq ($(ARCH),x86_64)
-	ARCH_CFLAGS = -march=nocona -m64
+	ARCH_CFLAGS = -march=native -m64
 endif
 ifeq ($(ARCH),x86)
 	ARCH_CFLAGS = -march=i686 -mtune=generic -mmmx -Did386
@@ -32,7 +31,7 @@ endif
 
 ifeq ($(OS),linux)
 	DEFAULT_TARGET = glx
-	OS_GL_CFLAGS = -DWITH_DGA -DWITH_EVDEV -DWITH_VMODE -DWITH_JOYSTICK -DWITH_PULSEAUDIO
+	OS_GL_CFLAGS = -DWITH_VMODE -DWITH_PULSEAUDIO
 endif
 ifeq ($(OS),darwin)
 	ARCH_CFLAGS = -arch i686 -arch ppc -msse2
@@ -49,15 +48,13 @@ LIB_PREFIX=$(OS)-$(ARCH)
 
 default_target: $(DEFAULT_TARGET)
 
-all: glx x11 svga
+all: glx
 
 ################################
 # Directories for object files #
 ################################
 
 GLX_DIR	= $(TYPE)-$(ARCH)/glx
-X11_DIR	= $(TYPE)-$(ARCH)/x11
-SVGA_DIR = $(TYPE)-$(ARCH)/svga
 MAC_DIR	= $(TYPE)-$(ARCH)/mac
 
 ################
@@ -65,8 +62,6 @@ MAC_DIR	= $(TYPE)-$(ARCH)/mac
 ################
 
 GLX_TARGET = $(TYPE)-$(ARCH)/ezquake-gl.glx
-X11_TARGET = $(TYPE)-$(ARCH)/ezquake.x11
-SVGA_TARGET = $(TYPE)-$(ARCH)/ezquake.svga
 MAC_TARGET = $(TYPE)-$(ARCH)/ezquake-gl.mac
 QUAKE_DIR="/opt/quake/"
 
@@ -79,7 +74,7 @@ MKDIR = $(_E)mkdir -p $@
 
 ################
 
-$(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR):
+$(GLX_DIR) $(MAC_DIR):
 	$(MKDIR)
 
 # compiler flags
@@ -147,7 +142,7 @@ include Makefile.list
 GLX_C_OBJS = $(addprefix $(GLX_DIR)/, $(addsuffix .o, $(GLX_C_FILES)))
 GLX_S_OBJS = $(addprefix $(GLX_DIR)/, $(addsuffix .o, $(GLX_S_FILES)))
 GLX_CFLAGS = $(CFLAGS) $(GLCFLAGS)
-GLX_LDFLAGS = $(LDFLAGS) -lGL -lXxf86dga -lXxf86vm -lXpm
+GLX_LDFLAGS = $(LDFLAGS) -lGL -lXxf86vm -lXpm -lXi
 
 glx: _DIR = $(GLX_DIR)
 glx: _OBJS = $(GLX_C_OBJS) $(GLX_S_OBJS) $(COMMON_LIBS) $(GL_LIBS)
@@ -180,91 +175,6 @@ $(GLX_S_OBJS): $(GLX_DIR)/%.o: %.s
 -include $(GLX_C_OBJS:.o=.P)
 
 #######
-# X11 #
-#######
-
-X11_C_OBJS = $(addprefix $(X11_DIR)/, $(addsuffix .o, $(X11_C_FILES)))
-X11_S_OBJS = $(addprefix $(X11_DIR)/, $(addsuffix .o, $(X11_S_FILES)))
-X11_CFLAGS = $(CFLAGS) -D_Soft_X11
-X11_LDFLAGS = $(LDFLAGS) -lX11 -lXext -lXpm
-
-x11: _DIR = $(X11_DIR)
-x11: _OBJS = $(X11_C_OBJS) $(X11_S_OBJS) $(COMMON_LIBS)
-x11: _LDFLAGS = $(X11_LDFLAGS)
-x11: _CFLAGS = $(X11_CFLAGS)
-x11: $(X11_TARGET)
-
-$(X11_TARGET): $(X11_DIR) $(X11_C_OBJS) $(X11_S_OBJS)
-	@echo [LINK] $@
-	$(BUILD)
-ifeq ($(TYPE),release)
-	@echo [STRIP] $@
-	$(STRIP) $(STRIPFLAGS) $(X11_TARGET)
-endif
-
-df_x11 = $(X11_DIR)/$(*F)
-
-$(X11_C_OBJS): $(X11_DIR)/%.o: %.c
-	@echo [CC] $<
-	$(C_BUILD); \
-		cp $(df_x11).d $(df_x11).P; \
-		sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-			-e '/^$$/ d' -e 's/$$/ :/' < $(df_x11).d >> $(df_x11).P; \
-		rm -f $(df_x11).d
-
-$(X11_S_OBJS): $(X11_DIR)/%.o: %.s
-	@echo [CC] $<
-	$(S_BUILD)
-
--include $(X11_C_OBJS:.o=.P)
-
-########
-# SVGA #
-########
-
-SVGA_C_OBJS = $(addprefix $(SVGA_DIR)/, $(addsuffix .o, $(SVGA_C_FILES)))
-SVGA_S_OBJS = $(addprefix $(SVGA_DIR)/, $(addsuffix .o, $(SVGA_S_FILES)))
-SVGA_CFLAGS = $(CFLAGS) -D_Soft_SVGA
-SVGA_LDFLAGS = $(LDFLAGS) -lvga
-ifeq ($(OS),linux)
-# FreeBSD don't need -ldl, but it need /usr/ports/graphics/svgalib to be installed:
-# > cd /usr/ports/graphics/svgalib
-# > make install clean
-# for compiling and for running.
-SVGA_LDFLAGS += -ldl
-endif
-
-svga: _DIR = $(SVGA_DIR)
-svga: _OBJS = $(SVGA_C_OBJS) $(SVGA_S_OBJS) $(COMMON_LIBS)
-svga: _LDFLAGS = $(SVGA_LDFLAGS)
-svga: _CFLAGS = $(SVGA_CFLAGS)
-svga: $(SVGA_TARGET)
-
-$(SVGA_TARGET): $(SVGA_DIR) $(SVGA_C_OBJS) $(SVGA_S_OBJS)
-	@echo [LINK] $@
-	$(BUILD)
-ifeq ($(TYPE),release)
-	@echo [STRIP] $@
-	$(STRIP) $(STRIPFLAGS) $(SVGA_TARGET)
-endif
-
-df_svga = $(SVGA_DIR)/$(*F)
-
-$(SVGA_C_OBJS): $(SVGA_DIR)/%.o: %.c
-	@echo [CC] $<
-	$(C_BUILD); \
-		cp $(df_svga).d $(df_svga).P; \
-		sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-			-e '/^$$/ d' -e 's/$$/ :/' < $(df_svga).d >> $(df_svga).P; \
-		rm -f $(df_svga).d
-
-$(SVGA_S_OBJS): $(SVGA_DIR)/%.o: %.s
-	@echo [CC] $<
-	$(S_BUILD)
-
--include $(SVGA_C_OBJS:.o=.P)
-
-#######
 # MAC #
 #######
 
@@ -293,24 +203,18 @@ $(MAC_C_OBJS): $(MAC_DIR)/%.o: %.c
 #################
 clean:
 	@echo [CLEAN]
-	@-rm -rf $(GLX_DIR) $(X11_DIR) $(SVGA_DIR) $(MAC_DIR)
+	@-rm -rf $(GLX_DIR) $(MAC_DIR)
 
 help:
 	@echo "all     - make all the targets possible"
 	@echo "install - Installs all made clients to /opt/quake"
 	@echo "clean   - removes all output"
 	@echo "glx     - GLX GL client"
-	@echo "x11     - X11 software client"
-	@echo "svga    - SVGA software client"
 	@echo "mac     - Mac client"
 
 
 install:
 	@echo [CP] $(GLX_TARGET) 	$(QUAKE_DIR)
 	@cp $(GLX_TARGET) 			$(QUAKE_DIR)
-#	@echo [CP] $(X11_TARGET) 	$(QUAKE_DIR)
-#	@cp $(X11_TARGET)			$(QUAKE_DIR)
-#	@echo [CP] $(SVGA_TARGET) 	$(QUAKE_DIR)
-#	@cp $(SVGA_TARGET)			$(QUAKE_DIR)
 #	@echo [CP] $(MAC_TARGET) 	$(QUAKE_DIR)
 #	@cp $(MAC_TARGET)			$(QUAKE_DIR)

@@ -25,13 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/stat.h>
 #endif
 #include "quakedef.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#endif
-#ifndef CLIENTONLY
-#include "server.h"
-#endif
 #include "menu.h"
 #include "EX_browser.h"
 #include "Ctrl_Tab.h"
@@ -58,8 +53,6 @@ extern cvar_t con_shift, scr_menualpha;
 
 void M_Menu_Main_f (void);
 	void M_Menu_SinglePlayer_f (void);
-		void M_Menu_Load_f (void);
-		void M_Menu_Save_f (void);
 	void M_Menu_MultiPlayer_f (void);
 			void M_Menu_SEdit_f (void);
 		void M_Menu_Demos_f (void);
@@ -72,8 +65,6 @@ void M_Menu_Main_f (void);
 
 void M_Main_Draw (void);
 	void M_SinglePlayer_Draw (void);
-		void M_Load_Draw (void);
-		void M_Save_Draw (void);
 	void M_MultiPlayer_Draw (void);
 		void M_ServerList_Draw (void);
 			void M_SEdit_Draw (void);
@@ -86,8 +77,6 @@ void M_Main_Draw (void);
 
 void M_Main_Key (int key);
 	void M_SinglePlayer_Key (int key);
-		void M_Load_Key (int key);
-		void M_Save_Key (int key);
 	void M_MultiPlayerSub_Key (int key);
 		void M_ServerList_Key (int key);
 			void M_SEdit_Key (int key);
@@ -99,8 +88,6 @@ void M_Main_Key (int key);
 	void M_Quit_Key (int key);
 
 void M_Menu_Help_f (void);
-
-qbool Plug_Menu_Event(int eventtype, int param);
 
 #define QUAKE_ID_PLAQUE_PATH	"gfx/qplaque.lmp"
 
@@ -123,14 +110,9 @@ typedef struct menu_window_s {
 //=============================================================================
 /* Support Routines */
 
-#ifdef GLQUAKE
 cvar_t     scr_scaleMenu = {"scr_scaleMenu","1"};
 int        menuwidth = 320;
 int        menuheight = 240;
-#else
-#define menuwidth vid.width
-#define menuheight vid.height
-#endif
 
 cvar_t     scr_centerMenu = {"scr_centerMenu","1"};
 cvar_t     menu_ingame = {"menu_ingame", "1"};
@@ -228,7 +210,6 @@ void M_FindKeysForCommand (const char *command, int *twokeys) {
 
 void M_Unscale_Menu(void)
 {
-#ifdef GLQUAKE
 	// do not scale this menu
 	if (scr_scaleMenu.value) 
 	{
@@ -238,14 +219,12 @@ void M_Unscale_Menu(void)
 		glLoadIdentity ();
 		glOrtho  (0, menuwidth, menuheight, 0, -99999, 99999);
 	}
-#endif
 }
 
 // will apply menu scaling effect for given window region
 // scr_scaleMenu 1 uses glOrtho function and we use the same algorithm in here
 static void M_Window_Adjust(const menu_window_t *original, menu_window_t *scaled)
 {
-#ifdef GLQUAKE
 	double sc_x, sc_y; // scale factors
 
 	if (scr_scaleMenu.value)
@@ -261,9 +240,6 @@ static void M_Window_Adjust(const menu_window_t *original, menu_window_t *scaled
 	{
 		memcpy(scaled, original, sizeof(menu_window_t));
 	}
-#else
-	memcpy(scaled, original, sizeof(menu_window_t));
-#endif
 }
 
 // this function will look at window borders and current mouse cursor position
@@ -709,220 +685,6 @@ void M_Quit_Draw (void) { // Quit screen text.
 //=============================================================================
 /* SINGLE PLAYER MENU */
 
-#ifndef CLIENTONLY
-
-#define    SINGLEPLAYER_ITEMS    3
-int    m_singleplayer_cursor;
-qbool m_singleplayer_confirm;
-qbool m_singleplayer_notavail;
-menu_window_t m_singleplayer_window;
-static qbool m_singleplayer_big = false;
-static bigmenu_items_t m_singleplayer_items[] = {
-	{"New Game", NULL},
-	{"Load", NULL}, 
-	{"Save", NULL}
-};
-
-extern    cvar_t    maxclients;
-
-void M_Menu_SinglePlayer_f (void) {
-	M_EnterMenu (m_singleplayer);
-	m_singleplayer_confirm = false;
-	m_singleplayer_notavail = false;
-}
-
-void M_SinglePlayer_Draw (void) {
-	int f = (int)(curtime * 10)%6;
-	mpic_t *p;
-	int itemheight;
-
-#ifndef WITH_NQPROGS
-	if (m_singleplayer_notavail) {
-		p = Draw_CachePic ("gfx/ttl_sgl.lmp");
-		M_DrawPic ( (320-p->width)/2, 4, p);
-		M_DrawTextBox (60, 10*8, 24, 4);
-		M_PrintWhite (80, 12*8, " Cannot start a game");
-		M_PrintWhite (80, 13*8, "spprogs.dat not found");
-		return;
-	}
-#endif
-
-	if (m_singleplayer_confirm) {
-		M_PrintWhite (64, 11*8, "Are you sure you want to");
-		M_PrintWhite (64, 12*8, "    start a new game?");
-		return;
-	}
-
-	M_DrawTransPic (16, BIGMENU_TOP, Draw_CachePic (QUAKE_ID_PLAQUE_PATH) );
-	p = Draw_CachePic ("gfx/ttl_sgl.lmp");
-	M_DrawPic ( (320-p->width)/2, 4, p);
-
-	if (Draw_BigFontAvailable()) {
-		m_singleplayer_big = true;
-		m_singleplayer_window.x = BIGMENU_LEFT + ((menuwidth - 320)>>1);
-		m_singleplayer_window.y = BIGMENU_TOP + m_yofs;
-		M_BigMenu_DrawItems(m_singleplayer_items, BIGMENU_ITEMS_COUNT(m_singleplayer_items),
-			m_singleplayer_window.x, m_singleplayer_window.y, &m_singleplayer_window.w,
-			&m_singleplayer_window.h);
-		itemheight = m_singleplayer_window.h / BIGMENU_ITEMS_COUNT(m_singleplayer_items);
-	}
-	else {
-		m_singleplayer_big = false;
-		p = Draw_CachePic ("gfx/sp_menu.lmp");
-		m_singleplayer_window.w = p->width;
-		m_singleplayer_window.h = p->height;
-		M_DrawTransPic_GetPoint(72, 32, &m_singleplayer_window.x, &m_singleplayer_window.y, p);
-		itemheight = 20;
-	}
-
-	M_DrawTransPic (54, BIGMENU_TOP + m_singleplayer_cursor * itemheight,
-		Draw_CachePic( va("gfx/menudot%i.lmp", f+1 ) ) );
-
-}
-
-#ifndef WITH_NQPROGS
-static void CheckSPGame (void) {
-	vfsfile_t *v;
-	if ((v = FS_OpenVFS("spprogs.dat", "rb", FS_ANY))) {
-		VFS_CLOSE(v);
-		m_singleplayer_notavail = false;
-	} else {
-		m_singleplayer_notavail = true;
-	}
-}
-#endif	// !WITH_NQPROGS
-
-static void StartNewGame (void) {
-	extern cvar_t sv_progtype;
-
-	key_dest = key_game;
-	m_state = m_none;
-	Cvar_Set (&maxclients, "1");
-	Cvar_Set (&teamplay, "0");
-	Cvar_Set (&deathmatch, "0");
-	Cvar_Set (&coop, "0");
-
-	Cvar_Set (&sv_progsname, "spprogs"); // force progsname
-#ifdef USE_PR2
-	Cvar_Set (&sv_progtype, "0"); // force .dat
-#endif
-
-	if (com_serveractive)
-		Cbuf_AddText ("disconnect\n");
-
-	progs = (dprograms_t *) FS_LoadHunkFile ("spprogs.dat", NULL);
-	//if (progs && !file_from_gamedir)
-	//	Cbuf_AddText ("gamedir qw\n");
-	Cbuf_AddText ("map start\n");
-}
-
-void M_SinglePlayer_Key (int key) {
-#ifndef WITH_NQPROGS
-	if (m_singleplayer_notavail) {
-		switch (key) {
-			case K_BACKSPACE:
-			case K_ESCAPE:
-			case K_ENTER:
-				m_singleplayer_notavail = false;
-				break;
-		}
-		return;
-	}
-#endif
-
-	if (m_singleplayer_confirm) {
-		if (key == K_ESCAPE || key == 'n' || key == K_MOUSE2) {
-			m_singleplayer_confirm = false;
-			m_entersound = true;
-		} else if (key == 'y' || key == K_ENTER || key == K_MOUSE1) {
-			StartNewGame ();
-		}
-		return;
-	}
-
-	switch (key) {
-		case K_BACKSPACE:
-			m_topmenu = m_none;    // intentional fallthrough
-		case K_MOUSE2:
-		case K_ESCAPE:
-			M_LeaveMenu (m_main);
-			break;
-
-		case '`':
-		case '~':
-			key_dest = key_console;
-			m_state = m_none;
-			break;
-
-		case K_DOWNARROW:
-		case K_MWHEELDOWN:
-			S_LocalSound ("misc/menu1.wav");
-			if (++m_singleplayer_cursor >= SINGLEPLAYER_ITEMS)
-				m_singleplayer_cursor = 0;
-			break;
-
-		case K_UPARROW:
-		case K_MWHEELUP:
-			S_LocalSound ("misc/menu1.wav");
-			if (--m_singleplayer_cursor < 0)
-				m_singleplayer_cursor = SINGLEPLAYER_ITEMS - 1;
-			break;
-
-		case K_HOME:
-		case K_PGUP:
-			S_LocalSound ("misc/menu1.wav");
-			m_singleplayer_cursor = 0;
-			break;
-
-		case K_END:
-		case K_PGDN:
-			S_LocalSound ("misc/menu1.wav");
-			m_singleplayer_cursor = SINGLEPLAYER_ITEMS - 1;
-			break;
-
-		case K_ENTER:
-		case K_MOUSE1:
-			switch (m_singleplayer_cursor) {
-				case 0:
-#ifndef WITH_NQPROGS
-					CheckSPGame ();
-					if (m_singleplayer_notavail) {
-						m_entersound = true;
-						return;
-					}
-#endif
-					if (com_serveractive) {
-						// bring up confirmation dialog
-						m_singleplayer_confirm = true;
-						m_entersound = true;
-					} else {
-						StartNewGame ();
-					}
-					break;
-
-				case 1:
-					M_Menu_Load_f ();
-					break;
-
-				case 2:
-					M_Menu_Save_f ();
-					break;
-			}
-	}
-}
-
-qbool M_SinglePlayer_Mouse_Event(const mouse_state_t* ms)
-{
-	M_Mouse_Select(&m_singleplayer_window, ms, SINGLEPLAYER_ITEMS, &m_singleplayer_cursor);
-
-    if (ms->button_up == 1) M_SinglePlayer_Key(K_MOUSE1);
-    if (ms->button_up == 2) M_SinglePlayer_Key(K_MOUSE2);
-
-    return true;
-}
-
-#else    // !CLIENTONLY
-
 void M_Menu_SinglePlayer_f (void) {
 	M_EnterMenu (m_singleplayer);
 }
@@ -956,227 +718,6 @@ void M_SinglePlayer_Key (key) {
 			break;
 	}
 }
-#endif    // CLIENTONLY
-
-
-//=============================================================================
-/* LOAD/SAVE MENU */
-
-#ifndef CLIENTONLY
-
-#define    MAX_SAVEGAMES        12
-
-int        load_cursor;        // 0 < load_cursor < MAX_SAVEGAMES
-char    m_filenames[MAX_SAVEGAMES][SAVEGAME_COMMENT_LENGTH + 1];
-int        loadable[MAX_SAVEGAMES];
-menu_window_t load_window, save_window;
-
-void M_ScanSaves (char *sp_gamedir) {
-	int i, j, version;
-	char name[MAX_OSPATH];
-	vfsfile_t *f;
-
-	for (i = 0; i < MAX_SAVEGAMES; i++) {
-		strlcpy (m_filenames[i], "--- UNUSED SLOT ---", SAVEGAME_COMMENT_LENGTH + 1);
-		loadable[i] = false;
-
-		snprintf (name, sizeof(name), "save/s%i.sav", i);
-		if (!(f = FS_OpenVFS(name, "rb", FS_GAME_OS)))
-			continue;
-		VFS_GETS(f, name, sizeof(name));
-		version = atoi(name);
-		VFS_GETS(f, name, sizeof(name));
-		strlcpy (m_filenames[i], name, sizeof(m_filenames[i]));
-
-		// change _ back to space
-		for (j = 0; j < SAVEGAME_COMMENT_LENGTH; j++)
-			if (m_filenames[i][j] == '_')
-				m_filenames[i][j] = ' ';
-		loadable[i] = true;
-		VFS_CLOSE(f);
-	}
-}
-
-void M_Menu_Load_f (void) {
-	vfsfile_t *f;
-
-	if (!(f = FS_OpenVFS("spprogs.dat", "rb", FS_ANY)))
-		return;
-
-	M_EnterMenu (m_load);
-	// VFS-FIXME: file_from_gamedir is not set in FS_OpenVFS
-	M_ScanSaves (!file_from_gamedir ? "qw" : com_gamedir);
-}
-
-void M_Menu_Save_f (void) {
-	if (sv.state != ss_active)
-		return;
-	if (cl.intermission)
-		return;
-
-	M_EnterMenu (m_save);
-	M_ScanSaves (com_gamedir);
-}
-
-void M_Load_Draw (void) {
-	int i;
-	mpic_t *p;
-	int lx = 0, ly = 0;	// lower bounds of the window
-
-	p = Draw_CachePic ("gfx/p_load.lmp");
-	M_DrawPic ( (320 - p->width) >> 1, 4, p);
-
-	for (i = 0; i < MAX_SAVEGAMES; i++)
-	{
-		if (i == 0)
-			M_Print_GetPoint (16, 32 + 8*i, &load_window.x, &load_window.y, m_filenames[i], load_cursor == 0);
-		else 
-			M_Print_GetPoint (16, 32 + 8*i, &lx, &ly, m_filenames[i], load_cursor == i);
-	}
-
-	load_window.w = SAVEGAME_COMMENT_LENGTH*8; // presume 8 pixels for each letter
-	load_window.h = ly - load_window.y + 8;
-
-	// line cursor
-	M_DrawCharacter (8, 32 + load_cursor * 8, FLASHINGARROW());
-}
-
-void M_Save_Draw (void) {
-	int i;
-	mpic_t *p;
-	int lx = 0, ly = 0;	// lower bounds of the window
-
-	p = Draw_CachePic ("gfx/p_save.lmp");
-	M_DrawPic ( (320 - p->width) >> 1, 4, p);
-
-	for (i = 0; i < MAX_SAVEGAMES; i++)
-	{
-		if (i == 0)
-			M_Print_GetPoint (16, 32 + 8 * i, &save_window.x, &save_window.y, m_filenames[i], load_cursor == 0);
-		else
-			M_Print_GetPoint (16, 32 + 8 * i, &lx, &ly, m_filenames[i], load_cursor == i);
-	}
-
-	save_window.w = SAVEGAME_COMMENT_LENGTH*8; // presume 8 pixels for each letter
-	save_window.h = ly - save_window.y + 8;
-
-	// line cursor
-	M_DrawCharacter (8, 32 + load_cursor * 8, FLASHINGARROW());
-}
-
-void M_Load_Key (int key) {
-	switch (key) {
-		case K_BACKSPACE:
-			m_topmenu = m_none;    // intentional fallthrough
-		case K_MOUSE2:
-		case K_ESCAPE:
-			M_LeaveMenu (m_singleplayer);
-			break;
-
-		case '`':
-		case '~':
-			key_dest = key_console;
-			m_state = m_none;
-			break;
-
-		case K_ENTER:
-		case K_MOUSE1:
-			S_LocalSound ("misc/menu2.wav");
-			if (!loadable[load_cursor])
-				return;
-			m_state = m_none;
-			key_dest = key_game;
-
-			// issue the load command
-			if (FS_LoadHunkFile ("spprogs.dat", NULL) && !file_from_gamedir)
-				; //Cbuf_AddText("disconnect; gamedir qw\n");
-			Cbuf_AddText (va ("load s%i\n", load_cursor) );
-			return;
-
-		case K_UPARROW:
-		case K_MWHEELUP:
-		case K_LEFTARROW:
-			S_LocalSound ("misc/menu1.wav");
-			load_cursor--;
-			if (load_cursor < 0)
-				load_cursor = MAX_SAVEGAMES - 1;
-			break;
-
-		case K_DOWNARROW:
-		case K_MWHEELDOWN:
-		case K_RIGHTARROW:
-			S_LocalSound ("misc/menu1.wav");
-			load_cursor++;
-			if (load_cursor >= MAX_SAVEGAMES)
-				load_cursor = 0;
-			break;
-	}
-}
-
-void M_Save_Key (int key) {
-	switch (key) {
-		case K_BACKSPACE:
-			m_topmenu = m_none;    // intentional fallthrough
-		case K_MOUSE2:
-		case K_ESCAPE:
-			M_LeaveMenu (m_singleplayer);
-			break;
-
-		case '`':
-		case '~':
-			key_dest = key_console;
-			m_state = m_none;
-			break;
-
-		case K_ENTER:
-		case K_MOUSE1:
-			m_state = m_none;
-			key_dest = key_game;
-			Cbuf_AddText (va("save s%i\n", load_cursor));
-			return;
-
-		case K_UPARROW:
-		case K_MWHEELUP:
-		case K_LEFTARROW:
-			S_LocalSound ("misc/menu1.wav");
-			load_cursor--;
-			if (load_cursor < 0)
-				load_cursor = MAX_SAVEGAMES-1;
-			break;
-
-		case K_DOWNARROW:
-		case K_MWHEELDOWN:
-		case K_RIGHTARROW:
-			S_LocalSound ("misc/menu1.wav");
-			load_cursor++;
-			if (load_cursor >= MAX_SAVEGAMES)
-				load_cursor = 0;
-			break;
-	}
-}
-
-qbool M_Save_Mouse_Event(const mouse_state_t *ms)
-{
-	M_Mouse_Select(&save_window, ms, MAX_SAVEGAMES, &load_cursor);
-
-    if (ms->button_up == 1) M_Save_Key(K_MOUSE1);
-    if (ms->button_up == 2) M_Save_Key(K_MOUSE2);
-
-	return true;
-}
-
-qbool M_Load_Mouse_Event(const mouse_state_t *ms)
-{
-	M_Mouse_Select(&load_window, ms, MAX_SAVEGAMES, &load_cursor);
-
-    if (ms->button_up == 1) M_Load_Key(K_MOUSE1);
-    if (ms->button_up == 2) M_Load_Key(K_MOUSE2);
-
-    return true;
-}
-
-#endif
-
 
 // ================================
 // Multiplayer submenu
@@ -1290,17 +831,13 @@ void M_Menu_Demos_f (void)
 
 void M_Init (void) {
 	extern cvar_t menu_marked_bgcolor;
-#ifdef GLQUAKE
 	extern cvar_t menu_marked_fade;
-#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_MENU);
 	Cvar_Register (&scr_centerMenu);
 	Cvar_Register (&menu_ingame);
-#ifdef GLQUAKE
 	Cvar_Register (&scr_scaleMenu);
 	Cvar_Register (&menu_marked_fade);
-#endif
 
 	Cvar_Register (&menu_marked_bgcolor);
 	Browser_Init();
@@ -1315,11 +852,6 @@ void M_Init (void) {
 	Cmd_AddCommand ("toggleproxymenu", M_ToggleProxyMenu_f);
 
 	Cmd_AddCommand ("menu_main", M_Menu_Main_f);
-#ifndef CLIENTONLY
-	Cmd_AddCommand ("menu_singleplayer", M_Menu_SinglePlayer_f);
-	Cmd_AddCommand ("menu_load", M_Menu_Load_f);
-	Cmd_AddCommand ("menu_save", M_Menu_Save_f);
-#endif
 	Cmd_AddCommand ("menu_multiplayer", M_Menu_MultiPlayer_f);
 	Cmd_AddCommand ("menu_slist", M_Menu_MultiPlayer_f);
 #ifdef WITH_MP3_PLAYER
@@ -1342,13 +874,7 @@ void M_Draw (void) {
 
 		if (SCR_NEED_CONSOLE_BACKGROUND) {
 			Draw_ConsoleBackground (scr_con_current);
-#if (!defined GLQUAKE && defined _WIN32)
-			VID_UnlockBuffer ();
-#endif
 			CL_S_ExtraUpdate ();
-#if (!defined GLQUAKE && defined _WIN32)
-			VID_LockBuffer ();
-#endif
 		} else {
 			// if you don't like fade in ingame menu, uncomment this
 			// if (m_state != m_ingame && m_state != m_democtrl)
@@ -1360,8 +886,7 @@ void M_Draw (void) {
 		m_recursiveDraw = false;
 	}
 
-#ifdef GLQUAKE
-	if (scr_scaleMenu.value && m_state != m_plugin) {
+	if (scr_scaleMenu.value) {
 		menuwidth = 320;
 		menuheight = min (vid.height, 240);
 		glMatrixMode(GL_PROJECTION);
@@ -1371,7 +896,6 @@ void M_Draw (void) {
 		menuwidth = vid.width;
 		menuheight = vid.height;
 	}
-#endif
 
 	if (scr_centerMenu.value)
 		m_yofs = (menuheight - 200) / 2;
@@ -1382,10 +906,6 @@ void M_Draw (void) {
 		case m_none: break;
 		case m_main:			M_Main_Draw (); break;
 		case m_singleplayer:	M_SinglePlayer_Draw (); break;
-#ifndef CLIENTONLY
-		case m_load:			M_Load_Draw (); break;
-		case m_save:			M_Save_Draw (); break;
-#endif
 		case m_multiplayer:		Menu_MultiPlayer_Draw (); break;
 		case m_multiplayer_submenu: M_MultiPlayerSub_Draw(); break;
 		case m_options:			M_Options_Draw(); break;
@@ -1394,32 +914,23 @@ void M_Draw (void) {
 		case m_help:			M_Help_Draw(); break;
 		case m_quit:			M_Quit_Draw(); break;
 		case m_demos:			Menu_Demo_Draw(); break;
-		case m_plugin:			Plug_Menu_Event(0, (int)(realtime*1000)); break;
 #ifdef WITH_MP3_PLAYER
 		case m_mp3_control:		M_Menu_MP3_Control_Draw(); break;
 		case m_mp3_playlist:	M_Menu_MP3_Playlist_Draw(); break;
 #endif
 	}
 
-#ifdef GLQUAKE
 	if (scr_scaleMenu.value) {
 		glMatrixMode (GL_PROJECTION);
 		glLoadIdentity ();
 		glOrtho  (0, vid.width, vid.height, 0, -99999, 99999);
 	}
-#endif
 
 	if (m_entersound) {
 		S_LocalSound ("misc/menu2.wav");
 		m_entersound = false;
 	}
-#if (!defined GLQUAKE && defined _WIN32)
-	VID_UnlockBuffer ();
-#endif
 	CL_S_ExtraUpdate ();
-#if (!defined GLQUAKE && defined _WIN32)
-	VID_LockBuffer ();
-#endif
 }
 
 void M_Keydown (int key, wchar unichar) {
@@ -1427,10 +938,6 @@ void M_Keydown (int key, wchar unichar) {
 		case m_none: return;
 		case m_main:			M_Main_Key(key); return;
 		case m_singleplayer:	M_SinglePlayer_Key(key); return;
-#ifndef CLIENTONLY
-		case m_load:			M_Load_Key(key); return;
-		case m_save:			M_Save_Key(key); return;
-#endif
 		case m_multiplayer:		Menu_MultiPlayer_Key(key, unichar); return;
 		case m_multiplayer_submenu: M_MultiPlayerSub_Key(key); return;
 		case m_options: 		M_Options_Key(key, unichar); return;
@@ -1439,7 +946,6 @@ void M_Keydown (int key, wchar unichar) {
 		case m_help:			Menu_Help_Key(key, unichar); return;
 		case m_quit:			M_Quit_Key(key); return;
 		case m_demos:			Menu_Demo_Key(key, unichar); break;
-		case m_plugin:			Plug_Menu_Event(1, key); break;
 #ifdef WITH_MP3_PLAYER
 		case m_mp3_control: 	M_Menu_MP3_Control_Key(key); break;
 		case m_mp3_playlist: 	M_Menu_MP3_Playlist_Key(key); break;
@@ -1460,13 +966,8 @@ qbool Menu_Mouse_Event(const mouse_state_t* ms)
     // functions should report if they handled the event or not
     switch (m_state) {
 	case m_main:			return M_Main_Mouse_Event(ms);
-	case m_singleplayer:	return M_SinglePlayer_Mouse_Event(ms);
 	case m_multiplayer:		return Menu_MultiPlayer_Mouse_Event(ms);
 	case m_multiplayer_submenu: return M_MultiPlayerSub_Mouse_Event(ms);
-#ifndef CLIENTONLY
-	case m_load:			return M_Load_Mouse_Event(ms);
-	case m_save:			return M_Save_Mouse_Event(ms);
-#endif
 	case m_options:			return Menu_Options_Mouse_Event(ms);
 	case m_demos:			return Menu_Demo_Mouse_Event(ms);
 	case m_ingame:			return Menu_Ingame_Mouse_Event(ms);

@@ -42,9 +42,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define _MAX_DIR 1024
 #endif
 
-
-
 #include "localtime.h"
+
+#ifdef _WIN32
+	typedef HMODULE DL_t;
+	#define DLEXT "dll"
+#else
+	typedef void *DL_t;
+	#define DLEXT "so"
+#endif /* _WIN32 */
+
+/* MOVE ME */
+char *Q_normalizetext (char *name); //bliP: red to white text
+unsigned char *Q_redtext (unsigned char *str); //bliP: white to red text
+unsigned char *Q_yelltext (unsigned char *str); //VVD: white to red text and yellow numbers
+/* END */
+
+DL_t Sys_DLOpen (const char *path);
+qbool Sys_DLClose( DL_t dl);
+void *Sys_DLProc (DL_t dl, const char *name);
 
 // create thread (process under linux)
 int  Sys_CreateThread(DWORD (WINAPI *func)(void *), void *param);

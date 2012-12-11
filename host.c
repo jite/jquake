@@ -42,13 +42,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "embed_tcl.h"
 #endif
 #include "modules.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "rulesets.h"
 #include "teamplay.h"
 #include "pmove.h"
@@ -146,14 +141,10 @@ void SYSINFO_Init(void)
 		RegCloseKey(hKey);
 	}
 
-	#ifdef GLQUAKE
-	{
-		extern const char *gl_renderer;
+	extern const char *gl_renderer;
 
-		if (gl_renderer  &&  gl_renderer[0])
-			SYSINFO_3D_description = Q_strdup(gl_renderer);
-	}
-	#endif // GLQUAKE
+	if (gl_renderer  &&  gl_renderer[0])
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
 
 	//
 	// Create the f_system string.
@@ -236,14 +227,10 @@ void SYSINFO_Init(void)
 		Com_Printf("could not open /proc/cpuinfo!\n");
 	}
 
-#ifdef GLQUAKE
-	{
-		extern const char *gl_renderer;
+	extern const char *gl_renderer;
 
-		if (gl_renderer  &&  gl_renderer[0])
-			SYSINFO_3D_description = Q_strdup(gl_renderer);
-	}
-#endif
+	if (gl_renderer  &&  gl_renderer[0])
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory));
 
@@ -264,14 +251,10 @@ void SYSINFO_Init(void)
 {
 	// TODO: disconnect --> f_system for MacOSX (man sysctl)
 	// VVD: Look at code for FreeBSD: 30 lines down. :-)
-#ifdef GLQUAKE
-	{
-		extern const char *gl_renderer;
+	extern const char *gl_renderer;
 
-		if (gl_renderer  &&  gl_renderer[0])
-			SYSINFO_3D_description = Q_strdup(gl_renderer);
-	}
-#endif
+	if (gl_renderer  &&  gl_renderer[0])
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
@@ -337,14 +320,10 @@ void SYSINFO_Init(void)
 // Must work on Pentium 1/2/3; tested on Pentium 4. And RELENG_4 have no this sysctl.
 #endif
 
-#ifdef GLQUAKE
-	{
-		extern const char *gl_renderer;
+	extern const char *gl_renderer;
 
-		if (gl_renderer  &&  gl_renderer[0])
-			SYSINFO_3D_description = Q_strdup(gl_renderer);
-	}
-#endif
+	if (gl_renderer  &&  gl_renderer[0])
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
 
 	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
 
@@ -374,7 +353,6 @@ void Host_Abort (void)
 
 void Host_EndGame (void)
 {
-	SV_Shutdown ("Server was killed");
 	CL_Disconnect ();
 	// clear disconnect messages from loopback
 	NET_ClearLoopback ();
@@ -399,7 +377,6 @@ void Host_Error (char *error, ...)
 	Com_Printf ("Host_Error: %s\n",string);
 	Com_Printf ("===========================\n\n");
 
-	SV_Shutdown (va("server crashed: %s\n", string));
 	CL_Disconnect ();
 
 	if (!host_initialized)
@@ -455,7 +432,7 @@ void Host_Frame (double time)
 
 	curtime += time;
 
-	CL_Frame (time);	// will also call SV_Frame
+	CL_Frame (time);
 }
 
 char *Host_PrintBars(char *s, int len)
@@ -489,8 +466,6 @@ char *Host_PrintBars(char *s, int len)
 
 static void Commands_For_Configs_Init (void)
 {
-extern void SV_Floodprot_f (void);
-extern void SV_Floodprotmsg_f (void);
 extern void TP_MsgTrigger_f (void);
 extern void TP_MsgFilter_f (void);
 extern void TP_Took_f (void);
@@ -498,19 +473,15 @@ extern void TP_Pickup_f (void);
 extern void TP_Point_f (void);
 extern void MT_AddMapGroups (void);
 extern void MT_MapGroup_f (void);
-#ifdef GLQUAKE
 extern void MT_AddSkyGroups (void);
 extern void MT_SkyGroup_f (void);
 extern void CL_Fog_f (void);
-#endif
 extern void SB_SourceUnmarkAll(void);
 extern void SB_SourceMark(void);
 extern void LoadConfig_f(void);
 
 
 	//disconnect: fix it if i forgot something
-	Cmd_AddCommand ("floodprot", SV_Floodprot_f);
-	Cmd_AddCommand ("floodprotmsg", SV_Floodprotmsg_f);
 	Cmd_AddCommand ("msg_trigger", TP_MsgTrigger_f);
 	Cmd_AddCommand ("filter", TP_MsgFilter_f);
 	Cmd_AddCommand ("tp_took", TP_Took_f);
@@ -520,11 +491,9 @@ extern void LoadConfig_f(void);
 	MT_AddMapGroups ();
 	Cmd_AddCommand ("mapgroup", MT_MapGroup_f);
 
-#ifdef GLQUAKE
 	MT_AddSkyGroups ();
 	Cmd_AddCommand ("skygroup", MT_SkyGroup_f);
 	Cmd_AddCommand ("fog", CL_Fog_f);
-#endif
 	Cmd_AddCommand ("allskins", Skin_AllSkins_f);
 
 	Cmd_AddCommand ("sb_sourceunmarkall", SB_SourceUnmarkAll);
@@ -622,7 +591,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	PM_Init ();
 	Mod_Init ();
 
-	SV_Init ();
 	CL_Init ();
 
 	Cvar_CleanUpTempVars ();
@@ -744,8 +712,6 @@ void Host_Shutdown (void)
 	// at the same time may repeats repeats repeats some sounds, trying preventing this
 	S_StopAllSounds (true);
 	S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
-
-	SV_Shutdown ("Server quit\n");
 
 #if (!defined WITH_PNG_STATIC && !defined WITH_JPEG_STATIC)
 	QLib_Shutdown();

@@ -60,12 +60,11 @@ extern int m_yofs;
 #define FLASHINGCURSOR() (10+((int)(curtime*4)&1))
 
 typedef enum {
-    m_none, m_main, m_proxy, m_singleplayer, m_load, m_save,
+    m_none, m_main, m_proxy, m_singleplayer,
 	m_multiplayer, m_demos, m_multiplayer_submenu,
     m_options,
 	m_help,
 	m_quit, m_ingame, 
-	m_plugin,
 #ifdef WITH_MP3_PLAYER
     m_mp3_control, m_mp3_playlist
 #endif

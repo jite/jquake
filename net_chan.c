@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <time.h>
 #include "quakedef.h"
-#include "server.h"
 
 
 #define	PACKET_HEADER 8
@@ -252,11 +251,6 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 		chan->cleartime = curtime + send.cursize * chan->rate;
 	else
 		chan->cleartime += send.cursize * chan->rate;
-
-#ifndef CLIENTONLY
-	if (chan->sock == NS_SERVER && sv.paused)
-		chan->cleartime = curtime;
-#endif
 
 	if (showpackets.value) {
 		Print_flags[Print_current] |= PR_TR_SKIP;

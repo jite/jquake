@@ -55,16 +55,10 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #include "hud.h"
 #include "hud_common.h"
 #include "hud_editor.h"
-#include "auth.h"
 #include "input.h"
-#ifdef GLQUAKE
 #include "gl_model.h"
 #include "gl_local.h"
 #include "tr_types.h"
-#else
-#include "r_model.h"
-#include "r_local.h"
-#endif
 #include "teamplay.h"
 #include "tp_triggers.h"
 #include "rulesets.h"
@@ -82,9 +76,6 @@ $Id: cl_main.c,v 1.207 2007-10-28 19:56:44 qqshka Exp $
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#endif
-#ifndef CLIENTONLY
-#include "server.h"
 #endif
 #include "fs.h"
 #include "help.h"
@@ -259,11 +250,7 @@ lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
 dlight_t		cl_dlights[MAX_DLIGHTS];
 
 // refresh list
-#ifdef GLQUAKE
 visentlist_t	cl_firstpassents, cl_visents, cl_alphaents;
-#else
-visentlist_t	cl_visents, cl_visbents;
-#endif
 
 double		connect_time = 0;		// for connection retransmits
 qbool		connected_via_proxy = false;
@@ -741,29 +728,6 @@ void CL_CheckForResend (void)
 	char data[2048];
 	double t1, t2;
 
-	if (cls.state == ca_disconnected && com_serveractive) 
-	{
-		// if the local server is running and we are not, then connect
-		strlcpy (cls.servername, "local", sizeof(cls.servername));
-		NET_StringToAdr("local", &cls.server_adr);
-
-		// We don't need a challenge on the local server.
-		CL_SendConnectPacket(
-#ifdef PROTOCOL_VERSION_FTE
-				svs.fteprotocolextensions
-	#ifdef PROTOCOL_VERSION_FTE2
-				,
-	#endif // PROTOCOL_VERSION_FTE2
-#endif // PROTOCOL_VERSION_FTE
-#ifdef PROTOCOL_VERSION_FTE2
-				svs.fteprotocolextensions2
-#endif // PROTOCOL_VERSION_FTE
-				);
-		
-		// FIXME: cls.state = ca_connecting so that we don't send the packet twice?
-		return;
-	}
-
 	if (cls.state != ca_disconnected || !connect_time)
 		return;
 	if (cls.realtime - connect_time < 5.0)
@@ -783,7 +747,8 @@ void CL_CheckForResend (void)
 	if (cls.server_adr.port == 0)
 		cls.server_adr.port = BigShort(PORT_SERVER);
 
-	Com_Printf("Connecting to %s...\n", cls.servername);
+/* COLOR */
+	Com_Printf("&cf11connect:&r %s...\n", cls.servername);
 	snprintf(data, sizeof(data), "\xff\xff\xff\xff" "getchallenge\n");
 	NET_SendPacket(NS_CLIENT, strlen(data), data, cls.server_adr);
 }
@@ -1241,9 +1206,7 @@ void CL_DNS_f(void)
 		Com_Printf("Resolved %s to %s\n", address, h->h_name);
 }
 
-#ifdef GLQUAKE
 void SCR_ClearShownick(void);
-#endif // GLQUAKE
 
 void SCR_ClearTeamInfo(void);
 void SCR_ClearWeaponStats(void);
@@ -1295,10 +1258,8 @@ void CL_ClearState (void)
 
 	memset(&cshift_empty, 0, sizeof(cshift_empty));
 
-	#ifdef GLQUAKE
 	// Clear shownick structs
 	SCR_ClearShownick();
-	#endif // !GLQUAKE
 
 	// Clear teaminfo structs
 	SCR_ClearTeamInfo();
@@ -1318,13 +1279,7 @@ void CL_Disconnect (void)
 {
 	extern cvar_t r_lerpframes, cl_fakeshaft;
 
-	#ifdef GLQUAKE
 	extern cvar_t gl_polyblend, gl_clear;
-	#else
-	extern cvar_t r_waterwarp;
-	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
-		v_damagecshift, v_suitcshift, v_bonusflash;
-	#endif // GLQUAKE
 
 	byte final[10];
 
@@ -1341,19 +1296,8 @@ void CL_Disconnect (void)
 	v_contrast.value		= nContrastExit;
 	cl_fakeshaft.value		= nfakeshaft;
 
-	#ifdef GLQUAKE
 	gl_polyblend.value		= nPolyblendExit;
 	gl_clear.value			= nGlClearExit;
-	#else
-	r_waterwarp.value		= nWaterwarp;
-	v_contentblend.value	= nContentblend;
-	v_quadcshift.value		= nQuadshift;
-	v_ringcshift.value		= nRingshift;
-	v_pentcshift.value		= nPentshift;
-	v_damagecshift.value	= nDamageshift;
-	v_suitcshift.value		= nSuitshift;
-	v_bonusflash.value		= nBonusflash;
-	#endif // GLQUAKE
 
 	r_lerpframes.value		= nLerpframesExit;
 	nTrack1duel = nTrack2duel = 0;
@@ -1497,7 +1441,6 @@ void CL_Reconnect_f (void)
 
 extern double qstat_senttime;
 extern void CL_PrintQStatReply (char *s);
-int Plug_ConnectionlessClientPacket(byte *buffer, int size);
 
 // Responses to broadcasts, etc
 void CL_ConnectionlessPacket (void) 
@@ -1515,9 +1458,6 @@ void CL_ConnectionlessPacket (void)
     MSG_BeginReading();
     MSG_ReadLong();	// Skip the -1
 
-	if (Plug_ConnectionlessClientPacket(net_message.data+4, net_message.cursize-4))
-		return;
-
 	c = MSG_ReadByte();
 
 	if (msg_badread)
@@ -1534,7 +1474,9 @@ void CL_ConnectionlessPacket (void)
 				Com_DPrintf("cls.server_adr %s\n", NET_AdrToString(cls.server_adr));
 				return;
 			}
-			Com_Printf("%s: challenge\n", NET_AdrToString(net_from));
+			/* COLOR
+			Com_Printf("%s: challenge\n", NET_AdrToString(net_from));*/
+			Com_Printf("&cf55challenge&r ...\n");
 			cls.challenge = atoi(MSG_ReadString());
 
 			for(;;)
@@ -1575,7 +1517,9 @@ void CL_ConnectionlessPacket (void)
 			if (!NET_CompareAdr(net_from, cls.server_adr))
 				return;
 			if (!com_serveractive || developer.value)
-				Com_Printf("%s: connection\n", NET_AdrToString(net_from));
+				/* COLOR
+				Com_Printf("%s: connection\n", NET_AdrToString(net_from)); */
+				Com_Printf("&cff5connection&r ...\n");
 
 			if (cls.state >= ca_connected) 
 			{
@@ -1588,7 +1532,7 @@ void CL_ConnectionlessPacket (void)
 			MSG_WriteString (&cls.netchan.message, "new");
 			cls.state = ca_connected;
 			if (!com_serveractive || developer.value)
-				Com_Printf("Connected.\n");
+				Com_Printf("&c1f1connected!&r\n"); /* COLOR */
 			allowremotecmd = false; // localid required now for remote cmds
 			break;
 		}
@@ -1809,7 +1753,6 @@ void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel)
 
 void CL_InitCommands (void);
 
-#ifdef GLQUAKE
 void CL_Fog_f (void) 
 {
 	extern cvar_t gl_fogred, gl_foggreen, gl_fogblue, gl_fogenable;
@@ -1824,7 +1767,6 @@ void CL_Fog_f (void)
 	Cvar_SetValue (&gl_foggreen, atof(Cmd_Argv(2)));
 	Cvar_SetValue (&gl_fogblue, atof(Cmd_Argv(3)));
 }
-#endif
 
 void CL_InitLocal (void) 
 {
@@ -2073,7 +2015,6 @@ void ReloadPaletteAndColormap(void)
 }
 
 void EX_FileList_Init(void);
-void Plug_Init(void);
 
 void CL_Init (void) 
 {
@@ -2091,7 +2032,6 @@ void CL_Init (void)
 	strlcpy (cls.gamedirfile, com_gamedirfile, sizeof (cls.gamedirfile));
 	strlcpy (cls.gamedir, com_gamedir, sizeof (cls.gamedir));
 
-	Modules_Init();
 	FChecks_Init();
 
 	ReloadPaletteAndColormap();
@@ -2115,7 +2055,7 @@ void CL_Init (void)
 
 	GFX_Init ();
 
-#if defined(FRAMEBUFFERS) && defined(GLQUAKE)
+#if defined(FRAMEBUFFERS)
 	Framebuffer_Init();
 #endif
 
@@ -2143,7 +2083,6 @@ void CL_Init (void)
 	MT_Init();
 	CL_Demo_Init();
 	Ignore_Init();
-	Auth_Init();
 	Log_Init();
 	Movie_Init();
 
@@ -2171,7 +2110,6 @@ void CL_Init (void)
 	Sys_InitIPC();
 
 	Rulesets_Init();
-	Plug_Init();
 }
 
 //============================================================================
@@ -2213,22 +2151,6 @@ void CL_BeginLocalConnection (void)
 // automatically pause the game when going into the menus in single player
 static void CL_CheckAutoPause (void) 
 {
-	#ifndef CLIENTONLY
-
-	extern cvar_t maxclients;
-
-	if (com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1
-		&& (key_dest == key_menu /*|| key_dest == key_console*/))
-	{
-		if (!(sv.paused & 2))
-			SV_TogglePause (NULL, 2);
-	}
-	else 
-	{
-		if (sv.paused & 2)
-			SV_TogglePause (NULL, 2);
-	}
-	#endif // CLIENTONLY
 }
 
 
@@ -2265,7 +2187,7 @@ static double CL_MinFrameTime (void)
 		if (cl_independentPhysics.value == 0)
 		{
 			fpscap = cl.maxfps ? max (30.0, cl.maxfps) : Rulesets_MaxFPS();
-			fps = cl_maxfps.value ? bound (30.0, cl_maxfps.value, fpscap) : com_serveractive ? fpscap : bound (30.0, rate.value / 80.0, fpscap);
+			fps = cl_maxfps.value ? bound (30.0, cl_maxfps.value, fpscap) : bound (30.0, rate.value / 80.0, fpscap);
 		}
 		else
 			fps = cl_maxfps.value ? max(cl_maxfps.value, 30) : 99999; //#fps:
@@ -2332,7 +2254,7 @@ int timings_idx;
 // Returns true if it's not time yet to run a frame
 qbool VSyncLagFix (void)
 {
-#if defined(GLQUAKE) && defined(_WIN32)
+#if defined(_WIN32)
 	extern qbool vid_vsync_on;
 	extern double vid_last_swap_time;
 	double avg_rendertime, tmin, tmax;
@@ -2373,7 +2295,6 @@ qbool VSyncLagFix (void)
 }
 
 void CL_QTVPoll (void);
-void Plug_Tick(void);
 
 qbool physframe;
 double physframetime;
@@ -2388,14 +2309,8 @@ void CL_Frame (double time)
 	static double	extraphysframetime;	//#fps
 
 	extern cvar_t r_lerpframes;
-	#ifdef GLQUAKE
 	extern cvar_t gl_clear;
 	extern cvar_t gl_polyblend;
-	#else
-	extern cvar_t r_waterwarp;
-	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
-		v_damagecshift, v_suitcshift, v_bonusflash;
-	#endif // GLQUAKE
 
 	extratime += time;
 	minframetime = CL_MinFrameTime();
@@ -2483,8 +2398,6 @@ void CL_Frame (double time)
 		host_skipframe = false;
 	}
 
-	Plug_Tick();
-
 	cls.realtime += cls.frametime;
 
 	if (!ISPAUSED) 
@@ -2517,9 +2430,6 @@ void CL_Frame (double time)
 		// process console commands
 		Cbuf_Execute();
 		CL_CheckAutoPause();
-
-//		if (com_serveractive)
-			SV_Frame(cls.frametime);
 
 		// fetch results from server
 		CL_ReadPackets();
@@ -2562,9 +2472,6 @@ void CL_Frame (double time)
 			// process console commands
 			Cbuf_Execute();
 			CL_CheckAutoPause ();
-
-//			if (com_serveractive)
-				SV_Frame (physframetime);
 
 			// Fetch results from server
 			CL_ReadPackets();
@@ -2680,19 +2587,8 @@ void CL_Frame (double time)
 		nViewsizeExit		= scr_viewsize.value;
 		nfakeshaft			= cl_fakeshaft.value;
 
-		#ifdef GLQUAKE
 		nPolyblendExit		= gl_polyblend.value;
 		nGlClearExit		= gl_clear.value;
-		#else
-		nWaterwarp			= r_waterwarp.value;
-		nContentblend		= v_contentblend.value;
-		nQuadshift			= v_quadcshift.value;
-		nRingshift			= v_ringcshift.value;
-		nPentshift			= v_pentcshift.value;
-		nDamageshift		= v_damagecshift.value;
-		nSuitshift			= v_suitcshift.value;
-		nBonusflash			= v_bonusflash.value;
-		#endif
 
 		nLerpframesExit		= r_lerpframes.value;
 		CURRVIEW = 0;
@@ -2704,19 +2600,8 @@ void CL_Frame (double time)
 		v_contrast.value = nContrastExit;
 		cl_fakeshaft.value = nfakeshaft;
 
-		#ifdef GLQUAKE
 		gl_polyblend.value = nPolyblendExit;
 		gl_clear.value = nGlClearExit;
-		#else
-		r_waterwarp.value = nWaterwarp;
-		v_contentblend.value = nContentblend;
-		v_quadcshift.value = nQuadshift;
-		v_ringcshift.value = nRingshift;
-		v_pentcshift.value = nPentshift;
-		v_damagecshift.value = nDamageshift;
-		v_suitcshift.value = nSuitshift;
-		v_bonusflash.value = nBonusflash;
-		#endif
 
 		r_lerpframes.value = nLerpframesExit;
 		bExitmultiview = false;
@@ -2814,7 +2699,6 @@ void CL_Shutdown (void)
 	S_Shutdown();
 	MP3_Shutdown();
 	IN_Shutdown ();
-	Modules_Shutdown();
 	Log_Shutdown();
 	if (host_basepal)
 		VID_Shutdown();
@@ -2921,14 +2805,8 @@ void CL_Multiview(void)
 {
 	static int playernum = 0;
 
-	#ifdef GLQUAKE
 	extern cvar_t gl_polyblend;
 	extern cvar_t gl_clear;
-	#else
-	extern cvar_t r_waterwarp;
-	extern cvar_t v_contentblend, v_quadcshift, v_ringcshift, v_pentcshift,
-		v_damagecshift, v_suitcshift, v_bonusflash;
-	#endif
 	extern cvar_t r_lerpframes;
 
 	if (!cls.mvdplayback)
@@ -2972,20 +2850,8 @@ void CL_Multiview(void)
 		scr_viewsize.value = 100;
 	}
 
-	#ifdef GLQUAKE
 	gl_polyblend.value = 0;
 	gl_clear.value = 0;
-	#else
-	// disable these because they don't restrict the change to just the new viewport
-	r_waterwarp.value = 0;
-	v_contentblend.value = 0;
-	v_quadcshift.value = 0;
-	v_ringcshift.value = 0;
-	v_pentcshift.value = 0;
-	v_damagecshift.value = 0;
-	v_suitcshift.value = 0;
-	v_bonusflash.value = 0;
-	#endif
 
 	// stop weapon model lerping as it lerps with the other view
 	r_lerpframes.value = 0;
