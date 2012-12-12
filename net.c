@@ -903,7 +903,7 @@ int UDP_OpenSocket (netadrtype_t type, int port)
 		close(newsocket);
 		return INVALID_SOCKET;
 	}
-	
+
 	return newsocket;
 }
 
@@ -1017,8 +1017,10 @@ void NET_InitClient(void)
 	// init the message buffer
 	SZ_Init (&net_message, net_message_buffer, sizeof(net_message_buffer));
 
+/* FIXME Change this one to a call to like NET_IsLocalAddress instead of setting this global
+ *       Must work on IPv4 and IPv6 though! */
 	// determine my name & address
-	NET_GetLocalAddress (cls.socketip, &net_local_cl_ipadr);
+	//NET_GetLocalAddress (cls.socketip, &net_local_cl_ipadr);
 
 	Com_Printf_State (PRINT_OK, "Client port Initialized\n");
 }
