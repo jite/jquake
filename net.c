@@ -22,10 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_LOOPBACK 4 // must be a power of two
 
-netadr_t	net_local_cl_ipadr;
-netadr_t	net_from;
-sizebuf_t	net_message;
-byte		net_message_buffer[MSG_BUF_SIZE];
+netadr_t  net_local_cl_ipadr;
+netadr_t  net_from;
+sizebuf_t net_message;
+byte      net_message_buffer[MSG_BUF_SIZE];
 
 typedef struct
 {
@@ -91,6 +91,7 @@ qbool NET_CompareBaseAdr (netadr_t a, netadr_t b)
 	if (a.type == NA_LOOPBACK && b.type == NA_LOOPBACK)
 		return true;
 
+	/* It might be IPv4 over IPv6 network */
 	if (a.type != b.type)
         {
                 if (a.type == NA_IPv4 && b.type == NA_IPv6)
@@ -99,7 +100,7 @@ qbool NET_CompareBaseAdr (netadr_t a, netadr_t b)
                                 if (b.address.ip6[i] != 0)
                                         return false;   //only matches if they're 0s, otherwise its not an ipv4 address there
                         for (; i < 12; i++)
-                                if (b.address.ip6[i] != 0xff && b.address.ip6[i] != 0x00)       //0x00 is depricated
+                                if (b.address.ip6[i] != 0xff && b.address.ip6[i] != 0x00)       //0x00 is deprecated
                                         return false;   //only matches if they're 0s or ffs, otherwise its not an ipv4 address the
                         for (i = 0; i < 4; i++)
                         {
@@ -115,7 +116,7 @@ qbool NET_CompareBaseAdr (netadr_t a, netadr_t b)
                                         return false;   //only matches if they're 0s, otherwise its not an ipv4 address there
 
                         for (; i < 12; i++)
-                                if (a.address.ip6[i] != 0xff && a.address.ip6[i] != 0x00)       //0x00 is depricated
+                                if (a.address.ip6[i] != 0xff && a.address.ip6[i] != 0x00)       //0x00 is deprecated
                                         return false;   //only matches if they're 0s or ffs, otherwise its not an ipv4 address the
 
                         for (i = 0; i < 4; i++)
@@ -165,9 +166,13 @@ char *NET_AdrToString (netadr_t a)
 		case NA_LOOPBACK:
 			return "loopback";
 		case NA_IPv4:
-			snprintf (s, sizeof (s), "%i.%i.%i.%i:%i", a.address.ip[0], a.address.ip[1], a.address.ip[2], a.address.ip[3], ntohs(a.port));
+			if(a.port)
+				snprintf (s, sizeof (s), "%i.%i.%i.%i:%i", a.address.ip[0], a.address.ip[1], a.address.ip[2], a.address.ip[3], ntohs(a.port));
+			else
+				snprintf (s, sizeof (s), "%i.%i.%i.%i", a.address.ip[0], a.address.ip[1], a.address.ip[2], a.address.ip[3]);
 			break;
 		case NA_IPv6:
+			/* IPv4-mapped-IPv6 address */
 			if (!*(int*)&a.address.ip6[0] && !*(int*)&a.address.ip6[4] && !*(short*)&a.address.ip6[8] && *(short*)&a.address.ip6[10] == (short)0xffff)
                         {
                                 if (a.port)
@@ -176,6 +181,7 @@ char *NET_AdrToString (netadr_t a)
                                         snprintf (s, sizeof(s), "%i.%i.%i.%i", a.address.ip6[12], a.address.ip6[13], a.address.ip6[14], a.address.ip6[15]);
                                 break;
                         }
+			/* Real IPv6 address */
 
                         memset(&s, 0, 64);
                         doneblank = false;
@@ -214,7 +220,10 @@ char *NET_AdrToString (netadr_t a)
                                 }
                         }
 
-                        sprintf (p, "]:%i", ntohs(a.port));
+			if(a.port)
+	                        sprintf (p, "]:%i", ntohs(a.port));
+			else
+	                        sprintf (p, "]");
                         break;
 		default:
 			break;
@@ -224,8 +233,9 @@ char *NET_AdrToString (netadr_t a)
 
 char *NET_BaseAdrToString (netadr_t a)
 {
-#warning Make this one work...
-	return "dummy";
+	netadr_t temp;
+	temp = memcpy(&temp, &a, sizeof(netadr_t));
+	return NET_AdrToString(temp);
 }
 
 /*
@@ -286,7 +296,7 @@ qbool NET_StringToSockaddr (char *s, struct sockaddr_storage *dest)
 	if (error)
 		return false;
 
-	((struct sockaddr*)dest)->sa_family = 0;
+/*	((struct sockaddr*)dest)->sa_family = 0; */ /* Shouldn't be needed, we've already memseted it to zero :E */
 
 	for (p = res; p != NULL; p = p->ai_next)
 	{ /* Do this FTE style: Save only first IPv6 but keep looking for IPv4, if IPv4 found then use that */
@@ -329,11 +339,6 @@ qbool NET_StringToAdr (char *s, netadr_t *a)
 	SockadrToNetadr (&sadr, a);
 
 	return true;
-}
-
-int NET_UDPSVPort (void)
-{
-	return ntohs(net_local_sv_ipadr.port);
 }
 
 /*
@@ -633,10 +638,10 @@ void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbo
 
 	NetadrToSockadr (&to, &addr);
 
-	if (to.type == NA_IPv4)
-		size = sizeof(struct sockaddr_in);
-	else
+	if (to.type == NA_IPv6)
 		size = sizeof(struct sockaddr_in6);
+	else
+		size = sizeof(struct sockaddr_in);
 
 	ret = sendto (socket, data, length, 0, (struct sockaddr *)&addr, size);
 	if (ret == -1) {
@@ -825,39 +830,65 @@ int TCP_OpenListenSocket (int port)
 	return newsocket;
 }
 
-int UDP_OpenSocket (int port)
+int UDP_OpenSocket (netadrtype_t type, int port)
 {
-	/* FIXME Make this open appropriate socket type depending on whats supported
-	 * Like IPv4 over IPv6 socket is preffered, but if not available like on XP then
-	 * create an IPv4 _or_ IPv6 socket, if not IPv6 is available, just create AF_INET socket
-	 */
 	int newsocket;
 	struct sockaddr_storage addr;
-	int none = 0;
-	int ipv6 = 0;
+	int _yes = 0;
 
-	/* Try to create a IPv6 socket */
-	if ((newsocket = socket (PF_INET6, SOCK_DGRAM, IPPROTO_UDP)) != INVALID_SOCKET)
+	if (type == NA_IPv6)
 	{
-		ipv6 = 1;
+		/* Try to create a IPv6 socket */
+		if ((newsocket = socket (PF_INET6, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
+		{
+			ST_Printf (PRINT_FAIL, "UDP_OpenSocket: IPv6 socket: (%i): %s\n", qerrno, strerror(qerrno));
+			return INVALID_SOCKET;
+		}
+
+		if (setsockopt(newsocket, IPPROTO_IPV6, IPV6_V6ONLY, &_yes, sizeof(_yes)))
+		{
+			ST_Printf(PRINT_FAIL, "UDP_OpenSocket: Failed to enable IPV6_V6ONLY socket option... Continuing anyway...\n");
+		}
+
+		((struct sockaddr_in6 *)&addr)->sin6_family = AF_INET6;
+		((struct sockaddr_in6 *)&addr)->sin6_addr = in6addr_any;
+
+		if (port == PORT_ANY)
+		{
+			((struct sockaddr_in6 *)&addr)->sin6_port = 0;
+		}
+		else
+		{
+			((struct sockaddr_in6 *)&addr)->sin6_port = htons((short)port);
+		}
+
+	}
+	else if (type == NA_IPv4)
+	{
+		/* Try to create an IPv4 socket */
+		if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
+		{
+			ST_Printf (PRINT_FAIL, "UDP_OpenSocket: IPv4 socket: (%i): %s\n", qerrno, strerror(qerrno));
+			return INVALID_SOCKET;
+		}
+
+		((struct sockaddr_in *)&addr)->sin_family = AF_INET;
+		((struct sockaddr_in *)&addr)->sin_addr.s_addr = INADDR_ANY;
+
+		if (port == PORT_ANY)
+		{
+			((struct sockaddr_in *)&addr)->sin_port = 0;
+		}
+		else
+		{
+			((struct sockaddr_in *)&addr)->sin_port = htons((short)port);
+		}
 	}
 	else
 	{
-		ST_Printf(PRINT_FAIL, "Failed to create IPv6 socket...\n");
-		ipv6 = 0;
-		/* Failed at creating an IPv6 socket.. Try IPv4 */
-		if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
-		{
-			ST_Printf (PRINT_FAIL, "UDP_OpenSocket: socket: (%i): %s\n", qerrno, strerror(qerrno));
-			return INVALID_SOCKET;
-		}
+		ST_Printf(PRINT_FAIL, "UDP_OpenSocket: Unknown socket type!\n");
+		return INVALID_SOCKET;
 	}
-/* FIXME Current if your on windows XP, you're f*cked.. Need separate sockets for ipv6/v4, current unsupported */
-	if (ipv6 && setsockopt(newsocket, IPPROTO_IPV6, IPV6_V6ONLY, &none, sizeof(none)))
-	{
-		ST_Printf(PRINT_FAIL, "Failed to disable IPV6_V6ONLY socket option...\n");
-	}
-
 
 	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
 		ST_Printf (PRINT_FAIL, "UDP_OpenSocket: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
@@ -865,42 +896,9 @@ int UDP_OpenSocket (int port)
 		return INVALID_SOCKET;
 	}
 
-/* -ip cmd line is now OBSOLETE */
-
-	if (port == PORT_ANY)
-	{
-		if (ipv6)
-		{
-			((struct sockaddr_in6 *)&addr)->sin6_family = AF_INET6;
-			((struct sockaddr_in6 *)&addr)->sin6_port = 0;
-			((struct sockaddr_in6 *)&addr)->sin6_addr = in6addr_any;
-		}
-		else
-		{
-			((struct sockaddr_in *)&addr)->sin_family = AF_INET;
-			((struct sockaddr_in *)&addr)->sin_port = 0;
-			((struct sockaddr_in *)&addr)->sin_addr.s_addr = INADDR_ANY;
-		}
-	}
-	else
-	{
-		if (ipv6)
-		{
-			((struct sockaddr_in6 *)&addr)->sin6_family = AF_INET6;
-			((struct sockaddr_in6 *)&addr)->sin6_port = htons((short)port);
-			((struct sockaddr_in6 *)&addr)->sin6_addr = in6addr_any;
-		}
-		else
-		{
-			((struct sockaddr_in *)&addr)->sin_family = AF_INET;
-			((struct sockaddr_in *)&addr)->sin_port = htons((short)port);
-			((struct sockaddr_in *)&addr)->sin_addr.s_addr = INADDR_ANY;
-		}
-	}
-
+/* FIXME -ip cmd line reimplement? */
 
 	if (bind (newsocket, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-		exit(22);
 		ST_Printf (PRINT_FAIL, "UDP_OpenSocket: bind: (%i): %s\n", qerrno, strerror(qerrno));
 		close(newsocket);
 		return INVALID_SOCKET;
@@ -987,8 +985,6 @@ void NET_Init (void)
 		Sys_Error ("Winsock initialization failed.");
 #endif
 
-	Com_DPrintf("UDP Initialized\n");
-
 	cls.socketip = INVALID_SOCKET;
 // TCPCONNECT -->
 	cls.sockettcp = INVALID_SOCKET;
@@ -1004,8 +1000,11 @@ void NET_InitClient(void)
 	if (p && p < COM_Argc()) {
 		port = atoi(COM_Argv(p+1));
 	}
-
-	if (cls.socketip == INVALID_SOCKET)
+/* FIXME Set this up per connection instead.. Perhaps open a socket upon startup (IPv4) and switch
+ *       to IPv6 if remote is IPv6?
+ *       and vice versa..
+ */
+	/*if (cls.socketip == INVALID_SOCKET)
 		cls.socketip = UDP_OpenSocket (port);
 
 	if (cls.socketip == INVALID_SOCKET)
@@ -1013,6 +1012,7 @@ void NET_InitClient(void)
 
 	if (cls.socketip == INVALID_SOCKET)
 		Sys_Error ("Couldn't allocate client socket");
+	*/
 
 	// init the message buffer
 	SZ_Init (&net_message, net_message_buffer, sizeof(net_message_buffer));
