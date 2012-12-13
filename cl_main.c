@@ -719,8 +719,7 @@ void CL_CheckForResend (void)
 
 	t1 = Sys_DoubleTime();
 
-	if(cls.server_adr)
-		old = cls.server_adr;
+	old = cls.server_adr;
 
 	if (!NET_StringToAdr(cls.servername, &cls.server_adr)) 
 	{
@@ -729,7 +728,7 @@ void CL_CheckForResend (void)
 		return;
 	}
 
-	if((old && old.type != cls.server_adr.type) || cls.socketip == INVALID_SOCKET)
+	if((old.type != cls.server_adr.type) || cls.socketip == INVALID_SOCKET)
 	{
 		if(cls.socketip != INVALID_SOCKET)
 			closesocket(cls.socketip);
@@ -1536,16 +1535,24 @@ void CL_ConnectionlessPacket (void)
 		}
 		case A2C_CLIENT_COMMAND : 
 		{
+			Com_Printf("Sorry this is horribly broken atm...\n");
+			break;
+#warning As it will say next: broken. Disabled it temporarily.
 			// Remote command from gui front end
 			Com_Printf ("%s: client command\n", NET_AdrToString (net_from));
 
+#warning This is broken! Need NET_IsLocalAddress'ish
+
+/* BOOOOOOOORKEN
+
 			if (net_from.type != net_local_cl_ipadr.type
-				|| ((*(unsigned *)net_from.ip != *(unsigned *)net_local_cl_ipadr.ip)
+				|| ((*(unsigned *)net_from.address.ip != *(unsigned *)net_local_cl_ipadr.ip)
 				&& (*(unsigned *)net_from.ip != htonl(INADDR_LOOPBACK))))
 			{
 				Com_Printf ("Command packet from remote host.  Ignored.\n");
 				return;
 			}
+*/
 
 			#ifdef _WIN32
 			ShowWindow (mainwindow, SW_RESTORE);

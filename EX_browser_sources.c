@@ -166,8 +166,9 @@ void Precache_Source(source_data *s)
 	}
 	else if (s->type == type_master) {
 		snprintf(name, sizeof (name), "sb/cache/%d_%d_%d_%d_[%d].txt",
-				s->address.address.ip[0], s->address.address.ip[1],
-				s->address.address.ip[2], s->address.address.ip[3],
+#warning FIXME IPv4 only (WOHA, lot of addresssSSsssses here
+				s->address.address.address.ip[0], s->address.address.address.ip[1],
+				s->address.address.address.ip[2], s->address.address.address.ip[3],
 				ntohs(s->address.address.port));
 	}
 	else {
@@ -505,11 +506,11 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
             if (ret > 0  &&  ret < 10000)
             {
                 SockadrToNetadr (&hostaddr, &from);
-
-                if (from.ip[0] == s->address.address.ip[0] &&
-                    from.ip[1] == s->address.address.ip[1] &&
-                    from.ip[2] == s->address.address.ip[2] &&
-                    from.ip[3] == s->address.address.ip[3] &&
+#warning FIXME IPv4 only addddreessssssss ftw
+                if (from.address.ip[0] == s->address.address.address.ip[0] &&
+                    from.address.ip[1] == s->address.address.address.ip[1] &&
+                    from.address.ip[2] == s->address.address.address.ip[2] &&
+                    from.address.ip[3] == s->address.address.address.ip[3] &&
                     from.port == s->address.address.port)
                 {
                     answer[ret] = 0;
@@ -934,8 +935,9 @@ void DumpSource(source_data *s)
     {
         Sys_mkdir("sb/cache");
         snprintf(buf, sizeof (buf), "sb/cache/%d_%d_%d_%d_[%d].txt",
-                s->address.address.ip[0], s->address.address.ip[1],
-                s->address.address.ip[2], s->address.address.ip[3],
+#warning FIXME IPv4 only
+                s->address.address.address.ip[0], s->address.address.address.ip[1],
+                s->address.address.address.ip[2], s->address.address.address.ip[3],
                 ntohs(s->address.address.port));
     }
     else
@@ -949,8 +951,9 @@ void DumpSource(source_data *s)
 
     for (i=0; i < s->serversn; i++)
         fprintf(f, "%d.%d.%d.%d:%d\n",
-        s->servers[i]->address.ip[0], s->servers[i]->address.ip[1],
-        s->servers[i]->address.ip[2], s->servers[i]->address.ip[3],
+#warning FIXME IPv4 only
+        s->servers[i]->address.address.ip[0], s->servers[i]->address.address.ip[1],
+        s->servers[i]->address.address.ip[2], s->servers[i]->address.address.ip[3],
         ntohs(s->servers[i]->address.port));
 
     fclose(f);

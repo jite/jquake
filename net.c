@@ -18,7 +18,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "server.h"
 
 #define MAX_LOOPBACK 4 // must be a power of two
 
@@ -234,8 +233,8 @@ char *NET_AdrToString (netadr_t a)
 
 char *NET_BaseAdrToString (netadr_t a)
 {
-	netadr_t temp;
-	temp = memcpy(&temp, &a, sizeof(netadr_t));
+	netadr_t temp = a;
+	temp.port = 0;
 	return NET_AdrToString(temp);
 }
 
@@ -924,12 +923,6 @@ qbool NET_Sleep (int msec)
 	if (do_stdin)
 		FD_SET (0, &fdset); // stdin is processed too (tends to be socket 0)
 #endif
-
-	i = 0;
-	if (svs.socketip != INVALID_SOCKET) {
-		FD_SET(svs.socketip, &fdset); // network socket
-		i = svs.socketip;
-	}
 
 	timeout.tv_sec = msec/1000;
 	timeout.tv_usec = (msec%1000)*1000;
