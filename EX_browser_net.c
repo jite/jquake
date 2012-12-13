@@ -341,7 +341,7 @@ void GetServerInfo(server_data *serv)
     struct timeval tv;
 
     // so we have a socket
-    newsocket = UDP_OpenSocket(PORT_ANY);
+    newsocket = UDP_OpenSocket(NA_IPv4, PORT_ANY);
     NetadrToSockadr (&(serv->address), &server);
 
     // send status request
@@ -393,7 +393,7 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
         return 0;
 
     // so we have a socket
-    newsocket = UDP_OpenSocket(PORT_ANY);
+    newsocket = UDP_OpenSocket(NA_IPv4, PORT_ANY);
 
     hosts = (infohost *) Q_malloc (serversn * sizeof(infohost));
     for (i=0; i < serversn; i++)

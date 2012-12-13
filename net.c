@@ -45,6 +45,7 @@ WSADATA winsockdata;
 #endif
 
 loopback_t	loopbacks[2];
+int clport = PORT_CLIENT;
 
 //=============================================================================
 void NetadrToSockadr (netadr_t *a, struct sockaddr_storage *s)
@@ -975,6 +976,7 @@ void NET_GetLocalAddress (int socket, netadr_t *out)
 
 void NET_Init (void)
 {
+	int p;
 #ifdef _WIN32
 	WORD wVersionRequested;
 	int r;
@@ -984,45 +986,18 @@ void NET_Init (void)
 	if (r)
 		Sys_Error ("Winsock initialization failed.");
 #endif
-
-	cls.socketip = INVALID_SOCKET;
-// TCPCONNECT -->
-	cls.sockettcp = INVALID_SOCKET;
-// <--TCPCONNECT
-}
-
-void NET_InitClient(void)
-{
-	int port = PORT_CLIENT;
-	int p;
-
 	p = COM_CheckParm ("-clientport");
 	if (p && p < COM_Argc()) {
-		port = atoi(COM_Argv(p+1));
+		clport = atoi(COM_Argv(p+1));
 	}
-/* FIXME Set this up per connection instead.. Perhaps open a socket upon startup (IPv4) and switch
- *       to IPv6 if remote is IPv6?
- *       and vice versa..
- */
-	/*if (cls.socketip == INVALID_SOCKET)
-		cls.socketip = UDP_OpenSocket (port);
 
-	if (cls.socketip == INVALID_SOCKET)
-		cls.socketip = UDP_OpenSocket (PORT_ANY); // any dynamic port
-
-	if (cls.socketip == INVALID_SOCKET)
-		Sys_Error ("Couldn't allocate client socket");
-	*/
+	cls.socketip = INVALID_SOCKET;
+	cls.sockettcp = INVALID_SOCKET;
 
 	// init the message buffer
 	SZ_Init (&net_message, net_message_buffer, sizeof(net_message_buffer));
 
-/* FIXME Change this one to a call to like NET_IsLocalAddress instead of setting this global
- *       Must work on IPv4 and IPv6 though! */
-	// determine my name & address
-	//NET_GetLocalAddress (cls.socketip, &net_local_cl_ipadr);
-
-	Com_Printf_State (PRINT_OK, "Client port Initialized\n");
+	Com_DPrintf("NET Initialized\n");
 }
 
 void NET_Shutdown (void)

@@ -135,11 +135,8 @@ qbool TCP_Set_KEEPALIVE(int sock);
 int TCP_OpenStream (netadr_t remoteaddr); //makes things easier
 
 void	NET_Init (void);
-void	NET_InitClient (void);
-void	NET_InitServer (void);
-void	NET_CloseServer (void);
 void	NET_Shutdown (void);
-qbool	NET_GetPacket (netsrc_t sock);
+qbool	NET_GetPacket (netadrtype_t sock);
 void	NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
 
 void	NET_ClearLoopback (void);
@@ -217,7 +214,7 @@ void Netchan_Setup (netsrc_t sock, netchan_t *chan, netadr_t adr, int qport);
 qbool Netchan_CanPacket (netchan_t *chan);
 qbool Netchan_CanReliable (netchan_t *chan);
 
-int  UDP_OpenSocket (int port);
+int  UDP_OpenSocket (netsrc_t type, int port);
 void NetadrToSockadr (netadr_t *a, struct sockaddr_storage *s);
 void SockadrToNetadr (struct sockaddr_storage *s, netadr_t *a);
 

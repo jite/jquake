@@ -305,7 +305,7 @@ void SB_Proxy_QueryForPingList(const netadr_t *address, proxy_ping_report_callba
 	addr_to.sin_family = AF_INET;
 	addr_to.sin_port = address->port;
 
-	sock = UDP_OpenSocket(PORT_ANY);
+	sock = UDP_OpenSocket(NA_IPv4, PORT_ANY);
 	for (i = 0; i < sb_proxretries.integer; i++) {
 		ret = sendto(sock, packet, strlen(packet), 0, (struct sockaddr *)&addr_to, sizeof(struct sockaddr));
 		if (ret == -1) // failure, try again
@@ -521,7 +521,7 @@ static void SB_PingTree_ScanProxies(void)
 		if (ping_nodes[i].proxport) {
 			queue.data[request].done = false;
 			queue.data[request].nodeid = i;
-			queue.data[request].sock = UDP_OpenSocket(PORT_ANY);
+			queue.data[request].sock = UDP_OpenSocket(NA_IPv4, PORT_ANY);
 			request++;
 		}
 	}

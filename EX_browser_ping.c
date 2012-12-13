@@ -762,7 +762,7 @@ int PingHost(char *host_to_ping, unsigned short port, int count, int time_out)
 	addr_to.sin_family = AF_INET;
 	addr_to.sin_port = htons(port);
 
-	sock = UDP_OpenSocket(PORT_ANY);
+	sock = UDP_OpenSocket(NA_IPv4, PORT_ANY);
 	pings = ping = 0;
 	for (i = 0; i < count; i++) {
 		ret = sendto(sock, packet, strlen(packet), 0, (struct sockaddr *)&addr_to, sizeof(struct sockaddr));
@@ -808,7 +808,7 @@ int PingHosts(server_data *servs[], int servsn, int count)
 	host_list.hosts = ParseServerList(servs, servsn, &host_list.nelms);
 	ping_finished = false;
 
-	ping_sock = UDP_OpenSocket(PORT_ANY);
+	ping_sock = UDP_OpenSocket(NA_IPv4, PORT_ANY);
 
 #ifndef _WIN32
 	if ((fcntl (ping_sock, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@

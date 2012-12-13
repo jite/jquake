@@ -294,7 +294,7 @@ void Update_Source(source_data *s)
 		int trynum;
 		int timeout;
 
-        newsocket = UDP_OpenSocket(PORT_ANY);
+        newsocket = UDP_OpenSocket(NA_IPv4, PORT_ANY);
         // so we have a socket
 
         // send status request
@@ -451,7 +451,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
         }
 	
     // update master sources
-    newsocket = UDP_OpenSocket(PORT_ANY);
+    newsocket = UDP_OpenSocket(NA_IPv4, PORT_ANY);
 
     for (sourcenum = 0; sourcenum < psourcesn  &&  !abort_ping; sourcenum++)
     {
