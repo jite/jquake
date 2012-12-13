@@ -258,6 +258,9 @@ qbool NET_StringToSockaddr (char *s, struct sockaddr_storage *dest)
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = IPPROTO_UDP; /* UDP only */
 
+	if (!(*s))
+		return false;
+
 	if (*s == '[')
 	{
 		port = strstr(s, "]:");
@@ -294,9 +297,11 @@ qbool NET_StringToSockaddr (char *s, struct sockaddr_storage *dest)
 	}
 
 	if (error)
+	{
 		return false;
+	}
 
-/*	((struct sockaddr*)dest)->sa_family = 0; */ /* Shouldn't be needed, we've already memseted it to zero :E */
+	((struct sockaddr*)dest)->sa_family = 0;  /* Shouldn't be needed, we've already memseted it to zero :E */
 
 	for (p = res; p != NULL; p = p->ai_next)
 	{ /* Do this FTE style: Save only first IPv6 but keep looking for IPv4, if IPv4 found then use that */

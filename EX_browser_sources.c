@@ -95,11 +95,15 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
 		while (VFS_GETS(f, line, sizeof(line)))
 		{
 			netadr_t addr;
+			Com_Printf("Getting here a lot\n");
 
 			if (!strchr(line, ':'))
 				strlcat (line, ":27000", sizeof (line));
 			if (!NET_StringToAdr(line, &addr))
+			{
+				Com_Printf("Problem...\n");
 				continue;
+			}
 
 			servers[(*pserversn)++] = Create_Server2(addr);
 			if (line[0] <= '0'  ||  line[0] >= '9')
