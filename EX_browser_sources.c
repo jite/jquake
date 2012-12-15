@@ -84,8 +84,9 @@ void Delete_Source(source_data *s)
 // which require the source to be dumped to file in corrected form
 qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers, int *pserversn)
 {
+#warning Whole serverbrowser is so insanely broken and horrid, its heavily marked for removal
 	vfsfile_t *f;
-	char line[2048];
+	char line[2048] = {0};
     qbool should_dump = false;
 
     //length = COM_FileOpenRead (fname, &f);
@@ -95,13 +96,11 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
 		while (VFS_GETS(f, line, sizeof(line)))
 		{
 			netadr_t addr;
-			Com_Printf("Getting here a lot\n");
 
 			if (!strchr(line, ':'))
 				strlcat (line, ":27000", sizeof (line));
 			if (!NET_StringToAdr(line, &addr))
 			{
-				Com_Printf("Problem...\n");
 				continue;
 			}
 
