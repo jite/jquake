@@ -728,11 +728,17 @@ void CL_CheckForResend (void)
 		return;
 	}
 
-	if((old.type != cls.server_adr.type) || cls.socketip == INVALID_SOCKET)
+#warning Proper place to open socket?
+	if ((old.type != cls.server_adr.type) || cls.socketip == INVALID_SOCKET)
 	{
-		if(cls.socketip != INVALID_SOCKET)
+		if (cls.socketip != INVALID_SOCKET)
+		{
 			closesocket(cls.socketip);
-		cls.socketip = UDP_OpenSocket(cls.server_adr.type, clport);
+		}
+		if ((cls.socketip = UDP_OpenSocket(cls.server_adr.type, clport)) == INVALID_SOCKET)
+		{
+			cls.socketip = UDP_OpenSocket(cls.server_adr.type, PORT_ANY);
+		}
 	}
 
 	if (cls.socketip == INVALID_SOCKET)

@@ -290,7 +290,10 @@ qbool NET_StringToSockaddr (char *s, struct sockaddr_storage *dest)
 			error = getaddrinfo(dupbase, port+1, &hints, &res);
 		}
 		else
+		{
 			error = EAI_NONAME;
+		}
+
 		if (error) {     //failed, try string with no port.
 			error = getaddrinfo(s, NULL, &hints, &res);
 		}
