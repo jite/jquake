@@ -9,7 +9,7 @@ CC = gcc
 CC_BASEVERSION = $(shell $(CC) -dumpversion | sed -e 's/\..*//g')
 
 # TYPE = release debug
-TYPE=debug
+TYPE=release
 STRIP = $(_E)strip
 STRIPFLAGS = --strip-unneeded --remove-section=.comment
 
