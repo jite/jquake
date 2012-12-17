@@ -71,6 +71,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern qbool ActiveApp, Minimized;
 #endif
 
+extern int clport;
+
 static void Cl_Reset_Min_fps_f(void);
 
 cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
@@ -708,6 +710,7 @@ void CL_CheckForResend (void)
 {
 	char data[2048];
 	double t1, t2;
+	netadr_t old;
 
 	if (cls.state != ca_disconnected || !connect_time)
 		return;
@@ -715,12 +718,31 @@ void CL_CheckForResend (void)
 		return;
 
 	t1 = Sys_DoubleTime();
+
+	old = cls.server_adr;
+
 	if (!NET_StringToAdr(cls.servername, &cls.server_adr)) 
 	{
 		Com_Printf("Bad server address\n");
 		connect_time = 0;
 		return;
 	}
+
+#warning Proper place to open socket?
+	if ((old.type != cls.server_adr.type) || cls.socketip == INVALID_SOCKET)
+	{
+		if (cls.socketip != INVALID_SOCKET)
+		{
+			closesocket(cls.socketip);
+		}
+		if ((cls.socketip = UDP_OpenSocket(cls.server_adr.type, clport)) == INVALID_SOCKET)
+		{
+			cls.socketip = UDP_OpenSocket(cls.server_adr.type, PORT_ANY);
+		}
+	}
+
+	if (cls.socketip == INVALID_SOCKET)
+		Sys_Error("Unable to create %s socket!", cls.server_adr.type == NA_IPv6 ? "IPv6" : "IPv4");
 
 	t2 = Sys_DoubleTime();
 	connect_time = cls.realtime + t2 - t1;	// for retransmit requests
@@ -1520,15 +1542,13 @@ void CL_ConnectionlessPacket (void)
 		case A2C_CLIENT_COMMAND : 
 		{
 			// Remote command from gui front end
-			Com_Printf ("%s: client command\n", NET_AdrToString (net_from));
-
-			if (net_from.type != net_local_cl_ipadr.type
-				|| ((*(unsigned *)net_from.ip != *(unsigned *)net_local_cl_ipadr.ip)
-				&& (*(unsigned *)net_from.ip != htonl(INADDR_LOOPBACK))))
+			if (!NET_IsLocalAddress(net_from))
 			{
 				Com_Printf ("Command packet from remote host.  Ignored.\n");
 				return;
 			}
+
+			Com_Printf ("%s: client command\n", NET_AdrToString (net_from));
 
 			#ifdef _WIN32
 			ShowWindow (mainwindow, SW_RESTORE);

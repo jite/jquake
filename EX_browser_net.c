@@ -341,7 +341,7 @@ void GetServerInfo(server_data *serv)
     struct timeval tv;
 
     // so we have a socket
-    newsocket = UDP_OpenSocket(PORT_ANY);
+    newsocket = UDP_OpenSocket(NA_IPv4, PORT_ANY);
     NetadrToSockadr (&(serv->address), &server);
 
     // send status request
@@ -393,7 +393,7 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
         return 0;
 
     // so we have a socket
-    newsocket = UDP_OpenSocket(PORT_ANY);
+    newsocket = UDP_OpenSocket(NA_IPv4, PORT_ANY);
 
     hosts = (infohost *) Q_malloc (serversn * sizeof(infohost));
     for (i=0; i < serversn; i++)
@@ -404,7 +404,7 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
 
         // do not update dead servers
 		if (servers[i]->ping < 0) {
-            hosts[i].phase = -1;//(int)sb_inforetries.value;
+			hosts[i].phase = -1;//(int)sb_inforetries.value;
 		}
 		// do not update too distant servers
 		else if (sb_hidehighping.integer && servers[i]->ping > sb_pinglimit.integer) {
@@ -506,12 +506,12 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
             if (ret > 0)
             {
                 SockadrToNetadr (&hostaddr, &from);
-
+#warning FIXME IPv4 only
                 for (i=0; i < serversn; i++)
-                    if (from.ip[0] == servers[i]->address.ip[0] &&
-                        from.ip[1] == servers[i]->address.ip[1] &&
-                        from.ip[2] == servers[i]->address.ip[2] &&
-                        from.ip[3] == servers[i]->address.ip[3] &&
+                    if (from.address.ip[0] == servers[i]->address.address.ip[0] &&
+                        from.address.ip[1] == servers[i]->address.address.ip[1] &&
+                        from.address.ip[2] == servers[i]->address.address.ip[2] &&
+                        from.address.ip[3] == servers[i]->address.address.ip[3] &&
                         from.port == servers[i]->address.port)
                     {
                         hosts[i].phase = (int)sb_inforetries.value;
@@ -537,11 +537,12 @@ void GetServerPing(server_data *serv)
 {
     int p;
     char buf[32];
+#warning FIXME IPv4 only
     snprintf (buf, sizeof (buf), "%d.%d.%d.%d",
-        serv->address.ip[0],
-        serv->address.ip[1],
-        serv->address.ip[2],
-        serv->address.ip[3]);
+        serv->address.address.ip[0],
+        serv->address.address.ip[1],
+        serv->address.address.ip[2],
+        serv->address.address.ip[3]);
 
     p = useNewPing
 			// new ping = UPD QW Packet

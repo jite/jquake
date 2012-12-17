@@ -202,7 +202,8 @@ static void SB_PingTree_Clear(void)
 static ipaddr_t SB_Netaddr2Ipaddr(const netadr_t *netadr)
 {
 	ipaddr_t retval;
-	memcpy(retval.data, &netadr->ip, 4);
+#warning FIXME IPv4 only
+	memcpy(retval.data, &netadr->address.ip, 4);
 	return retval;
 }
 
@@ -220,7 +221,8 @@ static qbool SB_PingTree_IsProxyFiltered(const server_data *data)
 		return false;
 	}
 	else {
-		const byte *ip = data->address.ip;
+#warning FIXME IPv4 only
+		const byte *ip = data->address.address.ip;
 		int port = (int) ntohs(data->address.port);
 		const char *ip_str = va("%d.%d.%d.%d:%d", ip[0], ip[1], ip[2], ip[3], port);
 
@@ -267,8 +269,9 @@ static void SB_Proxy_ParseReply(const byte *buf, int buflen, proxy_ping_report_c
 		netadr_t adr;
 		dist_t dist = 0;
 
-		adr.type = NA_IP;
-		memcpy(adr.ip, buf, 4);
+		adr.type = NA_IPv4;
+#warning FIXME IPv4 only
+		memcpy(adr.address.ip, buf, 4);
 		buf += 4;
 		
 		adr.port = 0;
@@ -296,7 +299,8 @@ void SB_Proxy_QueryForPingList(const netadr_t *address, proxy_ping_report_callba
 	int i, ret;
 	socklen_t inaddrlen;
 	const char *adrstr = va("%d.%d.%d.%d",
-		(int) address->ip[0], (int) address->ip[1], (int) address->ip[2], (int) address->ip[3]);
+#warning FIXME IPv4 only
+		(int) address->address.ip[0], (int) address->address.ip[1], (int) address->address.ip[2], (int) address->address.ip[3]);
 
 	addr_to.sin_addr.s_addr = inet_addr(adrstr);
 	if (addr_to.sin_addr.s_addr == INADDR_NONE) {
@@ -304,8 +308,7 @@ void SB_Proxy_QueryForPingList(const netadr_t *address, proxy_ping_report_callba
 	}
 	addr_to.sin_family = AF_INET;
 	addr_to.sin_port = address->port;
-
-	sock = UDP_OpenSocket(PORT_ANY);
+	sock = UDP_OpenSocket(NA_IPv4, PORT_ANY);
 	for (i = 0; i < sb_proxretries.integer; i++) {
 		ret = sendto(sock, packet, strlen(packet), 0, (struct sockaddr *)&addr_to, sizeof(struct sockaddr));
 		if (ret == -1) // failure, try again
@@ -354,9 +357,10 @@ static void SB_PingTree_AddNodes(void)
 static netadr_t SB_NodeNetadr_Get(nodeid_t id)
 {
 	netadr_t ret;
-	ret.type = NA_IP;
+	ret.type = NA_IPv4;
 	ret.port = ping_nodes[id].proxport;
-	memcpy(&ret.ip, ping_nodes[id].ipaddr.data, 4);
+#warning FIXME IPv4 only
+	memcpy(&ret.address.ip, ping_nodes[id].ipaddr.data, 4);
 	return ret;
 }
 
@@ -521,7 +525,7 @@ static void SB_PingTree_ScanProxies(void)
 		if (ping_nodes[i].proxport) {
 			queue.data[request].done = false;
 			queue.data[request].nodeid = i;
-			queue.data[request].sock = UDP_OpenSocket(PORT_ANY);
+			queue.data[request].sock = UDP_OpenSocket(NA_IPv4, PORT_ANY);
 			request++;
 		}
 	}

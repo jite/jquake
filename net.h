@@ -93,14 +93,27 @@ typedef int socket_t;
 
 #define PORT_ANY -1
 
-typedef enum {NA_INVALID, NA_LOOPBACK, NA_IP} netadrtype_t;
+typedef enum
+{
+	NA_INVALID,
+	NA_LOOPBACK,
+	NA_IPv4,
+	NA_IPv6
+} netadrtype_t;
 
-typedef enum {NS_CLIENT, NS_SERVER} netsrc_t;
+typedef enum
+{
+	NS_CLIENT,
+	NS_SERVER
+} netsrc_t;
 
-typedef struct {
+typedef struct
+{
 	netadrtype_t type;
-
-	byte ip[4];
+	union {
+		byte ip[4];
+		byte ip6[16];
+	} address;
 
 	unsigned short port;
 } netadr_t;
@@ -121,22 +134,21 @@ qbool TCP_Set_KEEPALIVE(int sock);
 
 int TCP_OpenStream (netadr_t remoteaddr); //makes things easier
 
-void	NET_Init (void);
-void	NET_InitClient (void);
-void	NET_InitServer (void);
-void	NET_CloseServer (void);
-void	NET_Shutdown (void);
-qbool	NET_GetPacket (netsrc_t sock);
-void	NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
+void NET_Init (void);
+void NET_Shutdown (void);
+qbool NET_GetPacket (netsrc_t sock);
+void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
 
-void	NET_ClearLoopback (void);
-qbool	NET_Sleep (int msec);
+void NET_ClearLoopback (void);
+qbool NET_Sleep (int msec);
 
-qbool	NET_CompareAdr (netadr_t a, netadr_t b);
-qbool	NET_CompareBaseAdr (netadr_t a, netadr_t b);
-char	*NET_AdrToString (netadr_t a);
-char	*NET_BaseAdrToString (netadr_t a);
-qbool	NET_StringToAdr (char *s, netadr_t *a);
+qbool NET_CompareAdr (netadr_t a, netadr_t b);
+qbool NET_CompareBaseAdr (netadr_t a, netadr_t b);
+char *NET_AdrToString (netadr_t a);
+char *NET_BaseAdrToString (netadr_t a);
+qbool NET_StringToAdr (char *s, netadr_t *a);
+
+qbool NET_IsLocalAddress (netadr_t addr);
 
 int		NET_UDPSVPort (void);
 
@@ -204,7 +216,7 @@ void Netchan_Setup (netsrc_t sock, netchan_t *chan, netadr_t adr, int qport);
 qbool Netchan_CanPacket (netchan_t *chan);
 qbool Netchan_CanReliable (netchan_t *chan);
 
-int  UDP_OpenSocket (int port);
+int  UDP_OpenSocket (netadrtype_t type, int port);
 void NetadrToSockadr (netadr_t *a, struct sockaddr_storage *s);
 void SockadrToNetadr (struct sockaddr_storage *s, netadr_t *a);
 

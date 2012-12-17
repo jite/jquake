@@ -84,8 +84,9 @@ void Delete_Source(source_data *s)
 // which require the source to be dumped to file in corrected form
 qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers, int *pserversn)
 {
+#warning Whole serverbrowser is so insanely broken and horrid, its heavily marked for removal
 	vfsfile_t *f;
-	char line[2048];
+	char line[2048] = {0};
     qbool should_dump = false;
 
     //length = COM_FileOpenRead (fname, &f);
@@ -99,7 +100,9 @@ qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers
 			if (!strchr(line, ':'))
 				strlcat (line, ":27000", sizeof (line));
 			if (!NET_StringToAdr(line, &addr))
+			{
 				continue;
+			}
 
 			servers[(*pserversn)++] = Create_Server2(addr);
 			if (line[0] <= '0'  ||  line[0] >= '9')
@@ -166,8 +169,9 @@ void Precache_Source(source_data *s)
 	}
 	else if (s->type == type_master) {
 		snprintf(name, sizeof (name), "sb/cache/%d_%d_%d_%d_[%d].txt",
-				s->address.address.ip[0], s->address.address.ip[1],
-				s->address.address.ip[2], s->address.address.ip[3],
+#warning FIXME IPv4 only (WOHA, lot of addresssSSsssses here
+				s->address.address.address.ip[0], s->address.address.address.ip[1],
+				s->address.address.address.ip[2], s->address.address.address.ip[3],
 				ntohs(s->address.address.port));
 	}
 	else {
@@ -294,7 +298,7 @@ void Update_Source(source_data *s)
 		int trynum;
 		int timeout;
 
-        newsocket = UDP_OpenSocket(PORT_ANY);
+        newsocket = UDP_OpenSocket(NA_IPv4, PORT_ANY);
         // so we have a socket
 
         // send status request
@@ -451,7 +455,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
         }
 	
     // update master sources
-    newsocket = UDP_OpenSocket(PORT_ANY);
+    newsocket = UDP_OpenSocket(NA_IPv4, PORT_ANY);
 
     for (sourcenum = 0; sourcenum < psourcesn  &&  !abort_ping; sourcenum++)
     {
@@ -505,11 +509,11 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
             if (ret > 0  &&  ret < 10000)
             {
                 SockadrToNetadr (&hostaddr, &from);
-
-                if (from.ip[0] == s->address.address.ip[0] &&
-                    from.ip[1] == s->address.address.ip[1] &&
-                    from.ip[2] == s->address.address.ip[2] &&
-                    from.ip[3] == s->address.address.ip[3] &&
+#warning FIXME IPv4 only addddreessssssss ftw
+                if (from.address.ip[0] == s->address.address.address.ip[0] &&
+                    from.address.ip[1] == s->address.address.address.ip[1] &&
+                    from.address.ip[2] == s->address.address.address.ip[2] &&
+                    from.address.ip[3] == s->address.address.address.ip[3] &&
                     from.port == s->address.address.port)
                 {
                     answer[ret] = 0;
@@ -934,8 +938,9 @@ void DumpSource(source_data *s)
     {
         Sys_mkdir("sb/cache");
         snprintf(buf, sizeof (buf), "sb/cache/%d_%d_%d_%d_[%d].txt",
-                s->address.address.ip[0], s->address.address.ip[1],
-                s->address.address.ip[2], s->address.address.ip[3],
+#warning FIXME IPv4 only
+                s->address.address.address.ip[0], s->address.address.address.ip[1],
+                s->address.address.address.ip[2], s->address.address.address.ip[3],
                 ntohs(s->address.address.port));
     }
     else
@@ -949,8 +954,9 @@ void DumpSource(source_data *s)
 
     for (i=0; i < s->serversn; i++)
         fprintf(f, "%d.%d.%d.%d:%d\n",
-        s->servers[i]->address.ip[0], s->servers[i]->address.ip[1],
-        s->servers[i]->address.ip[2], s->servers[i]->address.ip[3],
+#warning FIXME IPv4 only
+        s->servers[i]->address.address.ip[0], s->servers[i]->address.address.ip[1],
+        s->servers[i]->address.address.ip[2], s->servers[i]->address.address.ip[3],
         ntohs(s->servers[i]->address.port));
 
     fclose(f);

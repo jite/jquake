@@ -579,7 +579,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Cbuf_Execute ();
 
 	Con_Init ();
-	NET_InitClient ();
 	Netchan_Init ();
 
 #if (!defined WITH_PNG_STATIC || !defined WITH_JPEG_STATIC || defined WITH_MP3_PLAYER)

@@ -85,15 +85,6 @@ void Netchan_Init (void)
 	srand((unsigned)time(NULL));
 	port &= rand();
 
-	/*
-	// pick a port value that should be nice and random
-#ifdef _WIN32
-	port = ((int) (timeGetTime() * 1000) * time(NULL)) & 0xffff;
-#else
-	port = ((int) (getpid() + getuid() * 1000) * time(NULL)) & 0xffff;
-#endif
-	*/
-
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&showpackets);
 	Cvar_Register (&showdrop);
