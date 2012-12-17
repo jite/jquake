@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_LOOPBACK 4 // must be a power of two
 
-netadr_t  net_local_cl_ipadr;
 netadr_t  net_from;
 sizebuf_t net_message;
 byte      net_message_buffer[MSG_BUF_SIZE];
@@ -784,6 +783,7 @@ int TCP_OpenStream (netadr_t remoteaddr)
 
 int TCP_OpenListenSocket (int port)
 {
+#warning FIXME: Make this work with IPv6... Currently IPv4 only
 	int newsocket;
 	struct sockaddr_in address;
 	unsigned long _true = true;
@@ -943,36 +943,11 @@ qbool NET_Sleep (int msec)
 	return true;
 }
 
-void NET_GetLocalAddress (int socket, netadr_t *out)
+qbool NET_IsLocalAddress (netadr_t addr)
 {
-	char buff[512];
-	struct sockaddr_storage address;
-	size_t namelen;
-	netadr_t adr = {0};
-	qbool notvalid = false;
+#warning Broken.. Implement me properly!
+	return false;
 
-	strlcpy (buff, "localhost", sizeof (buff));
-	gethostname (buff, sizeof (buff));
-
-	if (!NET_StringToAdr (buff, &adr))	//urm
-		NET_StringToAdr ("127.0.0.1", &adr);
-
-	namelen = sizeof(address);
-	if (getsockname (socket, (struct sockaddr *)&address, (socklen_t *)&namelen) == -1) {
-		notvalid = true;
-		NET_StringToSockaddr("0.0.0.0", (struct sockaddr_storage *)&address);
-		//		Sys_Error ("NET_Init: getsockname:", strerror(qerrno));
-	}
-
-	SockadrToNetadr(&address, out);
-	if (out->type == NA_IPv4)
-		if (!*(int*)out->address.ip)	//socket was set to auto
-			*(int *)out->address.ip = *(int *)adr.address.ip;	//change it to what the machine says it is, rather than the socket.
-
-	if (notvalid)
-		Com_Printf_State (PRINT_FAIL, "Couldn't detect local ip\n");
-	else
-		Com_Printf_State (PRINT_OK, "IP address %s\n", NET_AdrToString (*out));
 }
 
 void NET_Init (void)

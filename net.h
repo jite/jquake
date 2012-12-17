@@ -134,19 +134,21 @@ qbool TCP_Set_KEEPALIVE(int sock);
 
 int TCP_OpenStream (netadr_t remoteaddr); //makes things easier
 
-void	NET_Init (void);
-void	NET_Shutdown (void);
-qbool	NET_GetPacket (netsrc_t sock);
-void	NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
+void NET_Init (void);
+void NET_Shutdown (void);
+qbool NET_GetPacket (netsrc_t sock);
+void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
 
-void	NET_ClearLoopback (void);
-qbool	NET_Sleep (int msec);
+void NET_ClearLoopback (void);
+qbool NET_Sleep (int msec);
 
-qbool	NET_CompareAdr (netadr_t a, netadr_t b);
-qbool	NET_CompareBaseAdr (netadr_t a, netadr_t b);
-char	*NET_AdrToString (netadr_t a);
-char	*NET_BaseAdrToString (netadr_t a);
-qbool	NET_StringToAdr (char *s, netadr_t *a);
+qbool NET_CompareAdr (netadr_t a, netadr_t b);
+qbool NET_CompareBaseAdr (netadr_t a, netadr_t b);
+char *NET_AdrToString (netadr_t a);
+char *NET_BaseAdrToString (netadr_t a);
+qbool NET_StringToAdr (char *s, netadr_t *a);
+
+qbool NET_IsLocalAddress (netadr_t addr);
 
 int		NET_UDPSVPort (void);
 
