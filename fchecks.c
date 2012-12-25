@@ -263,7 +263,7 @@ static qbool FChecks_CheckFRulesetRequest (const char *s)
 	char *fServer;
 	const char *features;
 	char *emptystring = "";
-	char *brief_version = "ezq" VERSION_NUMBER;
+	char *brief_version = "jqw" VERSION_NUMBER;
 	char *ruleset = Rulesets_Ruleset();
 	size_t name_len = strlen(cl.players[cl.playernum].name);
 	size_t pad_len = 15 - min(name_len, 15);
