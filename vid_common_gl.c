@@ -20,11 +20,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // vid_common_gl.c -- Common code for vid_wgl.c and vid_glx.c
 
+#include <GL/glew.h>
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
 
-
+// dimman: Might have to remove these ..
 #ifdef __APPLE__
 void *Sys_GetProcAddress (const char *ExtName);
 #endif
@@ -43,6 +44,7 @@ void *Sys_GetProcAddress (const char *ExtName);
 # endif
 #endif
 
+#if 0
 void *GL_GetProcAddress (const char *ExtName)
 {
 #ifdef _WIN32
@@ -55,6 +57,7 @@ void *GL_GetProcAddress (const char *ExtName)
 #endif /* __APPLE__ */
 #endif /* _WIN32 */
 }
+#endif
 
 const char *gl_vendor;
 const char *gl_renderer;
@@ -63,10 +66,8 @@ const char *gl_extensions;
 
 int anisotropy_ext = 0;
 
-qbool gl_mtexable = false;
-int gl_textureunits = 1;
-lpMTexFUNC qglMultiTexCoord2f = NULL;
-lpSelTexFUNC qglActiveTexture = NULL;
+qbool gl_mtexable = true;
+int gl_textureunits = 4;
 
 qbool gl_combine = false;
 
@@ -94,94 +95,6 @@ cvar_t  gl_maxtmu2 = {"gl_maxtmu2", "0", CVAR_LATCH};
 qbool gl_support_arb_texture_non_power_of_two = false;
 cvar_t gl_ext_arb_texture_non_power_of_two = {"gl_ext_arb_texture_non_power_of_two", "1", CVAR_LATCH};
 
-extern const GLubyte * ( APIENTRY * qglGetString )(GLenum name);
-
-/************************************* EXTENSIONS *************************************/
-
-qbool CheckExtension (const char *extension) {
-	const char *start;
-	char *where, *terminator;
-
-	if (!gl_extensions && !(gl_extensions = (const char*) qglGetString (GL_EXTENSIONS)))
-		return false;
-
-
-	if (!extension || *extension == 0 || strchr (extension, ' '))
-		return false;
-
-	for (start = gl_extensions; (where = strstr(start, extension)); start = terminator) {
-		terminator = where + strlen (extension);
-		if ((where == start || *(where - 1) == ' ') && (*terminator == 0 || *terminator == ' '))
-			return true;
-	}
-	return false;
-}
-
-void CheckMultiTextureExtensions (void) {
-	if (!COM_CheckParm("-nomtex") && CheckExtension("GL_ARB_multitexture")) {
-		if (strstr(gl_renderer, "Savage"))
-			return;
-		qglMultiTexCoord2f = GL_GetProcAddress("glMultiTexCoord2fARB");
-		qglActiveTexture = GL_GetProcAddress("glActiveTextureARB");
-		if (!qglMultiTexCoord2f || !qglActiveTexture)
-			return;
-		Com_Printf_State(PRINT_OK, "Multitexture extensions found\n");
-		gl_mtexable = true;
-	}
-
-	glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, (GLint *)&gl_textureunits);
-	gl_textureunits = min(gl_textureunits, 4);
-
-	if (COM_CheckParm("-maxtmu2") /*|| !strcmp(gl_vendor, "ATI Technologies Inc.")*/ || gl_maxtmu2.value)
-		gl_textureunits = min(gl_textureunits, 2);
-
-	if (gl_textureunits < 2)
-		gl_mtexable = false;
-
-	if (!gl_mtexable)
-		gl_textureunits = 1;
-	else
-		Com_Printf_State(PRINT_OK, "Enabled %i texture units on hardware\n", gl_textureunits);
-}
-
-void GL_CheckExtensions (void) {
-	CheckMultiTextureExtensions ();
-
-	gl_combine = CheckExtension("GL_ARB_texture_env_combine");
-	gl_add_ext = CheckExtension("GL_ARB_texture_env_add");
-
-
-	if (CheckExtension("GL_EXT_texture_filter_anisotropic")) {
-		int gl_anisotropy_factor_max;
-
-		anisotropy_ext = 1;
-
-		glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_anisotropy_factor_max);
-
-		Com_Printf_State(PRINT_OK, "Anisotropic Filtering Extension Found (%d max)\n",gl_anisotropy_factor_max);
-	}
-
-
-	if (CheckExtension("GL_ARB_texture_compression")) {
-		Com_Printf_State(PRINT_OK, "Texture compression extensions found\n");
-		Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
-		Cvar_Register (&gl_ext_texture_compression);
-		Cvar_ResetCurrentGroup();
-	}
-
-	// GL_ARB_texture_non_power_of_two
-	// NOTE: we always register cvar even if ext is not supported.
-	// cvar added just to be able force OFF an extension.
-	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
-	Cvar_Register (&gl_ext_arb_texture_non_power_of_two);
-	Cvar_ResetCurrentGroup();
-
-	gl_support_arb_texture_non_power_of_two =
-		gl_ext_arb_texture_non_power_of_two.integer && CheckExtension("GL_ARB_texture_non_power_of_two");
-	Com_Printf_State(PRINT_OK, "GL_ARB_texture_non_power_of_two extension %s\n", 
-		gl_support_arb_texture_non_power_of_two ? "found" : "not found");
-}
-
 void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cancel) {
 	float newval = Q_atof(string);
 
@@ -192,10 +105,20 @@ void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cance
 /************************************** GL INIT **************************************/
 
 void GL_Init (void) {
-	gl_vendor     = (const char*) qglGetString (GL_VENDOR);
-	gl_renderer   = (const char*) qglGetString (GL_RENDERER);
-	gl_version    = (const char*) qglGetString (GL_VERSION);
-	gl_extensions = (const char*) qglGetString (GL_EXTENSIONS);
+	if (glewInit())
+	{
+		ST_Printf(PRINT_ERR_FATAL, "Could not initialize GLEW\n");
+	}
+
+	if(!glewIsSupported("GL_VERSION_2_0"))
+	{
+		ST_Printf(PRINT_ERR_FATAL, "OpenGL 2.0 support missing\n");
+	}
+
+	gl_vendor     = (const char*) glGetString (GL_VENDOR);
+	gl_renderer   = (const char*) glGetString (GL_RENDERER);
+	gl_version    = (const char*) glGetString (GL_VERSION);
+	gl_extensions = (const char*) glGetString (GL_EXTENSIONS);
 
 #if !defined( _WIN32 ) && !defined( __linux__ ) /* we print this in different place on WIN and Linux */
 /* FIXME/TODO: FreeBSD too? */
@@ -234,8 +157,6 @@ void GL_Init (void) {
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-	GL_CheckExtensions();
 }
 
 /************************************* VID GAMMA *************************************/

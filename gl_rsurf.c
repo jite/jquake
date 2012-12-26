@@ -744,8 +744,8 @@ void R_DrawAlphaChain (void) {
 		v = s->polys->verts[0];
 		for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
 			if (gl_mtexable) {
-				qglMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
-				qglMultiTexCoord2f (GL_TEXTURE1_ARB, v[5], v[6]);
+				glMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
+				glMultiTexCoord2f (GL_TEXTURE1_ARB, v[5], v[6]);
 			} else {
 				glTexCoord2f (v[3], v[4]);
 			}
@@ -968,23 +968,23 @@ void DrawTextureChains (model_t *model, int contents)
 							//Tei: textureless for the world brush models
 							if(gl_textureless.value && model->isworldmodel)
 							{ //Qrack
-								qglMultiTexCoord2f (GL_TEXTURE0_ARB, 0, 0);
+								glMultiTexCoord2f (GL_TEXTURE0_ARB, 0, 0);
 	                            
 								if (mtex_lightmaps)
-									qglMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
+									glMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
 
 								if (mtex_fbs)
-									qglMultiTexCoord2f (GL_TEXTURE2_ARB, 0, 0);
+									glMultiTexCoord2f (GL_TEXTURE2_ARB, 0, 0);
 							}
 							else
 							{
-								qglMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
+								glMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
 
 								if (mtex_lightmaps)
-									qglMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
+									glMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
 
 								if (mtex_fbs)
-									qglMultiTexCoord2f (GL_FB_TEXTURE, v[3], v[4]);
+									glMultiTexCoord2f (GL_FB_TEXTURE, v[3], v[4]);
 							}
 						}
 						else

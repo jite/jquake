@@ -333,13 +333,8 @@ void R_TimeRefresh_f (void) {
 		return;
 	}
 
-#ifndef __APPLE__
-	if (glConfig.hardwareType != GLHW_INTEL)
-	{
-		// Causes the console to flicker on Intel cards.
-		glDrawBuffer  (GL_FRONT);
-	}
-#endif
+	// Causes the console to flicker on Intel cards.
+	glDrawBuffer  (GL_FRONT);
 	
 	glFinish ();
 
@@ -355,12 +350,7 @@ void R_TimeRefresh_f (void) {
 	time = stop-start;
 	Com_Printf ("%f seconds (%f fps)\n", time, 128/time);
 
-#ifndef __APPLE__
-	if (glConfig.hardwareType != GLHW_INTEL)
-	{
-		glDrawBuffer  (GL_BACK);
-	}
-#endif
+	glDrawBuffer  (GL_BACK);
 
 	GL_EndRendering ();
 }

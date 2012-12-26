@@ -2027,42 +2027,6 @@ void Draw_FadeScreen (float alpha)
 	Sbar_Changed();
 }
 
-//=============================================================================
-// Draws the little blue disc in the corner of the screen.
-// Call before beginning any disc IO.
-void Draw_BeginDisc (void)
-{
-	if (!draw_disc)
-		return;
-
-	// Intel cards, most notably Intel 915GM/910GML has problems with
-	// writing directly to the front buffer and then flipping the back buffer,
-	// so don't draw the I/O disc on those cards, it will cause the console
-	// to flicker.
-	//
-	// From Intels dev network:
-	// "Using two dimensional data within a 3D scene is sometimes used to render
-	// objects like scoreboards and road signs. When that blit request is sent 
-	// to or from a buffer, the data contained within must be updated, causing 
-	// a pipeline flush and disabling Zone Rendering. One easy way to generate 
-	// the same effect is to use a quad or a billboard that is aligned to the 
-	// view frustrum. Similarly, a flip operation while rendering to a back buffer 
-	// will cause serialization. Be sure you are done altering the back buffer
-	// before you flip.
-#ifndef __APPLE__
-	if (glConfig.hardwareType == GLHW_INTEL)
-		return;
-#endif
-
-	glDrawBuffer  (GL_FRONT);
-	Draw_Pic (vid.width - 24, 0, draw_disc);
-	glDrawBuffer  (GL_BACK);
-}
-
-// Erases the disc icon.
-// Call after completing any disc IO
-void Draw_EndDisc (void) {}
-
 //
 // Changes the projection to orthogonal (2D drawing).
 //
