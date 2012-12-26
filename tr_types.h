@@ -67,24 +67,14 @@ typedef enum {
 } glHardwareType_t;
 
 typedef struct {
-	char					renderer_string[MAX_STRING_CHARS];
-	char					vendor_string[MAX_STRING_CHARS];
-	char					version_string[MAX_STRING_CHARS];
-	char					extensions_string[BIG_INFO_STRING];
+	const char					*renderer_string;
+	const char					*vendor_string;
+	const char					*version_string;
+	const char					*extensions_string;
+	const char					*glx_extensions_string;
 
 	int						maxTextureSize;			// queried from GL
-//	int						maxActiveTextures;		// multitexture ability
-
 	int						colorBits, depthBits, stencilBits;
-
-	glDriverType_t			driverType;
-	glHardwareType_t		hardwareType;
-
-// FIXME: make this work
-//	qbool				deviceSupportsGamma;
-
-//	textureCompression_t	textureCompression;
-//	qbool				textureEnvAddAvailable;
 
 	int						vidWidth, vidHeight;
 	// aspect is the screen's physical width / height, which may be different
@@ -229,14 +219,6 @@ void		GLimp_Init( void );
 void		GLimp_Shutdown( void );
 void		GLimp_EndFrame( void );
 
-// NOTE TTimo linux works with float gamma value, not the gamma table
-//   the params won't be used, getting the r_gamma cvar directly
-/*
-void		GLimp_SetGamma( unsigned char red[256], 
-						    unsigned char green[256],
-							unsigned char blue[256] );
-*/
-
 //===========================================================
 // extensions will be function pointers on all platforms
 
@@ -246,10 +228,7 @@ extern	void ( APIENTRY * qglClientActiveTextureARB )( GLenum texture );
 
 //============================================================
 
-extern  void ( APIENTRY * qglGetIntegerv )(GLenum pname, GLint *params);
-extern  GLenum ( APIENTRY * qglGetError )(void);
-extern  const GLubyte * ( APIENTRY * qglGetString )(GLenum name);
-
+// dimman: This below should probaby go too
 #if defined( _WIN32 )
 
 extern  int   ( WINAPI * qwglChoosePixelFormat )(HDC, CONST PIXELFORMATDESCRIPTOR *);
@@ -287,17 +266,5 @@ extern BOOL ( WINAPI * qwglSwapLayerBuffers)(HDC, UINT);
 extern BOOL ( WINAPI * qwglSwapIntervalEXT)( int interval );
 
 #endif	// _WIN32
-
-#if ( (defined __linux__ )  || (defined __FreeBSD__ ) ) // rb010123
-
-//GLX Functions
-extern XVisualInfo * (*qglXChooseVisual)( Display *dpy, int screen, int *attribList );
-extern GLXContext (*qglXCreateContext)( Display *dpy, XVisualInfo *vis, GLXContext shareList, Bool direct );
-extern void (*qglXDestroyContext)( Display *dpy, GLXContext ctx );
-extern Bool (*qglXMakeCurrent)( Display *dpy, GLXDrawable drawable, GLXContext ctx);
-//extern void (*qglXCopyContext)( Display *dpy, GLXContext src, GLXContext dst, GLuint mask );
-extern void (*qglXSwapBuffers)( Display *dpy, GLXDrawable drawable );
-
-#endif // __linux__ || __FreeBSD__ // rb010123
 
 #endif	// __TR_TYPES_H

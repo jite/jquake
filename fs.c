@@ -381,12 +381,8 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 
 	((byte *)buf)[len] = 0;
 
-	Draw_BeginDisc ();
-
 	VFS_READ(f, buf, len, &err);
 	VFS_CLOSE(f);
-
-	Draw_EndDisc ();
 
 	return buf;
 }

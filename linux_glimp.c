@@ -131,6 +131,8 @@ qbool Minimized = false;
 
 static int xi_opcode;
 
+static int (*swapInterval)(int); // Check if we support glXSwapIntervalSGI or perhaps MESA? 
+
 //
 // function declaration
 //
@@ -140,78 +142,24 @@ void GLW_RestoreGamma(void);
 void GLW_CheckNeedSetDeviceGammaRamp(void);
 
 
-// FIXME: this is a stubs for now...
-
-void ( APIENTRY * qglGetIntegerv )(GLenum pname, GLint *params);
-GLenum ( APIENTRY * qglGetError )(void);
-const GLubyte * ( APIENTRY * qglGetString )(GLenum name);
-
-XVisualInfo * (*qglXChooseVisual)( Display *dpy, int screen, int *attribList );
-GLXContext (*qglXCreateContext)( Display *dpy, XVisualInfo *vis, GLXContext shareList, Bool direct );
-void (*qglXDestroyContext)( Display *dpy, GLXContext ctx );
-Bool (*qglXMakeCurrent)( Display *dpy, GLXDrawable drawable, GLXContext ctx);
-//void (*qglXCopyContext)( Display *dpy, GLXContext src, GLXContext dst, GLuint mask );
-void (*qglXSwapBuffers)( Display *dpy, GLXDrawable drawable );
-
-const char *(APIENTRY *qglXQueryExtensionsString)(Display *dpy, int screen);
-
-//GLX_SGI_swap_control
-GLint (APIENTRY *qglXSwapIntervalSGI)(GLint interval);
-
-// workaround for bad MesaGL implementation - hexum
-const GLubyte * fix_glGetString (GLenum name)
-{
-	const GLubyte *ret = glGetString(name);
-	return (ret ? ret : (GLubyte*)"");
-}
-
 void	 QGL_EnableLogging( qbool enable ) { /* TODO */ };
 
-qbool QGL_Init( const char *dllname ) {
-	// bombastic function
+qbool QGL_Init( const char *dllname )
+{
 	ST_Printf( PRINT_ALL, "...initializing QGL\n" );
 
-	qglGetIntegerv               = glGetIntegerv;
-	qglGetError                  = glGetError;
-	qglGetString                 = fix_glGetString;
-
-	qglXChooseVisual             = glXChooseVisual;
-	qglXCreateContext            = glXCreateContext;
-	qglXDestroyContext           = glXDestroyContext;
-	qglXMakeCurrent              = glXMakeCurrent;
-	//	qglXCopyContext              = glXCopyContext;
-	qglXSwapBuffers              = glXSwapBuffers;
-
-	qglXQueryExtensionsString    = glXQueryExtensionsString;
-
-	// extensions
-	qglXSwapIntervalSGI          = 0;
-
-	qglActiveTextureARB			     = 0;
-	qglClientActiveTextureARB	   = 0;
-	qglMultiTexCoord2fARB		     = 0;
+	qglActiveTextureARB       = 0;
+	qglClientActiveTextureARB = 0;
+	qglMultiTexCoord2fARB     = 0;
 
 	return true;
 }
 
 void QGL_Shutdown( void ) {
 	ST_Printf( PRINT_ALL, "...shutting down QGL\n" );
-
-	qglGetIntegerv               = NULL;
-	qglGetError                  = NULL;
-	qglGetString                 = NULL;
-
-	qglXChooseVisual             = NULL;
-	qglXCreateContext            = NULL;
-	qglXDestroyContext           = NULL;
-	qglXMakeCurrent              = NULL;
-	//	qglXCopyContext              = NULL;
-	qglXSwapBuffers              = NULL;
-
-	qglXQueryExtensionsString    = NULL;
 }
 
-
+#if 0
 /*
  * Find the first occurrence of find in s.
  */
@@ -245,7 +193,7 @@ static const char *Q_stristr( const char *s, const char *find)
 	}
 	return s;
 }
-
+#endif
 // ========================================================================
 // makes a null cursor
 // ========================================================================
@@ -757,7 +705,7 @@ void GLimp_Shutdown( void )
 	if (dpy)
 	{
 		if (ctx)
-			qglXDestroyContext(dpy, ctx);
+			glXDestroyContext(dpy, ctx);
 
 		if (win)
 			XDestroyWindow(dpy, win);
@@ -799,16 +747,6 @@ static qbool GLW_StartDriverAndSetMode( const char *drivername,
 		qbool fullscreen )
 {
 	rserr_t err;
-
-	// don't ever bother going into fullscreen with a voodoo card
-#if 1	// JDC: I reenabled this
-	if ( Q_stristr( drivername, "Voodoo" ) )
-	{
-		Cvar_Set( &r_fullscreen, "0" );
-		r_fullscreen.modified = false;
-		fullscreen = false;
-	}
-#endif
 
 	if (fullscreen && in_nograb.value)
 	{
@@ -1046,7 +984,7 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
 		attrib[ATTR_DEPTH_IDX] = tdepthbits; // default to 24 depth
 		attrib[ATTR_STENCIL_IDX] = tstencilbits;
 
-		visinfo = qglXChooseVisual(dpy, scrnum, attrib);
+		visinfo = glXChooseVisual(dpy, scrnum, attrib);
 		if (!visinfo)
 		{
 			continue;
@@ -1117,16 +1055,16 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
 
 	XFlush(dpy);
 	XSync(dpy,False); // bk001130 - from cvs1.17 (mkv)
-	ctx = qglXCreateContext(dpy, visinfo, NULL, True);
+	ctx = glXCreateContext(dpy, visinfo, NULL, True);
 	XSync(dpy,False); // bk001130 - from cvs1.17 (mkv)
 
 	/* GH: Free the visinfo after we're done with it */
 	XFree( visinfo );
 
-	qglXMakeCurrent(dpy, win, ctx);
+	glXMakeCurrent(dpy, win, ctx);
 
 	// bk001130 - from cvs1.17 (mkv)
-	glstring = (char*)qglGetString (GL_RENDERER);
+	glstring = (char*)glGetString (GL_RENDERER);
 	ST_Printf( PRINT_ALL, "GL_RENDERER: %s\n", glstring );
 
 	// bk010122 - new software token (Indirect)
@@ -1179,19 +1117,6 @@ static void GLW_InitExtensions( void )
 
 	ST_Printf( PRINT_ALL, "Initializing OpenGL extensions\n" );
 
-	//GLX_SGI_swap_control
-	if ( Q_stristr( glConfig.extensions_string, "GLX_SGI_swap_control" ) )
-		qglXSwapIntervalSGI = GL_GetProcAddress("glXSwapIntervalSGI");
-
-	if ( qglXSwapIntervalSGI )
-	{
-		ST_Printf( PRINT_ALL, "...using GLX_SGI_swap_control\n" );
-		r_swapInterval.modified = true;	// force a set next frame
-	}
-	else
-	{
-		ST_Printf( PRINT_ALL, "...GLX_SGI_swap_control not found\n" );
-	}
 }
 
 /*
@@ -1314,57 +1239,34 @@ void GLimp_Init( void )
 			ST_Printf(PRINT_ERR_FATAL, "GLimp_Init() - could not load OpenGL subsystem\n");
 	}
 
-	// This values force the UI to disable driver selection
-	glConfig.driverType = GLDRV_ICD;
-	glConfig.hardwareType = GLHW_GENERIC;
-
-	// get our config strings
-	strlcpy( glConfig.vendor_string,     (char*)qglGetString (GL_VENDOR),     sizeof( glConfig.vendor_string ) );
-	strlcpy( glConfig.renderer_string,   (char*)qglGetString (GL_RENDERER),   sizeof( glConfig.renderer_string ) );
-	if (*glConfig.renderer_string && glConfig.renderer_string[strlen(glConfig.renderer_string) - 1] == '\n')
-		glConfig.renderer_string[strlen(glConfig.renderer_string) - 1] = 0;
-	strlcpy( glConfig.version_string,    (char*)qglGetString (GL_VERSION),    sizeof( glConfig.version_string ) );
-	strlcpy( glConfig.extensions_string, (char*)qglGetString (GL_EXTENSIONS), sizeof( glConfig.extensions_string ) );
-	// append GLX extensions, DO NOT CONFUSE WITH GL EXTENSIONS
-	strlcat( glConfig.extensions_string, " ", sizeof( glConfig.extensions_string ) );
-	strlcat( glConfig.extensions_string, qglXQueryExtensionsString(dpy, scrnum), sizeof( glConfig.extensions_string ) );
-
-	//
-	// chipset specific configuration
-	//
-	strlcpy( buf, glConfig.renderer_string, sizeof( buf ) );
-	Q_strlwr( buf );
+	glConfig.vendor_string         = glGetString(GL_VENDOR);
+	glConfig.renderer_string       = glGetString(GL_RENDERER);
+	glConfig.version_string        = glGetString(GL_VERSION);
+	glConfig.extensions_string     = glGetString(GL_EXTENSIONS);
+	glConfig.glx_extensions_string = glXQueryExtensionsString(dpy, scrnum);
 
 	//
 	// NOTE: if changing cvars, do it within this block.  This allows them
 	// to be overridden when testing driver fixes, etc. but only sets
 	// them to their default state when the hardware is first installed/run.
 	//
-	//
-	// this is where hardware specific workarounds that should be
-	// detected/initialized every startup should go.
-	//
-	if ( Q_stristr( buf, "banshee" ) || Q_stristr( buf, "Voodoo_Graphics" ) )
-	{
-		glConfig.hardwareType = GLHW_3DFX_2D3D;
-	} else if ( Q_stristr( buf, "rage pro" ) || Q_stristr( buf, "RagePro" ) )
-	{
-		glConfig.hardwareType = GLHW_RAGEPRO;
-	} else if ( Q_stristr( buf, "permedia2" ) )
-	{
-		glConfig.hardwareType = GLHW_PERMEDIA2;
-	} else if ( Q_stristr( buf, "riva 128" ) )
-	{
-		glConfig.hardwareType = GLHW_RIVA128;
-	}
+
+	// Look up vsync-stuff
+        if (strstr(glConfig.glx_extensions_string, "GLX_SGI_swap_control"))
+                swapInterval = (int (*)(int)) glXGetProcAddress((const GLubyte*) "glXSwapIntervalSGI");
+        else if (strstr(glConfig.glx_extensions_string, "GLX_MESA_swap_control"))
+                swapInterval = (int (*)(int)) glXGetProcAddress((const GLubyte*) "glXSwapIntervalMESA");
+        else
+                swapInterval = NULL;
+
+        r_swapInterval.modified = true; /* Force re-set of vsync value */
+	
 
 	// initialize extensions
 	GLW_InitExtensions();
 	GLW_InitGamma();
 
 	InitSig(); // not clear why this is at begin & end of function
-
-	return;
 }
 
 
@@ -1377,19 +1279,27 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height) {
 		glClear (GL_COLOR_BUFFER_BIT);
 }
 
-void GL_EndRendering (void) {
-	//
-	// swapinterval stuff
-	//
-	if ( r_swapInterval.modified ) {
-		r_swapInterval.modified = false;
+void GL_EndRendering (void)
+{
+	if (r_swapInterval.modified) {
+                if (!swapInterval)
+                        Con_Printf("Warning: No vsync handler found...\n");
+                else
+                {
+                        if (r_swapInterval.integer > 0) {
+                                if (swapInterval(1)) {
+                                        Con_Printf("vsync: Failed to enable vsync...\n");
+                                }
+                        }
+                        else if (r_swapInterval.integer <= 0) {
+                                if (swapInterval(0)) {
+                                        Con_Printf("vsync: Failed to disable vsync...\n");
+                                }
+                        }
+                        r_swapInterval.modified = false;
+                }
+        }
 
-		if ( !glConfig.stereoEnabled ) {	// why?
-			if ( qglXSwapIntervalSGI ) {
-				qglXSwapIntervalSGI( r_swapInterval.integer );
-			}
-		}
-	}
 
 	GLW_CheckNeedSetDeviceGammaRamp();
 
@@ -1421,7 +1331,7 @@ void GL_EndRendering (void) {
  */
 void GLimp_EndFrame (void)
 {
-	qglXSwapBuffers(dpy, win);
+	glXSwapBuffers(dpy, win);
 }
 
 /************************************* Window related *******************************/
