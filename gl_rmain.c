@@ -56,6 +56,7 @@ int			playernmtextures[MAX_CLIENTS];
 int			playerfbtextures[MAX_CLIENTS];
 int			skyboxtextures[MAX_SKYBOXTEXTURES];
 int			underwatertexture, detailtexture;	
+int			whitetexture;
 
 float		gldepthmin, gldepthmax;	// for gl_ztrick
 
@@ -504,10 +505,10 @@ void GL_DrawAliasOutlineFrame (aliashdr_t *paliashdr, int pose1, int pose2)
 }
 
 void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, qbool scrolldir) {
-    int *order, count;
+	int *order, count;
 	vec3_t interpolated_verts;
-    float l, lerpfrac;
-    trivertx_t *verts1, *verts2;
+	float l, lerpfrac;
+	trivertx_t *verts1, *verts2;
 	//VULT COLOURED MODEL LIGHTS
 	int i;
 	vec3_t lc;
@@ -515,12 +516,21 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;	
 
-    verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
+	verts2 = verts1 = (trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
 
-    verts1 += pose1 * paliashdr->poseverts;
-    verts2 += pose2 * paliashdr->poseverts;
+	verts1 += pose1 * paliashdr->poseverts;
+	verts2 += pose2 * paliashdr->poseverts;
 
-    order = (int *) ((byte *) paliashdr + paliashdr->commands);
+	order = (int *) ((byte *) paliashdr + paliashdr->commands);
+
+	/* FIXME: do the uniforms somewhere else */
+	GLint shader = glsl_shaders[SHADER_MODEL].shader;
+	glUseProgram(shader);
+	GLint u_gamma        = glGetUniformLocation(shader, "gamma");
+	GLint u_contrast     = glGetUniformLocation(shader, "contrast");
+	glUniform1f(u_gamma, v_gamma.value);
+	glUniform1f(u_contrast, v_contrast.value);
+
 
 	if ( (r_shellcolor[0] || r_shellcolor[1] || r_shellcolor[2]) /* && bound(0, gl_powerupshells.value, 1) */ )
 	{
@@ -671,6 +681,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 		if (r_modelalpha < 1)
 			glDisable(GL_BLEND);
 	}
+	glUseProgram(0);
 }
 
 void R_SetupAliasFrame (maliasframedesc_t *oldframe, maliasframedesc_t *frame, aliashdr_t *paliashdr, qbool mtex, qbool scrolldir, qbool outline) {
@@ -1007,30 +1018,6 @@ void R_DrawAliasModel (entity_t *ent) {
 
 	frame = &paliashdr->frames[ent->frame];
 	oldframe = &paliashdr->frames[ent->oldframe];
-
-#if 0
-//TODO:
-// cheat protection
-// limit footsteps sounds to self 
-// add self footsteps :D
-// State: crap	
-	self = ent;
-	if(ent->stepframe != ent->frame && ent->model->modhint == MOD_PLAYER && (self->frame == 1||self->frame == 4||self->frame == 7 || self->frame ==10))
-	{
-		//Com_Printf("foot..\n");
-			//va("footsteps/step%d.wav",(int)(rand()%3+1)));
-
-		if (!setstep)
-		{
-			step = S_PrecacheSound ("footsteps/step1.wav");
-			setstep=true;
-		}
-
-		S_StartSound (-1, 0, step , ent->origin, 1, 1);
-
-		ent->stepframe = ent->frame;
-	}
-#endif
 
 	if (!r_lerpframes.value || ent->framelerp < 0 || ent->oldframe == ent->frame)
 		r_framelerp = 1.0;
@@ -1469,22 +1456,7 @@ void R_DrawEntitiesOnList (visentlist_t *vislist) {
 					}
 				}
 
-// I am apologise, but can't imagine a better way for example
-#ifdef GLSLEXAMPLE
-				{
-					extern qbool SHD_EXAMPLE_StartShader(void);
-
-					qbool shader_ok = SHD_EXAMPLE_StartShader();
-
-					R_DrawAliasModel (currententity);
-
-					if (shader_ok)
-						SHD_Unbind();
-				}
-#else
 				R_DrawAliasModel (currententity);
-#endif
-
 				break;
 			case mod_alias3:
 				R_DrawAlias3Model (currententity);
@@ -1592,7 +1564,7 @@ void R_DrawViewModel (void) {
 void R_PolyBlend (void) {
 	extern cvar_t gl_hwblend;
 
-	if (vid_hwgamma_enabled && gl_hwblend.value && !cl.teamfortress)
+	if (!cl.teamfortress)
 		return;
 	if (!v_blend[3])
 		return;
@@ -1618,6 +1590,7 @@ void R_PolyBlend (void) {
 }
 
 void R_BrightenScreen (void) {
+	return; //FIXME gamma mess
 	extern float vid_gamma;
 	float f;
 
@@ -2179,7 +2152,7 @@ void R_Clear (void) {
 	// This used to cause a bug with some graphics cards when
 	// in multiview mode. It would clear all but the last
 	// drawn views.
-	if (!cl_multiview.value && (gl_clear.value || (!vid_hwgamma_enabled && v_contrast.value > 1)))
+	if (!cl_multiview.value && gl_clear.value)
 	{
 		clearbits |= GL_COLOR_BUFFER_BIT;
 	}

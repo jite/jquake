@@ -81,6 +81,8 @@
 // cvars
 //
 
+int opengl_initialized = 0;
+
 typedef enum { mt_none = 0, mt_normal } mousetype_t;
 
 cvar_t in_mouse           = { "in_mouse",    "1", CVAR_ARCHIVE | CVAR_LATCH }; // NOTE: "1" is mt_normal
@@ -136,11 +138,6 @@ static int (*swapInterval)(int); // Check if we support glXSwapIntervalSGI or pe
 //
 // function declaration
 //
-
-void GLW_InitGamma(void);
-void GLW_RestoreGamma(void);
-void GLW_CheckNeedSetDeviceGammaRamp(void);
-
 
 void	 QGL_EnableLogging( qbool enable ) { /* TODO */ };
 
@@ -699,6 +696,7 @@ void GLimp_Shutdown( void )
 	if (!ctx || !dpy)
 		return;
 	IN_DeactivateMouse();
+	opengl_initialized = 0;
 	// bk001206 - replaced with H2/Fakk2 solution
 	// XAutoRepeatOn(dpy);
 	// autorepeaton = false; // bk001130 - from cvs1.17 (mkv)
@@ -715,11 +713,6 @@ void GLimp_Shutdown( void )
 			XF86VidModeSwitchToMode(dpy, scrnum, vidmodes[0]);
 			XFlush(dpy);
 		}
-
-		//  if (glConfig.deviceSupportsGamma)
-		//  {
-		GLW_RestoreGamma();
-		//  }
 
 		// NOTE TTimo opening/closing the display should be necessary only once per run
 		//   but it seems QGL_Shutdown gets called in a lot of occasion
@@ -771,6 +764,7 @@ static qbool GLW_StartDriverAndSetMode( const char *drivername,
 		default:
 			break;
 	}
+	opengl_initialized = 1;
 	return true;
 }
 
@@ -1103,23 +1097,6 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
 }
 
 /*
- ** GLW_InitExtensions
- */
-static void GLW_InitExtensions( void )
-{
-	extern void *GL_GetProcAddress (const char *ExtName);
-
-	if ( !r_allowExtensions.integer )
-	{
-		ST_Printf( PRINT_ALL, "*** IGNORING OPENGL EXTENSIONS ***\n" );
-		return;
-	}
-
-	ST_Printf( PRINT_ALL, "Initializing OpenGL extensions\n" );
-
-}
-
-/*
  ** GLW_LoadOpenGL
  **
  ** GLimp_win.c internal function that that attempts to load and use
@@ -1128,17 +1105,6 @@ static void GLW_InitExtensions( void )
 static qbool GLW_LoadOpenGL( const char *name )
 {
 	qbool fullscreen;
-
-	// qqshka, we are not loading...
-	//  ST_Printf( PRINT_ALL, "...loading %s: ", name );
-
-	// disable the 3Dfx splash screen and set gamma
-	// we do this all the time, but it shouldn't hurt anything
-	// on non-3Dfx stuff
-	putenv("FX_GLIDE_NO_SPLASH=0");
-
-	// Mesa VooDoo hacks
-	putenv("MESA_GLX_FX=fullscreen\n");
 
 	// load the QGL layer
 	if ( QGL_Init( name ) )
@@ -1261,11 +1227,6 @@ void GLimp_Init( void )
 
         r_swapInterval.modified = true; /* Force re-set of vsync value */
 	
-
-	// initialize extensions
-	GLW_InitExtensions();
-	GLW_InitGamma();
-
 	InitSig(); // not clear why this is at begin & end of function
 }
 
@@ -1300,8 +1261,6 @@ void GL_EndRendering (void)
                 }
         }
 
-
-	GLW_CheckNeedSetDeviceGammaRamp();
 
 	if (!scr_skipupdate || block_drawing) {
 
@@ -1354,80 +1313,6 @@ void VID_NotifyActivity(void) {
 
 	wmhints.flags = XUrgencyHint;
 	XSetWMHints( dpy, win, &wmhints );
-}
-
-/************************************* HW GAMMA *************************************/
-
-static unsigned short *currentgammaramp = NULL;
-static unsigned short sysramp[3][256]; // system gamma ramp
-
-extern cvar_t	vid_hwgammacontrol; // put here, so u remeber this cvar exist
-
-qbool vid_gammaworks      = false;
-qbool vid_hwgamma_enabled = false;
-qbool old_hwgamma_enabled = false;
-qbool customgamma         = false;
-
-
-void GLW_InitGamma (void)
-{
-	int size; // gamma ramp size
-
-	// main
-	vid_gammaworks      = false;
-	// damn helpers
-	vid_hwgamma_enabled = false;
-	old_hwgamma_enabled = false;
-	customgamma		      = false;
-	currentgammaramp    = NULL;
-
-	v_gamma.modified	= true; // force update on next frame
-
-	if (COM_CheckParm("-nohwgamma") && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) // FIXME
-		return;
-
-	XF86VidModeGetGammaRampSize(dpy, scrnum, &size);
-
-	vid_gammaworks = (size == 256);
-
-	if ( vid_gammaworks )
-	{
-		XF86VidModeGetGammaRamp(dpy, scrnum, size, sysramp[0], sysramp[1], sysramp[2]);
-	}
-}
-
-void GLW_RestoreGamma(void) {
-	if ( vid_gammaworks && customgamma )
-	{
-		customgamma = false;
-		XF86VidModeSetGammaRamp(dpy, scrnum, 256, sysramp[0], sysramp[1], sysramp[2]);
-	}
-}
-
-void GLW_CheckNeedSetDeviceGammaRamp(void) {
-	vid_hwgamma_enabled = vid_hwgammacontrol.value && vid_gammaworks && (ActiveApp || vid_hwgammacontrol.value == 3) && !Minimized;
-	vid_hwgamma_enabled = vid_hwgamma_enabled && (glConfig.isFullscreen || vid_hwgammacontrol.value >= 2);
-
-	if ( vid_hwgamma_enabled != old_hwgamma_enabled )
-	{
-		old_hwgamma_enabled = vid_hwgamma_enabled;
-		if ( vid_hwgamma_enabled && currentgammaramp )
-			VID_SetDeviceGammaRamp ( currentgammaramp );
-		else
-			GLW_RestoreGamma ();
-	}
-}
-
-void VID_SetDeviceGammaRamp (unsigned short *ramps) {
-	if ( vid_gammaworks )
-	{
-		currentgammaramp = ramps;
-		if ( vid_hwgamma_enabled )
-		{
-			XF86VidModeSetGammaRamp(dpy, scrnum, 256, ramps, ramps + 256, ramps + 512);
-			customgamma = true;
-		}
-	}
 }
 
 /********************************* CLIPBOARD *********************************/

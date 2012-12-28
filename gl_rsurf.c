@@ -838,6 +838,31 @@ void DrawTextureChains (model_t *model, int contents)
 
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
+	GLint shader;
+ 
+	if(model->isworldmodel) {
+		shader = glsl_shaders[SHADER_WORLD].shader;
+		glUseProgram(shader);
+ 
+		GLint u_world_tex    = glGetUniformLocation(shader, "world_tex");
+		GLint u_lightmap_tex = glGetUniformLocation(shader, "lightmap_tex");
+		GLint u_gamma        = glGetUniformLocation(shader, "gamma");
+		GLint u_contrast     = glGetUniformLocation(shader, "contrast");
+ 
+		glUniform1i(u_world_tex, 0);
+		glUniform1i(u_lightmap_tex, 1);
+		glUniform1f(u_gamma, v_gamma.value);
+		glUniform1f(u_contrast, v_contrast.value);
+	}
+	else {
+		shader = glsl_shaders[SHADER_MODEL].shader;
+		glUseProgram(shader);
+		GLint u_gamma        = glGetUniformLocation(shader, "gamma");
+		GLint u_contrast     = glGetUniformLocation(shader, "contrast");
+		glUniform1f(u_gamma, v_gamma.value);
+		glUniform1f(u_contrast, v_contrast.value);
+	}
+
 	for (i = 0; i < model->numtextures; i++)
 	{
 		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1]))
@@ -1034,6 +1059,7 @@ void DrawTextureChains (model_t *model, int contents)
 		if (doMtex2)
 			GL_DisableTMU(GL_TEXTURE2_ARB);
 	}
+	glUseProgram(0);
 
 	if (gl_mtexable)
 		GL_SelectTexture(GL_TEXTURE0_ARB);
