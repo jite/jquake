@@ -156,6 +156,7 @@ extern	int	skyboxtextures[MAX_SKYBOXTEXTURES];
 extern	int	skytexturenum;		// index in cl.loadmodel, not gl texture object
 extern	int underwatertexture, detailtexture;
 extern	int shelltexture;
+extern  int whitetexture;
 
 // Tomaz - Fog Begin
 extern  cvar_t  gl_fogenable;
@@ -339,5 +340,19 @@ qbool CheckExtension (const char *extension);
 void Check_Gamma (unsigned char *pal);
 void VID_SetPalette (unsigned char *palette);
 void GL_Init (void);
+enum {
+	SHADER_WORLD,
+	SHADER_MODEL,
+	SHADER_TURB,
+	SHADER_HUD,
+	SHADER_LAST
+};
+
+typedef struct {
+	int shader;
+	const char *name;
+} glsl_shader_t;
+
+extern glsl_shader_t glsl_shaders[SHADER_LAST];
 
 #endif /* !__GL_LOCAL_H__ */

@@ -67,11 +67,11 @@ typedef enum {
 } glHardwareType_t;
 
 typedef struct {
-	const char					*renderer_string;
-	const char					*vendor_string;
-	const char					*version_string;
-	const char					*extensions_string;
-	const char					*glx_extensions_string;
+	const unsigned char					*renderer_string;
+	const unsigned char					*vendor_string;
+	const unsigned char					*version_string;
+	const unsigned char					*extensions_string;
+	const unsigned char					*glx_extensions_string;
 
 	int						maxTextureSize;			// queried from GL
 	int						colorBits, depthBits, stencilBits;
