@@ -202,7 +202,7 @@ static void SB_PingTree_Clear(void)
 static ipaddr_t SB_Netaddr2Ipaddr(const netadr_t *netadr)
 {
 	ipaddr_t retval;
-#warning FIXME IPv4 only
+// FIXME IPv4 only
 	memcpy(retval.data, &netadr->address.ip, 4);
 	return retval;
 }
@@ -221,7 +221,7 @@ static qbool SB_PingTree_IsProxyFiltered(const server_data *data)
 		return false;
 	}
 	else {
-#warning FIXME IPv4 only
+// FIXME IPv4 only
 		const byte *ip = data->address.address.ip;
 		int port = (int) ntohs(data->address.port);
 		const char *ip_str = va("%d.%d.%d.%d:%d", ip[0], ip[1], ip[2], ip[3], port);
@@ -270,7 +270,7 @@ static void SB_Proxy_ParseReply(const byte *buf, int buflen, proxy_ping_report_c
 		dist_t dist = 0;
 
 		adr.type = NA_IPv4;
-#warning FIXME IPv4 only
+// FIXME IPv4 only
 		memcpy(adr.address.ip, buf, 4);
 		buf += 4;
 		
@@ -299,7 +299,7 @@ void SB_Proxy_QueryForPingList(const netadr_t *address, proxy_ping_report_callba
 	int i, ret;
 	socklen_t inaddrlen;
 	const char *adrstr = va("%d.%d.%d.%d",
-#warning FIXME IPv4 only
+// FIXME IPv4 only
 		(int) address->address.ip[0], (int) address->address.ip[1], (int) address->address.ip[2], (int) address->address.ip[3]);
 
 	addr_to.sin_addr.s_addr = inet_addr(adrstr);
@@ -359,7 +359,7 @@ static netadr_t SB_NodeNetadr_Get(nodeid_t id)
 	netadr_t ret;
 	ret.type = NA_IPv4;
 	ret.port = ping_nodes[id].proxport;
-#warning FIXME IPv4 only
+// FIXME IPv4 only
 	memcpy(&ret.address.ip, ping_nodes[id].ipaddr.data, 4);
 	return ret;
 }

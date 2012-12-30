@@ -728,7 +728,7 @@ void CL_CheckForResend (void)
 		return;
 	}
 
-#warning Proper place to open socket?
+// warning Proper place to open socket?
 	if ((old.type != cls.server_adr.type) || cls.socketip == INVALID_SOCKET)
 	{
 		if (cls.socketip != INVALID_SOCKET)

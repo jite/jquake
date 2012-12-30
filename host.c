@@ -85,6 +85,7 @@ void SYSINFO_Init(void)
 	LONG            ret;
 	HKEY            hKey;
 	PGMSE			pGMSE;
+	extern const char *gl_renderer;
 
 	// Get memory size.
 	if ((pGMSE = (PGMSE)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GlobalMemoryStatusEx")) != NULL)
@@ -140,8 +141,6 @@ void SYSINFO_Init(void)
 
 		RegCloseKey(hKey);
 	}
-
-	extern const char *gl_renderer;
 
 	if (gl_renderer  &&  gl_renderer[0])
 		SYSINFO_3D_description = Q_strdup(gl_renderer);

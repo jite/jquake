@@ -80,14 +80,11 @@ typedef enum {
 #define TRY_PFD_FAIL_SOFT	1
 #define TRY_PFD_FAIL_HARD	2
 
-#define	WINDOW_CLASS_NAME	"ezQuake"
-#define WINDOW_DEFAULT_NAME "ezQuake"
+#define	WINDOW_CLASS_NAME	"jQuake"
+#define WINDOW_DEFAULT_NAME "jQuake"
 
 static void		GLW_InitExtensions( void );
-static rserr_t	GLW_SetMode( const char *drivername, 
-							 int mode, 
-							 int colorbits, 
-							 qbool cdsFullscreen );
+static rserr_t	GLW_SetMode( const char *drivername, int mode, int colorbits, qbool cdsFullscreen );
 
 //
 // variable declarations
@@ -98,12 +95,6 @@ cvar_t	r_allowSoftwareGL = { "vid_allowSoftwareGL", "0", CVAR_LATCH }; // don't 
 cvar_t	r_maskMinidriver  = { "vid_maskMinidriver",  "0", CVAR_LATCH }; // allow a different dll name to be treated as if it were opengl32.dll
 
 static qbool s_classRegistered = false;
-
-// VVD: didn't restore gamma after ALT+TAB on some ATI video cards (or drivers?...) 
-// HACK!!! FIXME {
-cvar_t	vid_forcerestoregamma = {"vid_forcerestoregamma", "0", CVAR_SILENT};
-int		restore_gamma = 0;
-// }
 
 //
 // function declaration
@@ -908,8 +899,6 @@ static void PrintCDSError( int value )
 	}
 }
 
-void Plug_ResChanged(void);
-
 /*
 ** GLW_SetMode
 */
@@ -1141,8 +1130,6 @@ static rserr_t GLW_SetMode( const char *drivername,
 
 	// NOTE: this is overridden later on standalone 3Dfx drivers
 	glConfig.isFullscreen = cdsFullscreen;
-
-	Plug_ResChanged();
 
 	return RSERR_OK;
 }
@@ -1532,7 +1519,6 @@ void GLimp_Init( void )
 
 	Cvar_Register (&r_allowSoftwareGL);
 	Cvar_Register (&r_maskMinidriver);
-	Cvar_Register (&vid_forcerestoregamma);
 
 	Cvar_ResetCurrentGroup();
 
