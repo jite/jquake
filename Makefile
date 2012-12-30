@@ -20,10 +20,10 @@ OS = $(shell uname -s | tr A-Z a-z)
 
 # add special architecture based flags
 ifeq ($(ARCH),x86_64)
-	ARCH_CFLAGS = -march=native -m64
+	ARCH_CFLAGS = -m64
 endif
 ifeq ($(ARCH),x86)
-	ARCH_CFLAGS = -march=i686 -mtune=generic -mmmx -Did386
+	ARCH_CFLAGS = -march=i686 -mtune=generic -mmmx
 endif
 ifeq ($(ARCH),ppc)
 	ARCH_CFLAGS = -arch ppc -faltivec -maltivec -mcpu=7450 -mtune=7450 -mpowerpc -mpowerpc-gfxopt

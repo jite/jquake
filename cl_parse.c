@@ -839,6 +839,11 @@ void CL_SendChunkDownloadReq(void)
 		if (cls.downloadmethod != DL_QWCHUNKS)
 			return;
 
+		// Ugly workaround 
+		if(strstr(Info_ValueForKey(cl.serverinfo, "*version"), "MVDSV") == NULL)
+		{
+			j = chunks;
+		}
 		i = CL_RequestADownloadChunk();
 		// i < 0 mean client complete download, let server know
 		// qqshka: download percent optional, server does't really require it, that my extension, hope does't fuck up something
