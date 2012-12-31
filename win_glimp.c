@@ -49,7 +49,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef _MSC_VER
 	#pragma comment(lib, "glew32.lib")
-	#pragma comment(lib, "glu32.lib")
+//	#pragma comment(lib, "glu32.lib")
 #endif
 
 
@@ -99,40 +99,6 @@ static qbool s_classRegistered = false;
 // function declaration
 //
 
-// FIXME: this is a stubs for now...
-
-void	 QGL_EnableLogging( qbool enable ) { /* TODO */ };
-
-/*
-void ( APIENTRY * qglGetIntegerv )(GLenum pname, GLint *params);
-GLenum ( APIENTRY * qglGetError )(void);
-const GLubyte * ( APIENTRY * qglGetString )(GLenum name);
-
-BOOL  ( WINAPI * qwglCopyContext)(HGLRC, HGLRC, UINT);
-HGLRC ( WINAPI * qwglCreateContext)(HDC);
-HGLRC ( WINAPI * qwglCreateLayerContext)(HDC, int);
-BOOL  ( WINAPI * qwglDeleteContext)(HGLRC);
-HGLRC ( WINAPI * qwglGetCurrentContext)(VOID);
-HDC   ( WINAPI * qwglGetCurrentDC)(VOID);
-PROC  ( WINAPI * qwglGetProcAddress)(LPCSTR);
-BOOL  ( WINAPI * qwglMakeCurrent)(HDC, HGLRC);
-BOOL  ( WINAPI * qwglDescribeLayerPlane)(HDC, int, int, UINT, LPLAYERPLANEDESCRIPTOR);
-int   ( WINAPI * qwglSetLayerPaletteEntries)(HDC, int, int, int, CONST COLORREF *);
-int   ( WINAPI * qwglGetLayerPaletteEntries)(HDC, int, int, int, COLORREF *);
-BOOL  ( WINAPI * qwglRealizeLayerPalette)(HDC, int, BOOL);
-BOOL  ( WINAPI * qwglSwapLayerBuffers)(HDC, UINT);
-BOOL  ( WINAPI * qwglShareLists)(HGLRC, HGLRC);
-BOOL  ( WINAPI * qwglUseFontBitmaps)(HDC, DWORD, DWORD, DWORD);
-BOOL  ( WINAPI * qwglUseFontOutlines)(HDC, DWORD, DWORD, DWORD, FLOAT, FLOAT, int, LPGLYPHMETRICSFLOAT);
-
-int   ( WINAPI * qwglChoosePixelFormat )(HDC, CONST PIXELFORMATDESCRIPTOR *);
-int   ( WINAPI * qwglDescribePixelFormat) (HDC, int, UINT, LPPIXELFORMATDESCRIPTOR);
-int   ( WINAPI * qwglGetPixelFormat)(HDC);
-BOOL  ( WINAPI * qwglSetPixelFormat)(HDC, int, CONST PIXELFORMATDESCRIPTOR *);
-BOOL  ( WINAPI * qwglSwapBuffers)(HDC);
-
-int ( WINAPI * qwglSwapIntervalEXT)( int interval );
-*/
 // Finds out what monitor the window is currently on.
 HMONITOR VID_GetCurrentMonitor()
 {
@@ -149,77 +115,18 @@ MONITORINFOEX VID_GetCurrentMonitorInfo(HMONITOR monitor)
 	return inf;
 }
 
-qbool QGL_Init( const char *dllname ) {
-	// bombastic function
+qbool QGL_Init( const char *dllname )
+{
 	ST_Printf( PRINT_R_VERBOSE, "...initializing QGL\n" );
 
-	qglGetIntegerv				 = glGetIntegerv;
-	qglGetError					 = glGetError;
-	qglGetString				 = glGetString;
-
-/*	qwglCopyContext              = wglCopyContext;
-	qwglCreateContext            = wglCreateContext;
-	qwglCreateLayerContext       = wglCreateLayerContext;
-	qwglDeleteContext            = wglDeleteContext;
-	qwglDescribeLayerPlane       = wglDescribeLayerPlane;
-	qwglGetCurrentContext        = wglGetCurrentContext;
-	qwglGetCurrentDC             = wglGetCurrentDC;
-	qwglGetLayerPaletteEntries   = wglGetLayerPaletteEntries;
-	qwglGetProcAddress           = wglGetProcAddress;
-	qwglMakeCurrent              = wglMakeCurrent;
-	qwglRealizeLayerPalette      = wglRealizeLayerPalette;
-	qwglSetLayerPaletteEntries   = wglSetLayerPaletteEntries;
-	qwglShareLists               = wglShareLists;
-	qwglSwapLayerBuffers         = wglSwapLayerBuffers;
-	qwglUseFontBitmaps           = wglUseFontBitmapsA;
-	qwglUseFontOutlines          = wglUseFontOutlinesA;
-
-	qwglChoosePixelFormat        = ChoosePixelFormat;
-	qwglDescribePixelFormat      = DescribePixelFormat;
-	qwglGetPixelFormat           = GetPixelFormat;
-	qwglSetPixelFormat           = SetPixelFormat;
-	qwglSwapBuffers              = SwapBuffers;
-
-	qwglSwapIntervalEXT			 = 0;
-
-	qglActiveTextureARB			 = 0;
-	qglClientActiveTextureARB	 = 0;
-	qglMultiTexCoord2fARB		 = 0;
-*/
-
+	qglActiveTextureARB       = 0;
+	qglClientActiveTextureARB = 0;
+	qglMultiTexCoord2fARB     = 0;
 	return true;
 }
 
 void QGL_Shutdown( void ) {
 	ST_Printf( PRINT_R_VERBOSE, "...shutting down QGL\n" );
-
-	qglGetIntegerv				 = NULL;
-	qglGetError					 = NULL;
-	qglGetString				 = NULL;
-
-/*	qwglCopyContext              = NULL;
-	qwglCreateContext            = NULL;
-	qwglCreateLayerContext       = NULL;
-	qwglDeleteContext            = NULL;
-	qwglDescribeLayerPlane       = NULL;
-	qwglGetCurrentContext        = NULL;
-	qwglGetCurrentDC             = NULL;
-	qwglGetLayerPaletteEntries   = NULL;
-	qwglGetProcAddress           = NULL;
-	qwglMakeCurrent              = NULL;
-	qwglRealizeLayerPalette      = NULL;
-	qwglSetLayerPaletteEntries   = NULL;
-	qwglShareLists               = NULL;
-	qwglSwapLayerBuffers         = NULL;
-	qwglUseFontBitmaps           = NULL;
-	qwglUseFontOutlines          = NULL;
-
-	qwglChoosePixelFormat        = NULL;
-	qwglDescribePixelFormat      = NULL;
-	qwglGetPixelFormat           = NULL;
-	qwglSetPixelFormat           = NULL;
-	qwglSwapBuffers              = NULL;
-*/
 }
 
 
@@ -234,14 +141,14 @@ static qbool GLW_StartDriverAndSetMode(const char *drivername, int mode, int col
 
 	switch ( err )
 	{
-	case RSERR_INVALID_FULLSCREEN:
-		ST_Printf( PRINT_R_VERBOSE, "...WARNING: fullscreen unavailable in this mode\n" );
-		return false;
-	case RSERR_INVALID_MODE:
-		ST_Printf( PRINT_R_VERBOSE, "...WARNING: could not set the given mode (%d)\n", mode );
-		return false;
-	default:
-		break;
+		case RSERR_INVALID_FULLSCREEN:
+			ST_Printf( PRINT_R_VERBOSE, "...WARNING: fullscreen unavailable in this mode\n" );
+			return false;
+		case RSERR_INVALID_MODE:
+			ST_Printf( PRINT_R_VERBOSE, "...WARNING: could not set the given mode (%d)\n", mode );
+			return false;
+		default:
+			break;
 	}
 	return true;
 }
@@ -1148,8 +1055,6 @@ static void GLW_InitExtensions( void )
 
 	ST_Printf( PRINT_R_VERBOSE, "Initializing OpenGL extensions\n" );
 
-	// WGL_EXT_swap_control
-	wglSwapIntervalEXT = ( BOOL (WINAPI *)(int)) wglGetProcAddress( "wglSwapIntervalEXT" );
 	if ( wglSwapIntervalEXT )
 	{
 		ST_Printf( PRINT_R_VERBOSE, "...using WGL_EXT_swap_control\n" );
@@ -1360,9 +1265,6 @@ void GLimp_EndFrame (void)
 #endif
 	vid_last_swap_time = Sys_DoubleTime();
 	vid_vsync_lag = vid_last_swap_time - time_before_swap;
-
-	// check logging
-//	QGL_EnableLogging( r_logFile.integer );
 }
 
 static void GLW_StartError( void )
@@ -1455,7 +1357,6 @@ static void GLW_StartOpenGL( void )
 void GLimp_Init( void )
 {
 	char	buf[1024];
-//	cvar_t *lastValidRenderer = Cvar_Get( "vid_lastValidRenderer", "(uninitialized)", CVAR_ARCHIVE );
 
 	ST_Printf( PRINT_R_VERBOSE, "Initializing OpenGL subsystem\n" );
 
@@ -1478,10 +1379,10 @@ void GLimp_Init( void )
 	GLW_StartOpenGL();
 
 	// get our config strings
-	strlcpy( glConfig.vendor_string, (const char *) qglGetString (GL_VENDOR), sizeof( glConfig.vendor_string ) );
-	strlcpy( glConfig.renderer_string, (const char *) qglGetString (GL_RENDERER), sizeof( glConfig.renderer_string ) );
-	strlcpy( glConfig.version_string, (const char *) qglGetString (GL_VERSION), sizeof( glConfig.version_string ) );
-	strlcpy( glConfig.extensions_string, (const char *) qglGetString (GL_EXTENSIONS), sizeof( glConfig.extensions_string ) );
+	glConfig.vendor_string = glGetString (GL_VENDOR);
+	glConfig.renderer_string = glGetString (GL_RENDERER);
+	glConfig.version_string = glGetString (GL_VERSION);
+	glConfig.extensions_string = glGetString (GL_EXTENSIONS);
 
 	//
 	// chipset specific configuration
@@ -1494,34 +1395,6 @@ void GLimp_Init( void )
 	// to be overridden when testing driver fixes, etc. but only sets
 	// them to their default state when the hardware is first installed/run.
 	//
-#if 0 /* qqshka: sad, that good for q3, but not for ezquake cfg managment */
-	if ( Q_stricmp( lastValidRenderer->string, glConfig.renderer_string ) )
-	{
-		glConfig.hardwareType = GLHW_GENERIC;
-
-		Cvar_Set( &r_textureMode, "GL_LINEAR_MIPMAP_NEAREST" );
-
-		// VOODOO GRAPHICS w/ 2MB
-		if ( strstr( buf, "voodoo graphics/1 tmu/2 mb" ) )
-		{
-			Cvar_Set( &r_picmip, "2" );
-		}
-		else
-		{
-			Cvar_Set( &r_picmip, "1" );
-
-			if ( strstr( buf, "rage 128" ) || strstr( buf, "rage128" ) )
-			{
-				Cvar_Set( &r_finish, "0" );
-			}
-			// Savage3D and Savage4 should always have trilinear enabled
-			else if ( strstr( buf, "savage3d" ) || strstr( buf, "s3 savage4" ) )
-			{
-				Cvar_Set( &r_texturemode, "GL_LINEAR_MIPMAP_LINEAR" );
-			}
-		}
-	}
-#endif
 	
 	//
 	// this is where hardware specific workarounds that should be
@@ -1560,8 +1433,6 @@ void GLimp_Init( void )
 	else if ( strstr( buf, "riva tnt " ) )
 	{
 	}
-
-//	Cvar_Set( "r_lastValidRenderer", glConfig.renderer_string );
 
 	GLW_InitExtensions();
 
