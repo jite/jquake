@@ -317,7 +317,17 @@ void EmitWaterPolys (msurface_t *fa) {
 		glColor3ubv (color_white);
 		// END shaman RFE 1022504
 	} else {
+		GLint shader, u_gamma, u_contrast;
 		GL_Bind (fa->texinfo->texture->gl_texturenum);
+
+		/* FIXME: do the uniforms somewhere else */
+		shader = glsl_shaders[SHADER_TURB].shader;
+		glUseProgram(shader);
+		u_gamma        = glGetUniformLocation(shader, "gamma");
+		u_contrast     = glGetUniformLocation(shader, "contrast");
+		glUniform1f(u_gamma, v_gamma.value);
+		glUniform1f(u_contrast, v_contrast.value);
+
 		for (p = fa->polys; p; p = p->next) {
 			glBegin(GL_POLYGON);
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
@@ -343,6 +353,7 @@ void EmitWaterPolys (msurface_t *fa) {
 			}
 			glEnd();
 		}
+		glUseProgram(0);
 	}
 
 	if (gl_fogenable.value)

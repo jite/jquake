@@ -20,10 +20,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // vid_common_gl.c -- Common code for vid_wgl.c and vid_glx.c
 
+#include <stdlib.h>
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "fs.h"
 
+#define SHADER_ENTRY(a) [SHADER_##a] = { 0, #a }
+glsl_shader_t glsl_shaders[SHADER_LAST] = {
+	SHADER_ENTRY(WORLD),
+	SHADER_ENTRY(MODEL),
+	SHADER_ENTRY(TURB),
+	SHADER_ENTRY(HUD),
+};
 
 #ifdef __APPLE__
 void *Sys_GetProcAddress (const char *ExtName);
@@ -191,6 +200,208 @@ void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cance
 
 /************************************** GL INIT **************************************/
 
+static void print_infolog(GLuint program)
+{
+    char info[1 << 12];
+    info[0] = 0;
+    glGetInfoLogARB(program, sizeof info, NULL, info);
+	const char *p = info;
+	while(*p && *p == ' ')
+		p++;
+    Con_Printf("%s", p);
+}
+
+static unsigned int setup_shader(const char *src, unsigned int type)
+{
+	GLuint shader = glCreateShader(type);
+	glShaderSource(shader, 1, &src, NULL);
+	glCompileShader(shader);
+	print_infolog(shader);
+	return shader;
+}
+
+static unsigned int setup_program(const char *vertex_shader, const char *fragment_shader)
+{
+	GLuint prog, shader;;
+
+	prog = glCreateProgram();
+	glAttachShader(prog, shader = setup_shader(vertex_shader, GL_VERTEX_SHADER));
+	glDeleteShader(shader);
+	glAttachShader(prog, shader = setup_shader(fragment_shader, GL_FRAGMENT_SHADER));
+	glDeleteShader(shader);
+	glLinkProgram(prog);
+	print_infolog(prog);
+
+	return prog;
+}
+
+/* FIXME: Move these.. Should make it independent of order by using pointers perhaps.. */
+static const char *fragshader[] = {
+	/* WORLD.FRAG */
+	"varying vec2 tex_coord;\
+	varying vec2 lightmap_coord;\
+	uniform sampler2D world_tex;\
+	uniform sampler2D lightmap_tex;\
+	uniform float gamma;\
+	uniform float contrast;\
+	void\
+	main()\
+	{\
+		vec3 world = texture2D(world_tex, tex_coord).rgb;\
+		vec3 lightmap = vec3(1.0) - 0.999 * texture2D(lightmap_tex, lightmap_coord).rgb;\
+		gl_FragColor.rgb = pow(contrast * world * lightmap, vec3(gamma));\
+		gl_FragColor.a = 1.0;\
+	}\
+	",
+	/* MODEL.FRAG */
+	"uniform sampler2D model_tex;\
+	varying vec2 tex_coord;\
+	uniform float gamma;\
+	uniform float contrast;\
+	void\
+	main()\
+	{\
+		vec3 color = texture2D(model_tex, tex_coord).rgb;\
+		gl_FragColor.rgb = pow(vec3(gl_Color) * contrast * color, vec3(gamma));\
+		gl_FragColor.a = 1.0;\
+	}\
+	",
+	/* TURB.FRAG */
+	"uniform sampler2D turb_tex;\
+	varying vec2 tex_coord;\
+	uniform float gamma;\
+	uniform float contrast;\
+	void\
+	main()\
+	{\
+		vec4 color = texture2D(turb_tex, tex_coord);\
+		gl_FragColor.rgb = pow(vec3(gl_Color) * contrast * vec3(color), vec3(gamma));\
+		gl_FragColor.a = color.a;\
+	}\
+	",
+	/* HUD.FRAG */
+	"uniform sampler2D hud_tex;\
+	varying vec2 tex_coord;\
+	uniform float gamma;\
+	uniform float contrast;\
+	void\
+	main()\
+	{\
+		vec4 color = texture2D(hud_tex, tex_coord);\
+		gl_FragColor.rgb = pow(vec3(gl_Color) * contrast * vec3(color), vec3(gamma));\
+		gl_FragColor.a = color.a * gl_Color.a;\
+	}\
+	"
+};
+
+static const char *vertshader[] = {
+	/* MODEL.VERT */
+	"varying vec2 tex_coord;\
+	varying vec2 lightmap_coord;\
+	void\
+	main()\
+	{\
+	        gl_Position = ftransform();\
+	        tex_coord = vec2(gl_MultiTexCoord0);\
+	        lightmap_coord = vec2(gl_MultiTexCoord1);\
+	}\
+	",
+	/* WORLD.VERT */
+	"varying vec2 tex_coord;\
+	void\
+	main()\
+	{\
+		gl_Position = ftransform();\
+		tex_coord = vec2(gl_MultiTexCoord0);\
+		gl_FrontColor = gl_Color;\
+	}\
+	",
+	/* TURB.VERT */
+	"varying vec2 tex_coord;\
+	void\
+	main()\
+	{\
+		gl_Position = ftransform();\
+		tex_coord = vec2(gl_MultiTexCoord0);\
+		gl_FrontColor = gl_Color;\
+	}\
+	",
+	/* HUD.VERT */
+	"varying vec2 tex_coord;\
+	void\
+	main()\
+	{\
+		gl_Position = ftransform();\
+		tex_coord = vec2(gl_MultiTexCoord0);\
+		gl_FrontColor = gl_Color;\
+	}\
+	"
+};
+
+
+static void load_shader()
+{
+	int i, j;
+	char filename[256], shadername[128];
+	unsigned long len_vert, len_frag;
+	char *src_vert, *src_frag;
+	vfsfile_t *vert, *frag;
+	for(i = 0; i < SHADER_LAST; i++) {
+		for(j = 0; glsl_shaders[i].name[j] && j < sizeof shadername - 1; j++)
+			shadername[j] = tolower(glsl_shaders[i].name[j]);
+		shadername[j] = 0;
+		glsl_shaders[i].shader = 0;
+		if(0)
+		{	
+			src_vert = src_frag = NULL;
+			vert = frag = NULL;
+			Con_Printf("loading shader: %s\n", shadername);
+			snprintf(filename, sizeof filename, "shader/%s.vert", shadername);
+			vert = FS_OpenVFS(filename, "rb", FS_ANY);
+			if(!vert) {
+				Con_Printf("could not open \"%s\", skipping shader\n", filename);
+				goto out;
+			}
+			snprintf(filename, sizeof filename, "shader/%s.frag", shadername);
+			frag = FS_OpenVFS(filename, "rb", FS_ANY);
+			if(!frag) {
+				Con_Printf("could not open \"%s\", skipping shader\n", filename);
+				goto out;
+			}
+
+			len_vert = VFS_GETLEN(vert);
+			len_frag = VFS_GETLEN(frag);
+			src_vert = malloc(len_vert + 1);
+			src_frag = malloc(len_frag + 1);
+
+
+			VFS_READ(vert, src_vert, len_vert, NULL);
+			src_vert[len_vert] = 0;
+			VFS_READ(frag, src_frag, len_frag, NULL);
+			src_frag[len_frag] = 0;
+
+			glsl_shaders[i].shader = setup_program(src_vert, src_frag);
+	out:
+			if(vert)
+				VFS_CLOSE(vert);
+			if(frag)
+				VFS_CLOSE(frag);
+
+			free(src_vert);
+			free(src_frag);
+		}
+		else
+		{
+			Con_Printf("loading builtin shader: %s\n", shadername);
+			glsl_shaders[i].shader = setup_program(vertshader[i], fragshader[i]);
+		}
+
+
+	}
+	//setup_program("void main() { gl_Position = ftransform(); }","void main() { gl_FragColor = vec4(1.0); }");
+}
+
+
 void GL_Init (void) {
 	gl_vendor     = (const char*) qglGetString (GL_VENDOR);
 	gl_renderer   = (const char*) qglGetString (GL_RENDERER);
@@ -236,6 +447,7 @@ void GL_Init (void) {
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 	GL_CheckExtensions();
+	load_shader();
 }
 
 /************************************* VID GAMMA *************************************/
