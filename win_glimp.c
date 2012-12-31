@@ -42,28 +42,27 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "input.h"
 #include "gl_model.h"
 #include "gl_local.h"
-#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__)
 #include "tr_types.h"
-#endif // _WIN32 || __linux__ || __FreeBSD__
 #include "rulesets.h"
 #include "sbar.h"
 #include "keys.h"
+
+#ifdef _MSC_VER
+	#pragma comment(lib, "glew32.lib")
+	#pragma comment(lib, "glu32.lib")
+#endif
 
 
 extern	HWND	mainwindow;
 extern  LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-HMONITOR		prevMonitor; // The previous monitor the window was on before getting destroyed.
+HMONITOR	prevMonitor; // The previous monitor the window was on before getting destroyed.
 MONITORINFOEX	prevMonInfo; // Information about the previous monitor the window was on before getting destroyed.
 
 // exported to the client
 qbool	vid_vsync_on;
 double	vid_vsync_lag;
 double	vid_last_swap_time;
-
-void WG_CheckHardwareGamma( void );
-void WG_RestoreGamma( void );
-void WG_CheckNeedSetDeviceGammaRamp (void);
 
 void VID_UpdateWindowStatus(void);
 
@@ -104,6 +103,7 @@ static qbool s_classRegistered = false;
 
 void	 QGL_EnableLogging( qbool enable ) { /* TODO */ };
 
+/*
 void ( APIENTRY * qglGetIntegerv )(GLenum pname, GLint *params);
 GLenum ( APIENTRY * qglGetError )(void);
 const GLubyte * ( APIENTRY * qglGetString )(GLenum name);
@@ -132,9 +132,7 @@ BOOL  ( WINAPI * qwglSetPixelFormat)(HDC, int, CONST PIXELFORMATDESCRIPTOR *);
 BOOL  ( WINAPI * qwglSwapBuffers)(HDC);
 
 int ( WINAPI * qwglSwapIntervalEXT)( int interval );
-BOOL  ( WINAPI * qwglGetDeviceGammaRamp3DFX)( HDC, LPVOID );
-BOOL  ( WINAPI * qwglSetDeviceGammaRamp3DFX)( HDC, LPVOID );
-
+*/
 // Finds out what monitor the window is currently on.
 HMONITOR VID_GetCurrentMonitor()
 {
@@ -159,7 +157,7 @@ qbool QGL_Init( const char *dllname ) {
 	qglGetError					 = glGetError;
 	qglGetString				 = glGetString;
 
-	qwglCopyContext              = wglCopyContext;
+/*	qwglCopyContext              = wglCopyContext;
 	qwglCreateContext            = wglCreateContext;
 	qwglCreateLayerContext       = wglCreateLayerContext;
 	qwglDeleteContext            = wglDeleteContext;
@@ -183,12 +181,11 @@ qbool QGL_Init( const char *dllname ) {
 	qwglSwapBuffers              = SwapBuffers;
 
 	qwglSwapIntervalEXT			 = 0;
-	qwglGetDeviceGammaRamp3DFX	 = NULL;
-	qwglSetDeviceGammaRamp3DFX	 = NULL;
 
 	qglActiveTextureARB			 = 0;
 	qglClientActiveTextureARB	 = 0;
 	qglMultiTexCoord2fARB		 = 0;
+*/
 
 	return true;
 }
@@ -200,7 +197,7 @@ void QGL_Shutdown( void ) {
 	qglGetError					 = NULL;
 	qglGetString				 = NULL;
 
-	qwglCopyContext              = NULL;
+/*	qwglCopyContext              = NULL;
 	qwglCreateContext            = NULL;
 	qwglCreateLayerContext       = NULL;
 	qwglDeleteContext            = NULL;
@@ -222,16 +219,14 @@ void QGL_Shutdown( void ) {
 	qwglGetPixelFormat           = NULL;
 	qwglSetPixelFormat           = NULL;
 	qwglSwapBuffers              = NULL;
+*/
 }
 
 
 /*
 ** GLW_StartDriverAndSetMode
 */
-static qbool GLW_StartDriverAndSetMode( const char *drivername, 
-										   int mode, 
-										   int colorbits,
-										   qbool cdsFullscreen )
+static qbool GLW_StartDriverAndSetMode(const char *drivername, int mode, int colorbits, qbool cdsFullscreen)
 {
 	rserr_t err;
 
@@ -258,7 +253,7 @@ static qbool GLW_StartDriverAndSetMode( const char *drivername,
 */
 #define MAX_PFDS 256
 
-static int GLW_ChoosePFD( HDC hDC, PIXELFORMATDESCRIPTOR *pPFD )
+static int GLW_ChoosePFD(HDC hDC, PIXELFORMATDESCRIPTOR *pPFD)
 {
 	PIXELFORMATDESCRIPTOR pfds[MAX_PFDS+1];
 	int maxPFD = 0;
@@ -270,7 +265,7 @@ static int GLW_ChoosePFD( HDC hDC, PIXELFORMATDESCRIPTOR *pPFD )
 	// count number of PFDs
 	if ( glConfig.driverType > GLDRV_ICD )
 	{
-		maxPFD = qwglDescribePixelFormat( hDC, 1, sizeof( PIXELFORMATDESCRIPTOR ), &pfds[0] );
+		maxPFD = wglDescribePixelFormat( hDC, 1, sizeof( PIXELFORMATDESCRIPTOR ), &pfds[0] );
 	}
 	else
 	{
@@ -289,7 +284,7 @@ static int GLW_ChoosePFD( HDC hDC, PIXELFORMATDESCRIPTOR *pPFD )
 	{
 		if ( glConfig.driverType > GLDRV_ICD )
 		{
-			qwglDescribePixelFormat( hDC, i, sizeof( PIXELFORMATDESCRIPTOR ), &pfds[i] );
+			wglDescribePixelFormat( hDC, i, sizeof( PIXELFORMATDESCRIPTOR ), &pfds[i] );
 		}
 		else
 		{
@@ -529,10 +524,10 @@ static int GLW_MakeContext( PIXELFORMATDESCRIPTOR *pPFD )
 
 		if ( glConfig.driverType > GLDRV_ICD )
 		{
-			qwglDescribePixelFormat( glw_state.hDC, pixelformat, sizeof( *pPFD ), pPFD );
-			if ( qwglSetPixelFormat( glw_state.hDC, pixelformat, pPFD ) == FALSE )
+			wglDescribePixelFormat( glw_state.hDC, pixelformat, sizeof( *pPFD ), pPFD );
+			if ( wglSetPixelFormat( glw_state.hDC, pixelformat, pPFD ) == FALSE )
 			{
-				ST_Printf ( PRINT_R_VERBOSE, "...qwglSetPixelFormat failed\n");
+				ST_Printf ( PRINT_R_VERBOSE, "...wglSetPixelFormat failed\n");
 				return TRY_PFD_FAIL_SOFT;
 			}
 		}
@@ -556,7 +551,7 @@ static int GLW_MakeContext( PIXELFORMATDESCRIPTOR *pPFD )
 	if ( !glw_state.hGLRC )
 	{
 		ST_Printf( PRINT_R_VERBOSE, "...creating GL context: " );
-		if ( ( glw_state.hGLRC = qwglCreateContext( glw_state.hDC ) ) == 0 )
+		if ( ( glw_state.hGLRC = wglCreateContext( glw_state.hDC ) ) == 0 )
 		{
 			ST_Printf (PRINT_R_VERBOSE, "failed\n");
 
@@ -565,9 +560,9 @@ static int GLW_MakeContext( PIXELFORMATDESCRIPTOR *pPFD )
 		ST_Printf( PRINT_R_VERBOSE, "succeeded\n" );
 
 		ST_Printf( PRINT_R_VERBOSE, "...making context current: " );
-		if ( !qwglMakeCurrent( glw_state.hDC, glw_state.hGLRC ) )
+		if ( !wglMakeCurrent( glw_state.hDC, glw_state.hGLRC ) )
 		{
-			qwglDeleteContext( glw_state.hGLRC );
+			wglDeleteContext( glw_state.hGLRC );
 			glw_state.hGLRC = NULL;
 			ST_Printf (PRINT_R_VERBOSE, "failed\n");
 			return TRY_PFD_FAIL_HARD;
@@ -1139,18 +1134,11 @@ static rserr_t GLW_SetMode( const char *drivername,
 */
 static void GLW_InitExtensions( void )
 {
-#ifdef GLSL
-
-	/*	glew is not shaders lib, its OpenGL extensions lib,
-		but atm we use it for shaders only, so surround with #ifdef */
-
-
 	// glew lib unable to deinit, so init it even r_allowExtensions is zero
 	if ( glewInit () != GLEW_OK )
 	{
 		ST_Printf( PRINT_R_VERBOSE, "*** ERROR in glewInit ***\n" );
 	}
-#endif
 
 	if ( !r_allowExtensions.integer )
 	{
@@ -1161,8 +1149,8 @@ static void GLW_InitExtensions( void )
 	ST_Printf( PRINT_R_VERBOSE, "Initializing OpenGL extensions\n" );
 
 	// WGL_EXT_swap_control
-	qwglSwapIntervalEXT = ( BOOL (WINAPI *)(int)) qwglGetProcAddress( "wglSwapIntervalEXT" );
-	if ( qwglSwapIntervalEXT )
+	wglSwapIntervalEXT = ( BOOL (WINAPI *)(int)) wglGetProcAddress( "wglSwapIntervalEXT" );
+	if ( wglSwapIntervalEXT )
 	{
 		ST_Printf( PRINT_R_VERBOSE, "...using WGL_EXT_swap_control\n" );
 		r_swapInterval.modified = true;	// force a set next frame
@@ -1170,37 +1158,6 @@ static void GLW_InitExtensions( void )
 	else
 	{
 		ST_Printf( PRINT_R_VERBOSE, "...WGL_EXT_swap_control not found\n" );
-	}
-
-	// WGL_3DFX_gamma_control
-	qwglGetDeviceGammaRamp3DFX = NULL;
-	qwglSetDeviceGammaRamp3DFX = NULL;
-
-	if ( strstr( glConfig.extensions_string, "WGL_3DFX_gamma_control" ) )
-	{
-//		if ( !r_ignorehwgamma->integer && r_ext_gamma_control->integer )
-//		{
-			qwglGetDeviceGammaRamp3DFX = ( BOOL ( WINAPI * )( HDC, LPVOID ) ) qwglGetProcAddress( "wglGetDeviceGammaRamp3DFX" );
-			qwglSetDeviceGammaRamp3DFX = ( BOOL ( WINAPI * )( HDC, LPVOID ) ) qwglGetProcAddress( "wglSetDeviceGammaRamp3DFX" );
-
-			if ( qwglGetDeviceGammaRamp3DFX && qwglSetDeviceGammaRamp3DFX )
-			{
-				ST_Printf( PRINT_R_VERBOSE, "...using WGL_3DFX_gamma_control\n" );
-			}
-			else
-			{
-				qwglGetDeviceGammaRamp3DFX = NULL;
-				qwglSetDeviceGammaRamp3DFX = NULL;
-			}
-//		}
-//		else
-//		{
-//			ST_Printf( PRINT_R_VERBOSE, "...ignoring WGL_3DFX_gamma_control\n" );
-//		}
-	}
-	else
-	{
-		ST_Printf( PRINT_R_VERBOSE, "...WGL_3DFX_gamma_control not found\n" );
 	}
 }
 
@@ -1344,18 +1301,19 @@ void GL_EndRendering (void) {
 	//
 	// swapinterval stuff
 	//
-	if ( r_swapInterval.modified ) {
+	if ( r_swapInterval.modified )
+	{
 		r_swapInterval.modified = false;
 
-		if ( !glConfig.stereoEnabled ) {	// why?
-			if ( qwglSwapIntervalEXT ) {
-				qwglSwapIntervalEXT( r_swapInterval.value != 0);
+		if ( !glConfig.stereoEnabled )
+		{	// why?
+			if ( wglSwapIntervalEXT )
+			{
+				wglSwapIntervalEXT(r_swapInterval.value != 0);
 				vid_vsync_on = (r_swapInterval.value != 0);
 			}
 		}
 	}
-
-	WG_CheckNeedSetDeviceGammaRamp();
 
 	if (!scr_skipupdate || block_drawing) {
 
@@ -1383,20 +1341,6 @@ void GL_EndRendering (void) {
 void GLimp_EndFrame (void)
 {
 	double time_before_swap;
-/* move it to GL_EndRendering() temporaly
-	//
-	// swapinterval stuff
-	//
-	if ( r_swapInterval.modified ) {
-		r_swapInterval.modified = false;
-
-		if ( !glConfig.stereoEnabled ) {	// why?
-			if ( qwglSwapIntervalEXT ) {
-				qwglSwapIntervalEXT( r_swapInterval.integer );
-			}
-		}
-	}
-*/
 
 	time_before_swap = Sys_DoubleTime();
 #ifdef USEFAKEGL
@@ -1404,7 +1348,7 @@ void GLimp_EndFrame (void)
 #else
 	if ( glConfig.driverType > GLDRV_ICD )
 	{
-		if ( !qwglSwapBuffers( glw_state.hDC ) )
+		if ( !wglSwapBuffers( glw_state.hDC ) )
 		{
 			ST_Printf( PRINT_ERR_FATAL, "GLimp_EndFrame() - SwapBuffers() failed!\n" );
 		}
@@ -1620,7 +1564,6 @@ void GLimp_Init( void )
 //	Cvar_Set( "r_lastValidRenderer", glConfig.renderer_string );
 
 	GLW_InitExtensions();
-	WG_CheckHardwareGamma();
 
 // FIXME: if we turn off ztrick due to lack of bits in one mode, we do not turn it on if we got enought bits in other mode
 	gl_allow_ztrick = true;
@@ -1649,19 +1592,16 @@ void GLimp_Shutdown( void )
 	int retVal;
 
 	// FIXME: Brian, we need better fallbacks from partially initialized failures
-	if ( !qwglMakeCurrent ) {
+	if ( !wglMakeCurrent ) {
 		return;
 	}
 
 	ST_Printf( PRINT_R_VERBOSE, "Shutting down OpenGL subsystem\n" );
 
-	// restore gamma.  We do this first because 3Dfx's extension needs a valid OGL subsystem
-	WG_RestoreGamma();
-
 	// set current context to NULL
-	if ( qwglMakeCurrent )
+	if ( wglMakeCurrent )
 	{
-		retVal = qwglMakeCurrent( NULL, NULL ) != 0;
+		retVal = wglMakeCurrent( NULL, NULL ) != 0;
 
 		ST_Printf( PRINT_R_VERBOSE, "...wglMakeCurrent( NULL, NULL ): %s\n", success[retVal] );
 	}
@@ -1669,7 +1609,7 @@ void GLimp_Shutdown( void )
 	// delete HGLRC
 	if ( glw_state.hGLRC )
 	{
-		retVal = qwglDeleteContext( glw_state.hGLRC ) != 0;
+		retVal = wglDeleteContext( glw_state.hGLRC ) != 0;
 		ST_Printf( PRINT_R_VERBOSE, "...deleting GL context: %s\n", success[retVal] );
 		glw_state.hGLRC = NULL;
 	}
@@ -1903,20 +1843,9 @@ void WG_AppActivate(BOOL fActive, BOOL minimized)
 			ShowWindow (mainwindow, SW_RESTORE);
 		}
 
-		if ( glw_state.vid_canalttab && !minimized )
-		{
-			// VVD: didn't restore gamma after ALT+TAB on some ATI video cards (or drivers?...)
-			// HACK!!! FIXME {
-			if (restore_gamma == 0 && (int)vid_forcerestoregamma.value)
-				restore_gamma = 1;
-			// }
-			v_gamma.modified = true; // force reset gamma on next frame
-		}
 	}
 	else
 	{
-		WG_RestoreGamma ();
-
 		if ( glConfig.isFullscreen )
 		{
 			if ( glw_state.vid_canalttab )
@@ -1933,134 +1862,4 @@ void WG_AppActivate(BOOL fActive, BOOL minimized)
 	}
 }
 
-/********************************** HW GAMMA **********************************/
-
-void VID_ShiftPalette (unsigned char *palette) {}
-
-extern cvar_t	vid_hwgammacontrol; // put here, so u remeber this cvar exist
-
-unsigned short *currentgammaramp = NULL;
-static unsigned short systemgammaramp[3][256];
-
-qbool vid_gammaworks	  = false;
-qbool vid_hwgamma_enabled = false;
-qbool old_hwgamma_enabled = false;
-qbool customgamma		  = false;
-
-// !!!!!!!!!
-// NOTE: somewhere we use glw_state.hDC somewhere hDC = GetDC( GetDesktopWindow() )
-// !!!!!!!!!
-
-// Note: ramps must point to a static array
-void VID_SetDeviceGammaRamp(unsigned short *ramps) 
-{
-	if ( !vid_gammaworks )
-		return;
-
-	currentgammaramp = ramps; // is this really need before check for vid_hwgamma_enabled ???
-
-	if ( !vid_hwgamma_enabled )
-		return;
-
-	customgamma = true;
-
-	if ( Win2K || WinXP || Win2K3 || WinVISTA || Win7)
-	{
-		int i, j;
-
-		for (i = 0; i < 128; i++)
-			for (j = 0; j < 3; j++)
-				ramps[j * 256 + i] = min(ramps[j * 256 + i], (i + 0x80) << 8);
-
-		for (j = 0; j < 3; j++)
-			ramps[j * 256 + 128] = min(ramps[j * 256 + 128], 0xFE00);
-	}
-
-	if ( qwglSetDeviceGammaRamp3DFX )
-		qwglSetDeviceGammaRamp3DFX( glw_state.hDC, ramps );
-	else {
-		SetDeviceGammaRamp( glw_state.hDC, ramps );
-	}
-}
-
-void WG_CheckHardwareGamma (void) 
-{
-	HDC			hDC;
-
-	// main
-	vid_gammaworks      = false;
-	// damn helpers
-	vid_hwgamma_enabled = false;
-	old_hwgamma_enabled = false;
-	customgamma		    = false;
-	currentgammaramp    = NULL;
-
-	v_gamma.modified	= true; // force update on next frame
-
-	if ( COM_CheckParm("-nohwgamma") && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4)) ) // FIXME
-		return;
-
-	if ( qwglGetDeviceGammaRamp3DFX )
-	{
-		hDC = GetDC( GetDesktopWindow() );
-		vid_gammaworks = qwglGetDeviceGammaRamp3DFX( hDC, systemgammaramp );
-		ReleaseDC( GetDesktopWindow(), hDC );
-
-		return;
-	}
-
-	// non-3Dfx standalone drivers don't support gamma changes, period
-	if ( glConfig.driverType == GLDRV_STANDALONE )
-	{
-		return;
-	}
-
-	hDC = GetDC( GetDesktopWindow() );
-	vid_gammaworks = GetDeviceGammaRamp( hDC, systemgammaramp );
-	ReleaseDC( GetDesktopWindow(), hDC );
-
-	if ( vid_gammaworks && !COM_CheckParm("-nogammareset") )
-	{
-		int i, j;
-		for (i = 0; i < 3; i++)
-			for (j = 0; j < 256; j++)
-				systemgammaramp[i][j] = (j << 8);
-	}
-}
-
-void WG_RestoreGamma(void) 
-{
-	if ( vid_gammaworks && customgamma )
-	{
-		customgamma = false;
-
-		if ( qwglSetDeviceGammaRamp3DFX )
-		{
-			qwglSetDeviceGammaRamp3DFX( glw_state.hDC, systemgammaramp );
-		}
-		else
-		{
-			HDC hDC;
-			
-			hDC = GetDC( GetDesktopWindow() );
-			SetDeviceGammaRamp( hDC, systemgammaramp );
-			ReleaseDC( GetDesktopWindow(), hDC );
-		}
-	}
-}
-
-void WG_CheckNeedSetDeviceGammaRamp(void) 
-{
-	vid_hwgamma_enabled = vid_hwgammacontrol.value && vid_gammaworks && ActiveApp && !Minimized;
-	vid_hwgamma_enabled = vid_hwgamma_enabled && (glConfig.isFullscreen || vid_hwgammacontrol.value == 2);
-
-	if ( vid_hwgamma_enabled != old_hwgamma_enabled )
-	{
-		old_hwgamma_enabled = vid_hwgamma_enabled;
-		if ( vid_hwgamma_enabled && currentgammaramp )
-			VID_SetDeviceGammaRamp ( currentgammaramp );
-		else
-			WG_RestoreGamma ();
-	}
-}
-
+void VID_ShiftPalette (unsigned char *palette) {} 
