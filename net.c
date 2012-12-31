@@ -898,11 +898,22 @@ int UDP_OpenSocket (netadrtype_t type, int port)
 		return INVALID_SOCKET;
 	}
 
-	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
-		ST_Printf (PRINT_FAIL, "UDP_OpenSocket: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
-		close(newsocket);
+
+#ifndef _WIN32
+	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1)
+	{ // O'Rly?! @@@
+ 		ST_Printf (PRINT_FAIL, "UDP_OpenSocket: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
+ 		close(newsocket);
+ 		return INVALID_SOCKET;
+ 	}
+#else
+	if (ioctlsocket (newsocket, FIONBIO, &_yes) == -1)
+	{ // make asynchronous
+		Com_Printf ("UDP_OpenSocket: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
+		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
+#endif
 
 /* FIXME -ip cmd line reimplement? */
 
