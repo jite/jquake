@@ -229,6 +229,11 @@ static unsigned int DI_BufSize(void)
 	return bound(16, in_di_bufsize.integer, 256);
 }
 
+void IN_Commands(void)
+{
+	//dummy
+}
+
 static void SetBufferSize(void) 
 {
 	static DIPROPDWORD dipdw = {

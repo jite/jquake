@@ -843,6 +843,7 @@ int UDP_OpenSocket (netadrtype_t type, int port)
 	int newsocket;
 	struct sockaddr_storage addr;
 	int _yes = 0;
+	unsigned long _true = 1;
 
 	if (type == NA_IPv6)
 	{
@@ -905,7 +906,7 @@ int UDP_OpenSocket (netadrtype_t type, int port)
 		return INVALID_SOCKET;
 	}
 #endif
-	if (ioctlsocket (newsocket, FIONBIO, &_yes) == -1)
+	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1)
 	{ // make asynchronous
 		Com_Printf ("UDP_OpenSocket: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);

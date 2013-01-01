@@ -2428,6 +2428,7 @@ void CL_Frame (double time)
 		// allow mice or other external controllers to add commands
 		IN_Commands();
 
+
 		// process console commands
 		Cbuf_Execute();
 		CL_CheckAutoPause();
