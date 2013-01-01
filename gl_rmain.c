@@ -512,6 +512,7 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 	//VULT COLOURED MODEL LIGHTS
 	int i;
 	vec3_t lc;
+	GLint shader, u_gamma, u_contrast;
 
 	lerpfrac = r_framelerp;
 	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;	
@@ -524,10 +525,10 @@ void GL_DrawAliasFrame(aliashdr_t *paliashdr, int pose1, int pose2, qbool mtex, 
 	order = (int *) ((byte *) paliashdr + paliashdr->commands);
 
 	/* FIXME: do the uniforms somewhere else */
-	GLint shader = glsl_shaders[SHADER_MODEL].shader;
+	shader = glsl_shaders[SHADER_MODEL].shader;
 	glUseProgram(shader);
-	GLint u_gamma        = glGetUniformLocation(shader, "gamma");
-	GLint u_contrast     = glGetUniformLocation(shader, "contrast");
+	u_gamma        = glGetUniformLocation(shader, "gamma");
+	u_contrast     = glGetUniformLocation(shader, "contrast");
 	glUniform1f(u_gamma, v_gamma.value);
 	glUniform1f(u_contrast, v_contrast.value);
 
@@ -1591,7 +1592,7 @@ void R_PolyBlend (void) {
 
 void R_BrightenScreen (void) {
 	return; //FIXME gamma mess
-	extern float vid_gamma;
+/*	extern float vid_gamma;
 	float f;
 
 	if (vid_hwgamma_enabled)
@@ -1629,6 +1630,7 @@ void R_BrightenScreen (void) {
 	glEnable (GL_TEXTURE_2D);
 	glDisable (GL_BLEND);
 	glColor3ubv (color_white);
+	*/
 }
 
 int SignbitsForPlane (mplane_t *out) {

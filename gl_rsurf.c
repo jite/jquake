@@ -799,24 +799,18 @@ static void R_ClearTextureChains(model_t *clmodel) {
 void DrawTextureChains (model_t *model, int contents)
 {
 	extern cvar_t  gl_lumaTextures;
-
 	int waterline, i, k, GL_LIGHTMAP_TEXTURE = 0, GL_FB_TEXTURE = 0, fb_texturenum;
 	msurface_t *s;
 	texture_t *t;
 	float *v;
-
 	qbool render_lightmaps = false;
 	qbool doMtex1, doMtex2;
-
 	qbool isLumaTexture;
-
 	qbool draw_fbs, draw_caustics, draw_details;
-
 	qbool can_mtex_lightmaps, can_mtex_fbs;
-
 	qbool draw_mtex_fbs;
-
 	qbool mtex_lightmaps, mtex_fbs;
+	GLint shader, u_world_tex, u_lightmap_tex, u_gamma, u_contrast;
 
 	draw_caustics = underwatertexture && gl_caustics.value;
 	draw_details  = detailtexture && gl_detail.value;
@@ -837,17 +831,15 @@ void DrawTextureChains (model_t *model, int contents)
 		glEnable(GL_FOG);
 
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-	GLint shader;
- 
+	 
 	if(model->isworldmodel) {
 		shader = glsl_shaders[SHADER_WORLD].shader;
 		glUseProgram(shader);
  
-		GLint u_world_tex    = glGetUniformLocation(shader, "world_tex");
-		GLint u_lightmap_tex = glGetUniformLocation(shader, "lightmap_tex");
-		GLint u_gamma        = glGetUniformLocation(shader, "gamma");
-		GLint u_contrast     = glGetUniformLocation(shader, "contrast");
+		u_world_tex    = glGetUniformLocation(shader, "world_tex");
+		u_lightmap_tex = glGetUniformLocation(shader, "lightmap_tex");
+		u_gamma        = glGetUniformLocation(shader, "gamma");
+		u_contrast     = glGetUniformLocation(shader, "contrast");
  
 		glUniform1i(u_world_tex, 0);
 		glUniform1i(u_lightmap_tex, 1);
@@ -857,8 +849,8 @@ void DrawTextureChains (model_t *model, int contents)
 	else {
 		shader = glsl_shaders[SHADER_MODEL].shader;
 		glUseProgram(shader);
-		GLint u_gamma        = glGetUniformLocation(shader, "gamma");
-		GLint u_contrast     = glGetUniformLocation(shader, "contrast");
+		u_gamma        = glGetUniformLocation(shader, "gamma");
+		u_contrast     = glGetUniformLocation(shader, "contrast");
 		glUniform1f(u_gamma, v_gamma.value);
 		glUniform1f(u_contrast, v_contrast.value);
 	}

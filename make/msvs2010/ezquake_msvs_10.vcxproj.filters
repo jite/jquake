@@ -174,9 +174,6 @@
     <ClCompile Include="..\..\gl_rsurf.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\gl_shader.c">
-      <Filter>Source Files\OpenGL</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\gl_texture.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
@@ -298,9 +295,6 @@
       <Filter>Source Files\Video</Filter>
     </ClCompile>
     <ClCompile Include="..\..\vid_common_gl.c">
-      <Filter>Source Files\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\vid_win.c">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
     <ClCompile Include="..\..\win_wndproc.c">
@@ -774,9 +768,6 @@
       <Filter>Header Files\OpenGL_h</Filter>
     </ClInclude>
     <ClInclude Include="..\..\gl_model.h">
-      <Filter>Header Files\OpenGL_h</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\gl_shader.h">
       <Filter>Header Files\OpenGL_h</Filter>
     </ClInclude>
     <ClInclude Include="..\..\gl_texture.h">

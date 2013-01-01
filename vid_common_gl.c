@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // vid_common_gl.c -- Common code for vid_wgl.c and vid_glx.c
 
-#include <GL/glew.h>
+#include <glew.h>
 #include <stdlib.h>
 #include "quakedef.h"
 #include "gl_model.h"
@@ -28,13 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fs.h"
 
 #define SHADER_ENTRY(a) [SHADER_##a] = { 0, #a }
-glsl_shader_t glsl_shaders[SHADER_LAST] = {
-	SHADER_ENTRY(WORLD),
-	SHADER_ENTRY(MODEL),
-	SHADER_ENTRY(TURB),
-	SHADER_ENTRY(HUD),
-};
-
 // dimman: Might have to remove these ..
 #ifdef __APPLE__
 void *Sys_GetProcAddress (const char *ExtName);
@@ -68,7 +61,9 @@ void *GL_GetProcAddress (const char *ExtName)
 #endif /* _WIN32 */
 }
 #endif
-
+glsl_shader_t glsl_shaders[SHADER_LAST] = {
+	{0, "WORLD"},{0, "MODEL"}, {0, "TURB"}, {0, "HUD"}
+};
 const char *gl_vendor;
 const char *gl_renderer;
 const char *gl_version;
@@ -117,9 +112,10 @@ void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool *cance
 static void print_infolog(GLuint program)
 {
     char info[1 << 12];
+	const char *p = info;
     info[0] = 0;
     glGetInfoLogARB(program, sizeof info, NULL, info);
-	const char *p = info;
+	
 	while(*p && *p == ' ')
 		p++;
     Con_Printf("%s", p);

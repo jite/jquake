@@ -3160,11 +3160,12 @@ void SCR_DrawElements(void)
 {
 	extern qbool  sb_showscores,  sb_showteamscores;
 	extern cvar_t	scr_menudrawhud;
+	GLint shader, u_gamma, u_contrast;
 
-	GLint shader = glsl_shaders[SHADER_HUD].shader;
+	shader = glsl_shaders[SHADER_HUD].shader;
 	glUseProgram(shader);
-	GLint u_gamma        = glGetUniformLocation(shader, "gamma");
-	GLint u_contrast     = glGetUniformLocation(shader, "contrast");
+	u_gamma        = glGetUniformLocation(shader, "gamma");
+	u_contrast     = glGetUniformLocation(shader, "contrast");
 	glUniform1f(u_gamma, v_gamma.value);
 	glUniform1f(u_contrast, v_contrast.value);	
 

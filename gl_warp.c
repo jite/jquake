@@ -261,8 +261,8 @@ void EmitWaterPolys (msurface_t *fa) {
 	byte *col;
 	extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor;
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
-
 	vec3_t nv;
+	GLint shader, u_gamma, u_contrast;
 
 	GL_DisableMultitexture();
 
@@ -320,10 +320,10 @@ void EmitWaterPolys (msurface_t *fa) {
 		GL_Bind (fa->texinfo->texture->gl_texturenum);
 
 		/* FIXME: do the uniforms somewhere else */
-		GLint shader = glsl_shaders[SHADER_TURB].shader;
+		shader = glsl_shaders[SHADER_TURB].shader;
 		glUseProgram(shader);
-		GLint u_gamma        = glGetUniformLocation(shader, "gamma");
-		GLint u_contrast     = glGetUniformLocation(shader, "contrast");
+		u_gamma        = glGetUniformLocation(shader, "gamma");
+		u_contrast     = glGetUniformLocation(shader, "contrast");
 		glUniform1f(u_gamma, v_gamma.value);
 		glUniform1f(u_contrast, v_contrast.value);
 

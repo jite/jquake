@@ -20,9 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __GL_LOCAL_H__
 #define __GL_LOCAL_H__
 
-#ifdef GLSL
-#include "glew.h"
-#endif // GLSL
+#ifdef _WIN32
+#include <glew.h>
+#else
+#include <GL/glew.h>
+#endif // _WIN32
 
 #ifdef __APPLE__
 
@@ -36,7 +38,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef USEFAKEGL
 #include "fakegl.h"
 #else
-#include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 #endif

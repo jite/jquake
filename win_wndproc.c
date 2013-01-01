@@ -132,21 +132,6 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
 	int fActive, fMinimized, temp;
 	extern unsigned int uiWheelMessage;
 
-	// VVD: didn't restore gamma after ALT+TAB on some ATI video cards (or drivers?...)
-	// HACK!!! FIXME {
-	extern int	restore_gamma;
-	static time_t time_old;
-	static float old_gamma;
-	if (restore_gamma == 2) 
-	{
-		if (time(NULL) - time_old > 0) 
-		{
-			Cvar_SetValue(&v_gamma, old_gamma);
-			restore_gamma = 0;
-		}
-	}
-	// }
-
 	if (uMsg == uiWheelMessage) 
 	{
 		uMsg = WM_MOUSEWHEEL;
@@ -224,16 +209,6 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
 			fMinimized = (BOOL) HIWORD(wParam);
 			AppActivate(!(fActive == WA_INACTIVE), fMinimized);
 
-			// VVD: didn't restore gamma after ALT+TAB on some ATI video cards (or drivers?...)
-			// HACK!!! FIXME {
-			if (restore_gamma == 1) 
-			{
-				time_old = time(NULL);
-				restore_gamma = 2;
-				old_gamma = v_gamma.value;
-				Cvar_SetValue(&v_gamma, old_gamma + 0.01);
-			}
-			// }
 			// fix the leftover Alt from any Alt-Tab or the like that switched us away
 			ClearAllStates ();
 

@@ -56,6 +56,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 extern	HWND	mainwindow;
 extern  LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+int ( WINAPI * qwglSwapIntervalEXT)( int interval );
+
 HMONITOR	prevMonitor; // The previous monitor the window was on before getting destroyed.
 MONITORINFOEX	prevMonInfo; // Information about the previous monitor the window was on before getting destroyed.
 
@@ -63,6 +65,7 @@ MONITORINFOEX	prevMonInfo; // Information about the previous monitor the window 
 qbool	vid_vsync_on;
 double	vid_vsync_lag;
 double	vid_last_swap_time;
+int opengl_initialized;
 
 void VID_UpdateWindowStatus(void);
 
@@ -122,6 +125,7 @@ qbool QGL_Init( const char *dllname )
 	qglActiveTextureARB       = 0;
 	qglClientActiveTextureARB = 0;
 	qglMultiTexCoord2fARB     = 0;
+	qwglSwapIntervalEXT       = 0;
 	return true;
 }
 
@@ -150,6 +154,7 @@ static qbool GLW_StartDriverAndSetMode(const char *drivername, int mode, int col
 		default:
 			break;
 	}
+	opengl_initialized = 1;
 	return true;
 }
 
@@ -170,14 +175,14 @@ static int GLW_ChoosePFD(HDC hDC, PIXELFORMATDESCRIPTOR *pPFD)
 	ST_Printf( PRINT_R_VERBOSE, "...GLW_ChoosePFD( %d, %d, %d )\n", ( int ) pPFD->cColorBits, ( int ) pPFD->cDepthBits, ( int ) pPFD->cStencilBits );
 
 	// count number of PFDs
-	if ( glConfig.driverType > GLDRV_ICD )
+	/*if ( glConfig.driverType > GLDRV_ICD )
 	{
 		maxPFD = wglDescribePixelFormat( hDC, 1, sizeof( PIXELFORMATDESCRIPTOR ), &pfds[0] );
 	}
 	else
-	{
+	{*/
 		maxPFD = DescribePixelFormat( hDC, 1, sizeof( PIXELFORMATDESCRIPTOR ), &pfds[0] );
-	}
+	//}
 	if ( maxPFD > MAX_PFDS )
 	{
 		ST_Printf( PRINT_WARNING, "...numPFDs > MAX_PFDS (%d > %d)\n", maxPFD, MAX_PFDS );
@@ -189,14 +194,14 @@ static int GLW_ChoosePFD(HDC hDC, PIXELFORMATDESCRIPTOR *pPFD)
 	// grab information
 	for ( i = 1; i <= maxPFD; i++ )
 	{
-		if ( glConfig.driverType > GLDRV_ICD )
-		{
-			wglDescribePixelFormat( hDC, i, sizeof( PIXELFORMATDESCRIPTOR ), &pfds[i] );
-		}
-		else
-		{
+		//if ( glConfig.driverType > GLDRV_ICD )
+		//{
+		//	wglDescribePixelFormat( hDC, i, sizeof( PIXELFORMATDESCRIPTOR ), &pfds[i] );
+		//}
+		//else
+		//{
 			DescribePixelFormat( hDC, i, sizeof( PIXELFORMATDESCRIPTOR ), &pfds[i] );
-		}
+		//}
 	}
 
 	// look for a best match
@@ -429,16 +434,16 @@ static int GLW_MakeContext( PIXELFORMATDESCRIPTOR *pPFD )
 		}
 		ST_Printf( PRINT_R_VERBOSE, "...PIXELFORMAT %d selected\n", pixelformat );
 
-		if ( glConfig.driverType > GLDRV_ICD )
-		{
-			wglDescribePixelFormat( glw_state.hDC, pixelformat, sizeof( *pPFD ), pPFD );
-			if ( wglSetPixelFormat( glw_state.hDC, pixelformat, pPFD ) == FALSE )
-			{
-				ST_Printf ( PRINT_R_VERBOSE, "...wglSetPixelFormat failed\n");
-				return TRY_PFD_FAIL_SOFT;
-			}
-		}
-		else
+//		if ( glConfig.driverType > GLDRV_ICD )
+//		{
+//			wglDescribePixelFormat( glw_state.hDC, pixelformat, sizeof( *pPFD ), pPFD );
+//			if ( wglSetPixelFormat( glw_state.hDC, pixelformat, pPFD ) == FALSE )
+//			{
+//				ST_Printf ( PRINT_R_VERBOSE, "...wglSetPixelFormat failed\n");
+//				return TRY_PFD_FAIL_SOFT;
+//			}
+//		}
+//		else
 		{
 			DescribePixelFormat( glw_state.hDC, pixelformat, sizeof( *pPFD ), pPFD );
 
@@ -837,8 +842,8 @@ static rserr_t GLW_SetMode( const char *drivername,
 	//
 	// verify desktop bit depth
 	//
-	if ( glConfig.driverType != GLDRV_VOODOO )
-	{
+	//if ( glConfig.driverType != GLDRV_VOODOO )
+	//{
 		if ( glw_state.desktopBitsPixel < 15 || glw_state.desktopBitsPixel == 24 )
 		{
 			if ( colorbits == 0 || ( !cdsFullscreen && colorbits >= 15 ) )
@@ -858,7 +863,7 @@ static rserr_t GLW_SetMode( const char *drivername,
 				}
 			}
 		}
-	}
+	//}
 
 	// do a CDS if needed
 	if ( cdsFullscreen )
@@ -1054,16 +1059,18 @@ static void GLW_InitExtensions( void )
 	}
 
 	ST_Printf( PRINT_R_VERBOSE, "Initializing OpenGL extensions\n" );
+	// WGL_EXT_swap_control
+        qwglSwapIntervalEXT = ( BOOL (WINAPI *)(int)) wglGetProcAddress( "wglSwapIntervalEXT" );
+        if ( qwglSwapIntervalEXT )
+        {
+                ST_Printf( PRINT_R_VERBOSE, "...using WGL_EXT_swap_control\n" );
+                r_swapInterval.modified = true; // force a set next frame
+        }
+        else
+        {
+                ST_Printf( PRINT_R_VERBOSE, "...WGL_EXT_swap_control not found\n" );
+        }
 
-	if ( wglSwapIntervalEXT )
-	{
-		ST_Printf( PRINT_R_VERBOSE, "...using WGL_EXT_swap_control\n" );
-		r_swapInterval.modified = true;	// force a set next frame
-	}
-	else
-	{
-		ST_Printf( PRINT_R_VERBOSE, "...WGL_EXT_swap_control not found\n" );
-	}
 }
 
 
@@ -1127,7 +1134,7 @@ static qbool GLW_LoadOpenGL( const char *drivername )
 	//
 	// determine if we're on a standalone driver
 	//
-	if ( strstr( buffer, "opengl32" ) != 0 || r_maskMinidriver.integer )
+/*	if ( strstr( buffer, "opengl32" ) != 0 || r_maskMinidriver.integer )
 	{
 		glConfig.driverType = GLDRV_ICD;
 	}
@@ -1142,9 +1149,10 @@ static qbool GLW_LoadOpenGL( const char *drivername )
 			glConfig.driverType = GLDRV_VOODOO;
 		}
 	}
+	*/
 
 	// disable the 3Dfx splash screen
-	_putenv("FX_GLIDE_NO_SPLASH=0");
+	//_putenv("FX_GLIDE_NO_SPLASH=0");
 
 	//
 	// load the driver and bind our function pointers to it
@@ -1158,8 +1166,8 @@ static qbool GLW_LoadOpenGL( const char *drivername )
 		{
 			// if we're on a 24/32-bit desktop and we're going fullscreen on an ICD,
 			// try it again but with a 16-bit desktop
-			if ( glConfig.driverType == GLDRV_ICD )
-			{
+			//if ( glConfig.driverType == GLDRV_ICD )
+			//{
 				if ( r_colorbits.integer != 16 ||
 					 cdsFullscreen != true ||
 					 r_mode.integer != 3 )
@@ -1169,17 +1177,17 @@ static qbool GLW_LoadOpenGL( const char *drivername )
 						goto fail;
 					}
 				}
-			}
+			//}
 			else
 			{
 				goto fail;
 			}
 		}
 
-		if ( glConfig.driverType == GLDRV_VOODOO )
-		{
-			glConfig.isFullscreen = true;
-		}
+		//if ( glConfig.driverType == GLDRV_VOODOO )
+		//{
+		//	glConfig.isFullscreen = true;
+		//}
 
 		return true;
 	}
@@ -1212,9 +1220,9 @@ void GL_EndRendering (void) {
 
 		if ( !glConfig.stereoEnabled )
 		{	// why?
-			if ( wglSwapIntervalEXT )
+			if ( qwglSwapIntervalEXT )
 			{
-				wglSwapIntervalEXT(r_swapInterval.value != 0);
+				qwglSwapIntervalEXT(r_swapInterval.value != 0);
 				vid_vsync_on = (r_swapInterval.value != 0);
 			}
 		}
@@ -1251,17 +1259,17 @@ void GLimp_EndFrame (void)
 #ifdef USEFAKEGL
 	FakeSwapBuffers();
 #else
-	if ( glConfig.driverType > GLDRV_ICD )
-	{
-		if ( !wglSwapBuffers( glw_state.hDC ) )
-		{
-			ST_Printf( PRINT_ERR_FATAL, "GLimp_EndFrame() - SwapBuffers() failed!\n" );
-		}
-	}
-	else
-	{
+//	if ( glConfig.driverType > GLDRV_ICD )
+//	{
+//		if ( !wglSwapBuffers( glw_state.hDC ) )
+//		{
+//			ST_Printf( PRINT_ERR_FATAL, "GLimp_EndFrame() - SwapBuffers() failed!\n" );
+//		}
+//	}
+//	else
+	//{
 		SwapBuffers( glw_state.hDC );
-	}
+	//}
 #endif
 	vid_last_swap_time = Sys_DoubleTime();
 	vid_vsync_lag = vid_last_swap_time - time_before_swap;
@@ -1400,7 +1408,7 @@ void GLimp_Init( void )
 	// this is where hardware specific workarounds that should be
 	// detected/initialized every startup should go.
 	//
-	if ( strstr( buf, "banshee" ) || strstr( buf, "voodoo3" ) )
+	/*if ( strstr( buf, "banshee" ) || strstr( buf, "voodoo3" ) )
 	{
 		glConfig.hardwareType = GLHW_3DFX_2D3D;
 	}
@@ -1433,7 +1441,7 @@ void GLimp_Init( void )
 	else if ( strstr( buf, "riva tnt " ) )
 	{
 	}
-
+	*/
 	GLW_InitExtensions();
 
 // FIXME: if we turn off ztrick due to lack of bits in one mode, we do not turn it on if we got enought bits in other mode
@@ -1534,6 +1542,7 @@ void GLimp_Shutdown( void )
 	QGL_Shutdown();
 
 	memset( &glConfig, 0, sizeof( glConfig ) );
+	opengl_initialized = 0;
 }
 
 /******************************************************************************/
