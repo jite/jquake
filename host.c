@@ -657,7 +657,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 			// Check if the running exe is the one associated with the qw:// protocol.
 			Com_PrintVerticalBar(INITIAL_CON_WIDTH);
 			Com_Printf("\n");
-			Com_Printf("ezQuake is not associated with the ");
+			Com_Printf("jQuake is not associated with the ");
 			Com_Printf("\x02QW:// protocol. ");
 			Com_Printf("Register it using"); 
 			Com_Printf("\x02/register_qwurl_protocol\n");

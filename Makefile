@@ -1,6 +1,6 @@
 #======================================================================
-# ezQuake Makefile
-# based on: Fuhquake Makefile && ZQuake Makefile && JoeQuake Makefile
+# jQuake Makefile
+# based on: ezQuake, Fuhquake, ZQuake and JoeQuake Makefiles
 #======================================================================
 
 # compilation tool and detection of targets/achitecture
@@ -61,8 +61,8 @@ MAC_DIR	= $(TYPE)-$(ARCH)/mac
 # Binary files #
 ################
 
-GLX_TARGET = $(TYPE)-$(ARCH)/ezquake-gl.glx
-MAC_TARGET = $(TYPE)-$(ARCH)/ezquake-gl.mac
+GLX_TARGET = $(TYPE)-$(ARCH)/jquake-gl.glx
+MAC_TARGET = $(TYPE)-$(ARCH)/jquake-gl.mac
 QUAKE_DIR="/opt/quake/"
 
 ################
