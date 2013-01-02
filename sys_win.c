@@ -74,6 +74,8 @@ LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam);
 void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel);
 cvar_t	sys_disableWinKeys = {"sys_disableWinKeys", "0", 0, OnChange_sys_disableWinKeys};
 
+void chartbl2_init(void);
+
 #ifndef id386
 void Sys_HighFPPrecision(void) {}
 void Sys_LowFPPrecision(void) {}
@@ -193,6 +195,16 @@ void OnChange_sys_highpriority (cvar_t *var, char *s, qbool *cancel)
 //===============================================================================
 // FILE IO
 //===============================================================================
+
+int Sys_compare_by_date (const void *a, const void *b)
+{               
+        return (int)(((file_t *)a)->time - ((file_t *)b)->time);
+}
+
+int Sys_compare_by_name (const void *a, const void *b)
+{
+        return strncmp(((file_t *)a)->name, ((file_t *)b)->name, MAX_DEMO_NAME);
+}
 
 void Sys_mkdir (const char *path) 
 {
@@ -1148,7 +1160,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	tevent = CreateEvent (NULL, FALSE, FALSE, NULL);
 	if (!tevent)
 		Sys_Error ("Couldn't create event");
-
+	chartbl2_init(); // ugly init of char table
 	Sys_Init_();
 
 	Sys_Printf ("Host_Init\n");
@@ -1486,3 +1498,52 @@ void *Sys_GetAddressForName(dllhandle_t *module, const char *exportname)
 		return NULL;
 	return GetProcAddress((HINSTANCE)module, exportname);
 }
+
+char chartbl2[256];
+char *Q_normalizetext (char *str)
+{
+        extern char chartbl2[];
+        char    *i;
+
+        for (i = str; *i; i++)
+                *i = chartbl2[(unsigned char) *i];
+        return str;
+}
+// UGLY insert of some stuff from the server, name is just fucked up... FIXME
+void chartbl2_init (void)
+{
+        int i;
+
+        for (i = 0; i < 32; i++)
+                chartbl2[i] = chartbl2[i + 128] = '#';
+        for (i = 32; i < 128; i++)
+                chartbl2[i] = chartbl2[i + 128] = i;
+
+        // special cases
+        chartbl2[10] = 10;
+        chartbl2[13] = 13;
+
+        // dot
+        chartbl2[5      ] = chartbl2[14      ] = chartbl2[15      ] = chartbl2[28      ] = chartbl2[46      ] = '.';
+        chartbl2[5 + 128] = chartbl2[14 + 128] = chartbl2[15 + 128] = chartbl2[28 + 128] = chartbl2[46 + 128] = '.';
+
+        // numbers
+        for (i = 18; i < 28; i++)
+                chartbl2[i] = chartbl2[i + 128] = i + 30;
+
+        // brackets
+        chartbl2[16] = chartbl2[16 + 128]= '[';
+        chartbl2[17] = chartbl2[17 + 128] = ']';
+        chartbl2[29] = chartbl2[29 + 128] = chartbl2[128] = '(';
+        chartbl2[31] = chartbl2[31 + 128] = chartbl2[130] = ')';
+
+        // left arrow
+        chartbl2[127] = '>';
+        // right arrow
+        chartbl2[141] = '<';
+
+        // '='
+        chartbl2[30] = chartbl2[129] = chartbl2[30 + 128] = '=';
+}
+
+

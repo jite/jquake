@@ -232,7 +232,7 @@ void GL_SelectTexture (GLenum target)
 	if (target == oldtarget)
 		return;
 
-	qglActiveTexture (target);
+	glActiveTexture (target);
 
 	cnttextures[oldtarget - GL_TEXTURE0_ARB] = currenttexture;
 	currenttexture = cnttextures[target - GL_TEXTURE0_ARB];

@@ -23,23 +23,12 @@
       <UniqueIdentifier>{eb602f50-aaad-49ed-805e-1d44ddfea4e3}</UniqueIdentifier>
       <Extensions>cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90</Extensions>
     </Filter>
-    <Filter Include="Source Files\Server">
-      <UniqueIdentifier>{6614380b-1fef-4b01-807b-251136945340}</UniqueIdentifier>
-      <Extensions>cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90</Extensions>
-    </Filter>
-    <Filter Include="Source Files\VM">
-      <UniqueIdentifier>{da1bd2e2-9cff-43dd-8605-92d077f97cbe}</UniqueIdentifier>
-      <Extensions>cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90</Extensions>
-    </Filter>
     <Filter Include="Source Files\Misc">
       <UniqueIdentifier>{c6657c07-af4c-47e7-9670-6a4a279435a7}</UniqueIdentifier>
       <Extensions>cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90</Extensions>
     </Filter>
     <Filter Include="Source Files\Draw">
       <UniqueIdentifier>{f70c8b1f-37a2-4430-b63c-4d89977ff6d2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Software">
-      <UniqueIdentifier>{3c8caeb1-9465-42e0-9741-dc6c186becc6}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Video">
       <UniqueIdentifier>{ff1a89d4-7ae1-4cd7-8dbc-e0c1ba94ff0e}</UniqueIdentifier>
@@ -185,9 +174,6 @@
     <ClCompile Include="..\..\gl_rsurf.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\gl_shader.c">
-      <Filter>Source Files\OpenGL</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\gl_texture.c">
       <Filter>Source Files\OpenGL</Filter>
     </ClCompile>
@@ -251,78 +237,6 @@
     <ClCompile Include="..\..\keys.c">
       <Filter>Source Files\Input</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\sv_ccmds.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_demo.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_demo_misc.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_demo_qtv.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_ents.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_init.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_login.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_main.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_master.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_mod_frags.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_move.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_nchan.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_phys.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_save.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_send.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_user.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\sv_world.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\pr2_cmds.c">
-      <Filter>Source Files\VM</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\pr2_edict.c">
-      <Filter>Source Files\VM</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\pr2_exec.c">
-      <Filter>Source Files\VM</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\pr2_vm.c">
-      <Filter>Source Files\VM</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\pr_cmds.c">
-      <Filter>Source Files\VM</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\pr_edict.c">
-      <Filter>Source Files\VM</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\pr_exec.c">
-      <Filter>Source Files\VM</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\cmodel.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
@@ -374,94 +288,13 @@
     <ClCompile Include="..\..\zone2.c">
       <Filter>Source Files\Misc</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\r_aclip.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\r_alias.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\r_bsp.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\r_draw.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\r_edge.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\r_efrag.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\r_light.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\r_main.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\r_misc.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\r_model.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\r_part.c">
       <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\r_rast.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\r_sky.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\r_sprite.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\r_surf.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\r_vars.c">
-      <Filter>Source Files\Draw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\d_edge.c">
-      <Filter>Source Files\Software</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\d_fill.c">
-      <Filter>Source Files\Software</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\d_init.c">
-      <Filter>Source Files\Software</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\d_modech.c">
-      <Filter>Source Files\Software</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\d_polyse.c">
-      <Filter>Source Files\Software</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\d_scan.c">
-      <Filter>Source Files\Software</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\d_sky.c">
-      <Filter>Source Files\Software</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\d_sprite.c">
-      <Filter>Source Files\Software</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\d_surf.c">
-      <Filter>Source Files\Software</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\d_vars.c">
-      <Filter>Source Files\Software</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\d_zpoint.c">
-      <Filter>Source Files\Software</Filter>
     </ClCompile>
     <ClCompile Include="..\..\tr_init.c">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
     <ClCompile Include="..\..\vid_common_gl.c">
-      <Filter>Source Files\Video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\vid_win.c">
       <Filter>Source Files\Video</Filter>
     </ClCompile>
     <ClCompile Include="..\..\win_wndproc.c">
@@ -503,9 +336,6 @@
     <ClCompile Include="..\..\cl_view.c">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\auth.c">
-      <Filter>Source Files\Addons</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\fchecks.c">
       <Filter>Source Files\Addons</Filter>
     </ClCompile>
@@ -540,9 +370,6 @@
       <Filter>Source Files\Addons</Filter>
     </ClCompile>
     <ClCompile Include="..\..\mumble.c">
-      <Filter>Source Files\Addons</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\plugin.c">
       <Filter>Source Files\Addons</Filter>
     </ClCompile>
     <ClCompile Include="..\..\qtv.c">
@@ -941,9 +768,6 @@
       <Filter>Header Files\OpenGL_h</Filter>
     </ClInclude>
     <ClInclude Include="..\..\gl_model.h">
-      <Filter>Header Files\OpenGL_h</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\gl_shader.h">
       <Filter>Header Files\OpenGL_h</Filter>
     </ClInclude>
     <ClInclude Include="..\..\gl_texture.h">

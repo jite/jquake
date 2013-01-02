@@ -261,8 +261,8 @@ void EmitWaterPolys (msurface_t *fa) {
 	byte *col;
 	extern cvar_t r_telecolor, r_watercolor, r_slimecolor, r_lavacolor;
 	float wateralpha = bound((1 - r_refdef2.max_watervis), r_wateralpha.value, 1);
-
 	vec3_t nv;
+	GLint shader, u_gamma, u_contrast;
 
 	GL_DisableMultitexture();
 
@@ -318,6 +318,15 @@ void EmitWaterPolys (msurface_t *fa) {
 		// END shaman RFE 1022504
 	} else {
 		GL_Bind (fa->texinfo->texture->gl_texturenum);
+
+		/* FIXME: do the uniforms somewhere else */
+		shader = glsl_shaders[SHADER_TURB].shader;
+		glUseProgram(shader);
+		u_gamma        = glGetUniformLocation(shader, "gamma");
+		u_contrast     = glGetUniformLocation(shader, "contrast");
+		glUniform1f(u_gamma, v_gamma.value);
+		glUniform1f(u_contrast, v_contrast.value);
+
 		for (p = fa->polys; p; p = p->next) {
 			glBegin(GL_POLYGON);
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
@@ -343,6 +352,7 @@ void EmitWaterPolys (msurface_t *fa) {
 			}
 			glEnd();
 		}
+		glUseProgram(0);
 	}
 
 	if (gl_fogenable.value)
@@ -416,8 +426,8 @@ void EmitSkyPolys (msurface_t *fa, qbool mtex) {
 			}
 
 			if (mtex) {				
-				qglMultiTexCoord2f (GL_TEXTURE0_ARB, s, t);
-				qglMultiTexCoord2f (GL_TEXTURE1_ARB, ss, tt);
+				glMultiTexCoord2f (GL_TEXTURE0_ARB, s, t);
+				glMultiTexCoord2f (GL_TEXTURE1_ARB, ss, tt);
 			} else {
 				glTexCoord2f (s, t);
 			}

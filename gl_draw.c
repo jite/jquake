@@ -1529,7 +1529,8 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 	if ((byte)(color >> 24 & 0xFF) == 0)
 		return;
 
-	glDisable (GL_TEXTURE_2D);
+//	glDisable (GL_TEXTURE_2D);
+	GL_Bind(whitetexture);
 	glEnable (GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 	COLOR_TO_RGBA(color, bytecolor);
@@ -1549,7 +1550,7 @@ void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool 
 		glRectf(x, y + h, x + w, y + h - thickness);
 	}
 
-	glEnable (GL_TEXTURE_2D);
+	//glEnable (GL_TEXTURE_2D);
 	glEnable (GL_ALPHA_TEST);
 	glDisable (GL_BLEND);
 
@@ -1580,7 +1581,8 @@ void Draw_Fill (int x, int y, int w, int h, byte c)
 void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, color_t color)
 {
 	byte bytecolor[4];
-	glDisable (GL_TEXTURE_2D);
+//	glDisable (GL_TEXTURE_2D);
+	GL_Bind(whitetexture);
 
 	glEnable (GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
@@ -1597,7 +1599,7 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 	glVertex2f (x_end, y_end);
 	glEnd ();
 
-	glEnable (GL_TEXTURE_2D);
+//	glEnable (GL_TEXTURE_2D);
 	glEnable(GL_ALPHA_TEST);
 	glDisable (GL_BLEND);
 
@@ -1623,7 +1625,8 @@ void Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, qbool fill, 
 	COLOR_TO_RGBA(color, bytecolor);
 	glColor4ub(bytecolor[0], bytecolor[1], bytecolor[2], bytecolor[3] * overall_alpha);
 
-	glDisable (GL_TEXTURE_2D);
+//	glDisable (GL_TEXTURE_2D);
+	GL_Bind(whitetexture);
 
 	if(fill)
 	{
@@ -1656,7 +1659,8 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 
-	glDisable (GL_TEXTURE_2D);
+//	glDisable (GL_TEXTURE_2D);
+	GL_Bind(whitetexture);
 
 	glEnable (GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
@@ -1716,7 +1720,7 @@ void Draw_AlphaPieSliceRGB (int x, int y, float radius, float startangle, float 
 
 	glEnd ();
 
-	glEnable (GL_TEXTURE_2D);
+//	glEnable (GL_TEXTURE_2D);
 
 	glEnable (GL_ALPHA_TEST);
 	glDisable (GL_BLEND);
@@ -1893,19 +1897,20 @@ void Draw_TransPic (int x, int y, mpic_t *pic)
 
 void Draw_SFill (int x, int y, int w, int h, byte c, float scale)
 {
-    glDisable(GL_TEXTURE_2D);
-    glColor4ub(host_basepal[c * 3], host_basepal[(c * 3) + 1], host_basepal[(c * 3) + 2 ], overall_alpha);
+	//glDisable(GL_TEXTURE_2D);
+	GL_Bind(whitetexture);
+	glColor4ub(host_basepal[c * 3], host_basepal[(c * 3) + 1], host_basepal[(c * 3) + 2 ], overall_alpha);
 
-    glBegin(GL_QUADS);
+	glBegin(GL_QUADS);
 
-    glVertex2f(x, y);
-    glVertex2f(x + (w * scale), y);
-    glVertex2f(x + (w * scale), y + (h * scale));
-    glVertex2f(x, y + (h * scale));
+	glVertex2f(x, y);
+	glVertex2f(x + (w * scale), y);
+	glVertex2f(x + (w * scale), y + (h * scale));
+	glVertex2f(x, y + (h * scale));
 
-    glEnd();
-    glColor4ubv(color_white);
-    glEnable(GL_TEXTURE_2D);
+	glEnd();
+	glColor4ubv(color_white);
+	//glEnable(GL_TEXTURE_2D);
 }
 
 static char last_mapname[MAX_QPATH] = {0};
@@ -1923,6 +1928,13 @@ void Draw_InitConback (void)
 	qpic_t *cb;
 	int start;
 	mpic_t *pic_24bit;
+	extern int opengl_initialized;
+
+	if (!opengl_initialized)
+	{
+		Con_Printf("WARNING: Trying to load a texture while OpenGL context os not yet created!\n");
+		return;
+	}
 
 	start = Hunk_LowMark ();
 
@@ -2007,7 +2019,8 @@ void Draw_FadeScreen (float alpha)
 		glColor3f (0, 0, 0);
 	}
 
-	glDisable (GL_TEXTURE_2D);
+//	glDisable (GL_TEXTURE_2D);
+	GL_Bind(whitetexture);
 
 	glBegin (GL_QUADS);
 	glVertex2f (0, 0);
@@ -2022,46 +2035,10 @@ void Draw_FadeScreen (float alpha)
 		glEnable (GL_ALPHA_TEST);
 	}
 	glColor3ubv (color_white);
-	glEnable (GL_TEXTURE_2D);
+	//glEnable (GL_TEXTURE_2D);
 
 	Sbar_Changed();
 }
-
-//=============================================================================
-// Draws the little blue disc in the corner of the screen.
-// Call before beginning any disc IO.
-void Draw_BeginDisc (void)
-{
-	if (!draw_disc)
-		return;
-
-	// Intel cards, most notably Intel 915GM/910GML has problems with
-	// writing directly to the front buffer and then flipping the back buffer,
-	// so don't draw the I/O disc on those cards, it will cause the console
-	// to flicker.
-	//
-	// From Intels dev network:
-	// "Using two dimensional data within a 3D scene is sometimes used to render
-	// objects like scoreboards and road signs. When that blit request is sent 
-	// to or from a buffer, the data contained within must be updated, causing 
-	// a pipeline flush and disabling Zone Rendering. One easy way to generate 
-	// the same effect is to use a quad or a billboard that is aligned to the 
-	// view frustrum. Similarly, a flip operation while rendering to a back buffer 
-	// will cause serialization. Be sure you are done altering the back buffer
-	// before you flip.
-#ifndef __APPLE__
-	if (glConfig.hardwareType == GLHW_INTEL)
-		return;
-#endif
-
-	glDrawBuffer  (GL_FRONT);
-	Draw_Pic (vid.width - 24, 0, draw_disc);
-	glDrawBuffer  (GL_BACK);
-}
-
-// Erases the disc icon.
-// Call after completing any disc IO
-void Draw_EndDisc (void) {}
 
 //
 // Changes the projection to orthogonal (2D drawing).

@@ -84,7 +84,7 @@ void Delete_Source(source_data *s)
 // which require the source to be dumped to file in corrected form
 qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers, int *pserversn)
 {
-#warning Whole serverbrowser is so insanely broken and horrid, its heavily marked for removal
+// Whole serverbrowser is so insanely broken and horrid, its heavily marked for removal
 	vfsfile_t *f;
 	char line[2048] = {0};
     qbool should_dump = false;
@@ -169,7 +169,7 @@ void Precache_Source(source_data *s)
 	}
 	else if (s->type == type_master) {
 		snprintf(name, sizeof (name), "sb/cache/%d_%d_%d_%d_[%d].txt",
-#warning FIXME IPv4 only (WOHA, lot of addresssSSsssses here
+// FIXME IPv4 only (WOHA, lot of addresssSSsssses here
 				s->address.address.address.ip[0], s->address.address.address.ip[1],
 				s->address.address.address.ip[2], s->address.address.address.ip[3],
 				ntohs(s->address.address.port));
@@ -509,7 +509,7 @@ DWORD WINAPI Update_Multiple_Sources_Proc(void * lpParameter)
             if (ret > 0  &&  ret < 10000)
             {
                 SockadrToNetadr (&hostaddr, &from);
-#warning FIXME IPv4 only addddreessssssss ftw
+// FIXME IPv4 only addddreessssssss ftw
                 if (from.address.ip[0] == s->address.address.address.ip[0] &&
                     from.address.ip[1] == s->address.address.address.ip[1] &&
                     from.address.ip[2] == s->address.address.address.ip[2] &&
@@ -938,7 +938,7 @@ void DumpSource(source_data *s)
     {
         Sys_mkdir("sb/cache");
         snprintf(buf, sizeof (buf), "sb/cache/%d_%d_%d_%d_[%d].txt",
-#warning FIXME IPv4 only
+// FIXME IPv4 only
                 s->address.address.address.ip[0], s->address.address.address.ip[1],
                 s->address.address.address.ip[2], s->address.address.address.ip[3],
                 ntohs(s->address.address.port));
@@ -954,7 +954,7 @@ void DumpSource(source_data *s)
 
     for (i=0; i < s->serversn; i++)
         fprintf(f, "%d.%d.%d.%d:%d\n",
-#warning FIXME IPv4 only
+// FIXME IPv4 only
         s->servers[i]->address.address.ip[0], s->servers[i]->address.address.ip[1],
         s->servers[i]->address.address.ip[2], s->servers[i]->address.address.ip[3],
         ntohs(s->servers[i]->address.port));

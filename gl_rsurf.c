@@ -744,8 +744,8 @@ void R_DrawAlphaChain (void) {
 		v = s->polys->verts[0];
 		for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
 			if (gl_mtexable) {
-				qglMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
-				qglMultiTexCoord2f (GL_TEXTURE1_ARB, v[5], v[6]);
+				glMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
+				glMultiTexCoord2f (GL_TEXTURE1_ARB, v[5], v[6]);
 			} else {
 				glTexCoord2f (v[3], v[4]);
 			}
@@ -799,24 +799,18 @@ static void R_ClearTextureChains(model_t *clmodel) {
 void DrawTextureChains (model_t *model, int contents)
 {
 	extern cvar_t  gl_lumaTextures;
-
 	int waterline, i, k, GL_LIGHTMAP_TEXTURE = 0, GL_FB_TEXTURE = 0, fb_texturenum;
 	msurface_t *s;
 	texture_t *t;
 	float *v;
-
 	qbool render_lightmaps = false;
 	qbool doMtex1, doMtex2;
-
 	qbool isLumaTexture;
-
 	qbool draw_fbs, draw_caustics, draw_details;
-
 	qbool can_mtex_lightmaps, can_mtex_fbs;
-
 	qbool draw_mtex_fbs;
-
 	qbool mtex_lightmaps, mtex_fbs;
+	GLint shader, u_world_tex, u_lightmap_tex, u_gamma, u_contrast;
 
 	draw_caustics = underwatertexture && gl_caustics.value;
 	draw_details  = detailtexture && gl_detail.value;
@@ -837,6 +831,29 @@ void DrawTextureChains (model_t *model, int contents)
 		glEnable(GL_FOG);
 
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	 
+	if(model->isworldmodel) {
+		shader = glsl_shaders[SHADER_WORLD].shader;
+		glUseProgram(shader);
+ 
+		u_world_tex    = glGetUniformLocation(shader, "world_tex");
+		u_lightmap_tex = glGetUniformLocation(shader, "lightmap_tex");
+		u_gamma        = glGetUniformLocation(shader, "gamma");
+		u_contrast     = glGetUniformLocation(shader, "contrast");
+ 
+		glUniform1i(u_world_tex, 0);
+		glUniform1i(u_lightmap_tex, 1);
+		glUniform1f(u_gamma, v_gamma.value);
+		glUniform1f(u_contrast, v_contrast.value);
+	}
+	else {
+		shader = glsl_shaders[SHADER_MODEL].shader;
+		glUseProgram(shader);
+		u_gamma        = glGetUniformLocation(shader, "gamma");
+		u_contrast     = glGetUniformLocation(shader, "contrast");
+		glUniform1f(u_gamma, v_gamma.value);
+		glUniform1f(u_contrast, v_contrast.value);
+	}
 
 	for (i = 0; i < model->numtextures; i++)
 	{
@@ -968,23 +985,23 @@ void DrawTextureChains (model_t *model, int contents)
 							//Tei: textureless for the world brush models
 							if(gl_textureless.value && model->isworldmodel)
 							{ //Qrack
-								qglMultiTexCoord2f (GL_TEXTURE0_ARB, 0, 0);
+								glMultiTexCoord2f (GL_TEXTURE0_ARB, 0, 0);
 	                            
 								if (mtex_lightmaps)
-									qglMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
+									glMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
 
 								if (mtex_fbs)
-									qglMultiTexCoord2f (GL_TEXTURE2_ARB, 0, 0);
+									glMultiTexCoord2f (GL_TEXTURE2_ARB, 0, 0);
 							}
 							else
 							{
-								qglMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
+								glMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
 
 								if (mtex_lightmaps)
-									qglMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
+									glMultiTexCoord2f (GL_LIGHTMAP_TEXTURE, v[5], v[6]);
 
 								if (mtex_fbs)
-									qglMultiTexCoord2f (GL_FB_TEXTURE, v[3], v[4]);
+									glMultiTexCoord2f (GL_FB_TEXTURE, v[3], v[4]);
 							}
 						}
 						else
@@ -1034,6 +1051,7 @@ void DrawTextureChains (model_t *model, int contents)
 		if (doMtex2)
 			GL_DisableTMU(GL_TEXTURE2_ARB);
 	}
+	glUseProgram(0);
 
 	if (gl_mtexable)
 		GL_SelectTexture(GL_TEXTURE0_ARB);

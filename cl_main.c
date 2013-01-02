@@ -728,7 +728,7 @@ void CL_CheckForResend (void)
 		return;
 	}
 
-#warning Proper place to open socket?
+// warning Proper place to open socket?
 	if ((old.type != cls.server_adr.type) || cls.socketip == INVALID_SOCKET)
 	{
 		if (cls.socketip != INVALID_SOCKET)
@@ -2427,6 +2427,7 @@ void CL_Frame (double time)
 
 		// allow mice or other external controllers to add commands
 		IN_Commands();
+
 
 		// process console commands
 		Cbuf_Execute();

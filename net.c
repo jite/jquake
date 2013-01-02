@@ -783,7 +783,7 @@ int TCP_OpenStream (netadr_t remoteaddr)
 
 int TCP_OpenListenSocket (int port)
 {
-#warning FIXME: Make this work with IPv6... Currently IPv4 only
+//FIXME: Make this work with IPv6... Currently IPv4 only
 	int newsocket;
 	struct sockaddr_in address;
 	unsigned long _true = true;
@@ -843,6 +843,7 @@ int UDP_OpenSocket (netadrtype_t type, int port)
 	int newsocket;
 	struct sockaddr_storage addr;
 	int _yes = 0;
+	unsigned long _true = 1;
 
 	if (type == NA_IPv6)
 	{
@@ -897,10 +898,18 @@ int UDP_OpenSocket (netadrtype_t type, int port)
 		ST_Printf(PRINT_FAIL, "UDP_OpenSocket: Unknown socket type!\n");
 		return INVALID_SOCKET;
 	}
-
-	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
+#ifndef _WIN32
+	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1)
+	{ // O'Rly?! @@@
 		ST_Printf (PRINT_FAIL, "UDP_OpenSocket: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
 		close(newsocket);
+		return INVALID_SOCKET;
+	}
+#endif
+	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1)
+	{ // make asynchronous
+		Com_Printf ("UDP_OpenSocket: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
+		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
 
@@ -945,7 +954,7 @@ qbool NET_Sleep (int msec)
 
 qbool NET_IsLocalAddress (netadr_t addr)
 {
-#warning Broken.. Implement me properly!
+// Broken.. Implement me properly!
 	return false;
 
 }

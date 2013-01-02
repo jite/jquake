@@ -506,7 +506,7 @@ DWORD WINAPI GetServerInfosProc(void * lpParameter)
             if (ret > 0)
             {
                 SockadrToNetadr (&hostaddr, &from);
-#warning FIXME IPv4 only
+// FIXME IPv4 only
                 for (i=0; i < serversn; i++)
                     if (from.address.ip[0] == servers[i]->address.address.ip[0] &&
                         from.address.ip[1] == servers[i]->address.address.ip[1] &&
@@ -537,7 +537,7 @@ void GetServerPing(server_data *serv)
 {
     int p;
     char buf[32];
-#warning FIXME IPv4 only
+// FIXME IPv4 only
     snprintf (buf, sizeof (buf), "%d.%d.%d.%d",
         serv->address.address.ip[0],
         serv->address.address.ip[1],

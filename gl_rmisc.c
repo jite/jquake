@@ -31,17 +31,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 void R_InitOtherTextures (void) {
-/*	static const int flags = TEX_MIPMAP | TEX_ALPHA | TEX_COMPLAIN;
-
-	underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  flags );	
-	detailtexture = GL_LoadTextureImage("textures/detail", NULL, 256, 256, flags);	
-*/
 	int flags = TEX_MIPMAP | TEX_ALPHA;
+	int white_pixel = -1;
 
 	underwatertexture = GL_LoadTextureImage ("textures/water_caustic", NULL, 0, 0,  flags | (gl_waterfog.value ? TEX_COMPLAIN : 0));	
 	detailtexture = GL_LoadTextureImage ("textures/detail", NULL, 256, 256, flags | (gl_detail.value ? TEX_COMPLAIN : 0));
 
 	shelltexture = GL_LoadTextureImage ("textures/shellmap", NULL, 0, 0,  flags | (bound(0, gl_powerupshells.value, 1) ? TEX_COMPLAIN : 0));
+	whitetexture = GL_LoadTexture("white_texture", 1, 1, (byte*) &white_pixel, TEX_NOSCALE | TEX_ALPHA, 4);
 }
 
 void R_InitTextures (void) {
@@ -333,13 +330,8 @@ void R_TimeRefresh_f (void) {
 		return;
 	}
 
-#ifndef __APPLE__
-	if (glConfig.hardwareType != GLHW_INTEL)
-	{
-		// Causes the console to flicker on Intel cards.
-		glDrawBuffer  (GL_FRONT);
-	}
-#endif
+	// Causes the console to flicker on Intel cards.
+	glDrawBuffer  (GL_FRONT);
 	
 	glFinish ();
 
@@ -355,12 +347,7 @@ void R_TimeRefresh_f (void) {
 	time = stop-start;
 	Com_Printf ("%f seconds (%f fps)\n", time, 128/time);
 
-#ifndef __APPLE__
-	if (glConfig.hardwareType != GLHW_INTEL)
-	{
-		glDrawBuffer  (GL_BACK);
-	}
-#endif
+	glDrawBuffer  (GL_BACK);
 
 	GL_EndRendering ();
 }
