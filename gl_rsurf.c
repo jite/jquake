@@ -832,7 +832,7 @@ void DrawTextureChains (model_t *model, int contents)
 
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	 
-	if(model->isworldmodel) {
+	if(model->isworldmodel || 1) {
 		shader = glsl_shaders[SHADER_WORLD].shader;
 		glUseProgram(shader);
  
