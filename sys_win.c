@@ -605,7 +605,7 @@ void WinCheckOSInfo(void)
 		Sys_Error ("Couldn't get OS info");
 
 	if ((vinfo.dwMajorVersion < 4) || (vinfo.dwPlatformId == VER_PLATFORM_WIN32s))
-		Sys_Error ("ezQuake requires at least Win95 or NT 4.0");
+		Sys_Error ("jQuake requires at least Win95 or NT 4.0");
 
 	WinNT = (vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) ? true : false;			// NT4
 	Win2K = WinNT && (vinfo.dwMajorVersion == 5) && (vinfo.dwMinorVersion == 0);	// 2000
@@ -955,29 +955,29 @@ typedef enum qwurl_regkey_e
 //
 void WinSetCheckQWURLRegKey(qwurl_regkey_t val)
 {
-	#define EZQUAKE_REG_SUBKEY			"Software\\ezQuake"
-	#define EZQUAKE_REG_QWPROTOCOLKEY	"AskForQWProtocol"
+	#define JQUAKE_REG_SUBKEY			"Software\\jQuake"
+	#define JQUAKE_REG_QWPROTOCOLKEY	"AskForQWProtocol"
 
 	HKEY keyhandle;
 
 	//
-	// HKCU\Software\ezQuake
+	// HKCU\Software\jQuake
 	//
 	{
 		DWORD dval = (DWORD)val;
 
 		// Open / Create the key.
-		if (RegCreateKeyEx(HKEY_CURRENT_USER, EZQUAKE_REG_SUBKEY, 
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, JQUAKE_REG_SUBKEY, 
 			0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, NULL))
 		{
-			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\"EZQUAKE_REG_SUBKEY"\n");
+			Com_Printf_State(PRINT_WARNING, "Could not create HKCU\\"JQUAKE_REG_SUBKEY"\n");
 			return;
 		}
 
 		// Set the key value.
-		if (RegSetValueEx(keyhandle, EZQUAKE_REG_QWPROTOCOLKEY, 0, REG_DWORD, (BYTE *)&dval, sizeof(DWORD)))
+		if (RegSetValueEx(keyhandle, JQUAKE_REG_QWPROTOCOLKEY, 0, REG_DWORD, (BYTE *)&dval, sizeof(DWORD)))
 		{
-			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"EZQUAKE_REG_SUBKEY"\\"EZQUAKE_REG_QWPROTOCOLKEY"\n");
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"JQUAKE_REG_SUBKEY"\\"JQUAKE_REG_QWPROTOCOLKEY"\n");
 			RegCloseKey(keyhandle);
 			return;
 		}
@@ -987,7 +987,7 @@ void WinSetCheckQWURLRegKey(qwurl_regkey_t val)
 }
 
 //
-// Gets the registry value for the "HKCU\Software\ezQuake\AskForQWProtocol key"
+// Gets the registry value for the "HKCU\Software\jQuake\AskForQWProtocol key"
 //
 qwurl_regkey_t WinGetCheckQWURLRegKey()
 {
@@ -995,7 +995,7 @@ qwurl_regkey_t WinGetCheckQWURLRegKey()
 	DWORD returnval = QWURL_ASK;
 
 	//
-	// HKCU\Software\ezQuake
+	// HKCU\Software\jQuake
 	//
 	do
 	{		
@@ -1005,17 +1005,17 @@ qwurl_regkey_t WinGetCheckQWURLRegKey()
 		LONG returnstatus;
 
 		// Open the key.
-		if ((returnstatus = RegOpenKeyEx(HKEY_CURRENT_USER, EZQUAKE_REG_SUBKEY, 0, KEY_ALL_ACCESS, &keyhandle)) != ERROR_SUCCESS)
+		if ((returnstatus = RegOpenKeyEx(HKEY_CURRENT_USER, JQUAKE_REG_SUBKEY, 0, KEY_ALL_ACCESS, &keyhandle)) != ERROR_SUCCESS)
 		{
-			Com_Printf_State(PRINT_WARNING, "Could not open HKCU\\"EZQUAKE_REG_SUBKEY", %l\n", returnstatus);
+			Com_Printf_State(PRINT_WARNING, "Could not open HKCU\\"JQUAKE_REG_SUBKEY", %l\n", returnstatus);
 			break;
 		}
 
 
 		// Set the key value.
-		if (RegQueryValueEx(keyhandle, EZQUAKE_REG_QWPROTOCOLKEY, 0, &type, (BYTE *)&val, &size))
+		if (RegQueryValueEx(keyhandle, JQUAKE_REG_QWPROTOCOLKEY, 0, &type, (BYTE *)&val, &size))
 		{
-			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"EZQUAKE_REG_SUBKEY"\\"EZQUAKE_REG_QWPROTOCOLKEY"\n");
+			Com_Printf_State(PRINT_WARNING, "Could not set HKCU\\"JQUAKE_REG_SUBKEY"\\"JQUAKE_REG_QWPROTOCOLKEY"\n");
 			break;
 		}
 
@@ -1069,9 +1069,9 @@ qbool WinCheckQWURL(void)
 	// Instead of creating a completly custom messagebox (which is a major pain)
 	// just show a normal one, but replace the text on the buttons using event hooking.
 	retval = MsgBoxEx(mainwindow, 
-					"The current ezQuake client is not associated with the qw:// protocol,\n"
-					"which lets you launch ezQuake by opening qw:// URLs (.qtv files).\n\n"
-					"Do you want to associate ezQuake with the qw:// protocol?",
+					"The current jQuake client is not associated with the qw:// protocol,\n"
+					"which lets you launch jQuake by opening qw:// URLs (.qtv files).\n\n"
+					"Do you want to associate jQuake with the qw:// protocol?",
 					"QW URL Protocol", QWURLProtocolButtonsHookProc, MB_YESNOCANCEL | MB_ICONWARNING);
 
 	switch (retval)
@@ -1289,15 +1289,15 @@ void Sys_GetFullExePath(char *path, unsigned int path_length, int long_name)
 	}
 }
 
-#define EZQUAKE_MAILSLOT	"\\\\.\\mailslot\\ezquake"
+#define JQUAKE_MAILSLOT	"\\\\.\\mailslot\\jquake"
 #define MAILSLOT_BUFFERSIZE 1024
 
-HANDLE ezquake_server_mailslot;
+HANDLE jquake_server_mailslot;
 
 void Sys_InitIPC()
 {	
-	ezquake_server_mailslot = CreateMailslot( 
-							  EZQUAKE_MAILSLOT,					// Mailslot name
+	jquake_server_mailslot = CreateMailslot( 
+							  JQUAKE_MAILSLOT,					// Mailslot name
 							  MAILSLOT_BUFFERSIZE,              // Input buffer size 
 							  0,								// Timeout
 							  NULL);							// Default security attribute 
@@ -1305,7 +1305,7 @@ void Sys_InitIPC()
 
 void Sys_CloseIPC()
 {
-	CloseHandle(ezquake_server_mailslot);
+	CloseHandle(jquake_server_mailslot);
 }
 
 void Sys_ReadIPC()
@@ -1313,13 +1313,13 @@ void Sys_ReadIPC()
 	char buf[MAILSLOT_BUFFERSIZE] = {0};
 	DWORD num_bytes_read = 0;
 
-	if (INVALID_HANDLE_VALUE == ezquake_server_mailslot)
+	if (INVALID_HANDLE_VALUE == jquake_server_mailslot)
 	{
 		return;
 	}
 
 	// Read client message
-	ReadFile( ezquake_server_mailslot,	// Handle to mailslot 
+	ReadFile( jquake_server_mailslot,	// Handle to mailslot 
 				buf,						// Buffer to receive data 
 				sizeof(buf),				// Size of buffer 
 				&num_bytes_read,			// Number of bytes read 
@@ -1335,7 +1335,7 @@ unsigned int Sys_SendIPC(const char *buf)
 	qbool result = false;
 
 	// Connect to the server mailslot using CreateFile()
-	hMailslot = CreateFile( EZQUAKE_MAILSLOT,		// Mailslot name 
+	hMailslot = CreateFile( JQUAKE_MAILSLOT,		// Mailslot name 
 							GENERIC_WRITE,			// Mailslot write only 
 							FILE_SHARE_READ,		// Required for mailslots
 							NULL,					// Default security attributes

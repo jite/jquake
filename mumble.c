@@ -121,7 +121,7 @@ void Mumble_CreateLink()
 	}
 #endif
 
-	mbstowcs(lm->name, "ezQuake", sizeof(lm->name));
+	mbstowcs(lm->name, "jQuake", sizeof(lm->name));
 	Com_Printf(CharsToBrownStatic("Mumble link initialized."));
 	Com_Printf("\n");
 }
@@ -214,7 +214,7 @@ void updateMumble()
 
 	// If a link is lost struct is reset, reinitialize lm->name
 	if(lm->name[0] != 'e')
-		mbstowcs(lm->name, "ezQuake", sizeof(lm->name));
+		mbstowcs(lm->name, "jQuake", sizeof(lm->name));
 
 	// Required by Mumble
 	lm->uiVersion = 1;

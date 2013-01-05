@@ -195,7 +195,7 @@ LONG WINAPI MainWndProc (HWND    hWnd, UINT    uMsg, WPARAM  wParam, LPARAM  lPa
 		}
    	    case WM_CLOSE:
 		{
-			if (MessageBox (mainwindow, "Are you sure you want to quit?", "ezQuake : Confirm Exit",
+			if (MessageBox (mainwindow, "Are you sure you want to quit?", "jQuake : Confirm Exit",
 						MB_YESNO | MB_SETFOREGROUND | MB_ICONQUESTION) == IDYES)
 			{
 				Host_Quit ();

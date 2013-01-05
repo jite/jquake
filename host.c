@@ -640,7 +640,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	#ifdef WIN32
 	//
-	// Verify that ezQuake is associated with the QW:// protocl handler.
+	// Verify that jQuake is associated with the QW:// protocl handler.
 	//
 	{
 		#define INITIAL_CON_WIDTH 35

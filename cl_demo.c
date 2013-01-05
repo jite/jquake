@@ -1388,9 +1388,6 @@ void CL_StopMvd_f(void)
 	{
 		char *quotes[] = {
 	       " Make love not WarCraft\n"
-	       " Get quake at http://nquake.sf.net\n",
-	       " ez come ez go\n"
-	       " Get ezQuake at http://ezQuake.sf.net\n",
 	       " In the name of fun\n"
 	       " Visit http://quakeworld.nu\n"
 		};
@@ -2204,7 +2201,7 @@ static void OnChange_demo_format(cvar_t *var, char *string, qbool *cancel)
 #endif
 
 //
-// Writes a "pimp message" for ezQuake at the end of a demo.
+// Writes a "pimp message" ezQuake-style at the end of a demo.
 //
 static void CL_WriteDemoPimpMessage(void)
 {
@@ -2223,7 +2220,7 @@ static void CL_WriteDemoPimpMessage(void)
 
 	snprintf (pimpmessage, sizeof(pimpmessage), "\n%s\n%s\n%s\n",
 		border,
-		"\x1d\x1e\x1e\x1e\x1e\x1e\x1e Recorded by ezQuake \x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f",
+		"\x1d\x1e\x1e\x1e\x1e\x1e\x1e Recorded by jQuake \x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f",
 		border
 	);
 
@@ -3161,7 +3158,7 @@ void CL_Demo_DumpBenchmarkResult(int frames, float timet)
 
 	fputs(va("\t<system>\n\t\t<os>%s</os>\n\t\t<hardware>%s</hardware>\n\t</system>\n", QW_PLATFORM, SYSINFO_GetString()), f);
 
-	fputs(va("\t<client>\n\t\t<name>ezQuake</name><version>%s</version>\n"
+	fputs(va("\t<client>\n\t\t<name>jQuake</name><version>%s</version>\n"
 		"\t\t<configuration>%s</configuration><rendering>%s</rendering>\n\t</client>\n",
 		VersionString(), QW_CONFIGURATION, QW_RENDERER), f);
 

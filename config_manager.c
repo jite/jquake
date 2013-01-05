@@ -717,13 +717,13 @@ static void Config_PrintPreamble(FILE *f)
 	Config_PrintBorder(f);
 	Config_PrintLine(f, "", 3);
 	Config_PrintLine(f, "", 3);
-	Config_PrintLine(f, "E Z Q U A K E   C O N F I G U R A T I O N", 3);
+	Config_PrintLine(f, "J Q U A K E   C O N F I G U R A T I O N", 3);
 	Config_PrintLine(f, "", 3);
 	Config_PrintLine(f, "", 3);
 	Config_PrintBorder(f);
 	Config_PrintBorder(f);
 	fprintf(f,"\n// %s's config\n\n", name.string);
-	fprintf(f,"// ezQuake %s " __DATE__ ", " __TIME__"\n", VersionString());
+	fprintf(f,"// jQuake %s " __DATE__ ", " __TIME__"\n", VersionString());
 
 	if (cfg_save_cmdline.value) {
 		DumpCmdLine(f);
@@ -962,7 +962,7 @@ qbool LoadCfg(FILE *f)
 /*
 	example how it works
 	
-	=== ./ezquake -game testmod -config testcfg
+	=== ./jquake -game testmod -config testcfg
 	homedir/testmod/testcfg.cfg (fullname)
 	homedir/testcfg.cfg (fullname_moddefault)
 	quakedir/testmod/configs/testcfg.cfg

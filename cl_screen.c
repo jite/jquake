@@ -3628,8 +3628,8 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 		snprintf(basename, sizeof(basename), "%s_", host_mapname.string);
 	}
 	else {
-		// otherwise prefix with ezquake.
-		strcpy(basename, "ezquake");
+		// otherwise prefix with jquake.
+		strcpy(basename, "jquake");
 	}
 
 	for (i = 0; i < MAX_SCREENSHOT_COUNT; i++)

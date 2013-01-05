@@ -147,7 +147,7 @@ qbool MP3_XMMS2_IsPlayerRunning(void) {
 }
 
 static void XMMS2_Connect(void) {
-	connection = qxmmsc_init("ezquake");
+	connection = qxmmsc_init("jquake");
 	if (!connection) {
 		fprintf(stderr, "OOM!\n");
 		return;
