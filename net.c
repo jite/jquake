@@ -842,7 +842,7 @@ int UDP_OpenSocket (netadrtype_t type, int port)
 {
 	int newsocket;
 	struct sockaddr_storage addr;
-	int _yes = 0;
+	int _yes = 1;
 	unsigned long _true = 1;
 
 	if (type == NA_IPv6)
@@ -854,7 +854,11 @@ int UDP_OpenSocket (netadrtype_t type, int port)
 			return INVALID_SOCKET;
 		}
 
+#ifdef _WIN32
+		if (setsockopt(newsocket, IPPROTO_IPV6, IPV6_V6ONLY, (char *)&_yes, sizeof(_yes)))
+#else
 		if (setsockopt(newsocket, IPPROTO_IPV6, IPV6_V6ONLY, &_yes, sizeof(_yes)))
+#endif
 		{
 			ST_Printf(PRINT_FAIL, "UDP_OpenSocket: Failed to enable IPV6_V6ONLY socket option... Continuing anyway...\n");
 		}
