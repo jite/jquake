@@ -932,7 +932,7 @@ qbool NET_Sleep (int msec)
 {
 	struct timeval timeout;
 	fd_set fdset;
-	int i;
+	int i = 0;
 
 	FD_ZERO (&fdset);
 
