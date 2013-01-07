@@ -21,17 +21,8 @@
 
  */
 /*
- ** GLW_IMP.C
- **
- ** This file contains ALL Linux specific stuff having to do with the
- ** OpenGL refresh.  When a port is being made the following functions
- ** must be implemented by the port:
- **
- ** GLimp_EndFrame
- ** GLimp_Init
- ** GLimp_Shutdown
- ** GLimp_SwitchFullscreen
- **
+ * This file contains ALL Linux specific stuff having to do with the
+ * OpenGL refresh.
  */
 
 #include <termios.h>
@@ -48,11 +39,8 @@
 #include <signal.h>
 #include <pthread.h>
 #include <semaphore.h>
-
-// bk001204
 #include <dlfcn.h>
 
-// bk001206 - from my Heretic2 by way of Ryan's Fakk2
 // Needed for the new X11_PendingInput() function.
 #include <sys/time.h>
 #include <sys/types.h>
@@ -77,21 +65,19 @@
 #include "rulesets.h"
 #include "utils.h"
 
+#define	WINDOW_CLASS_NAME	"jQuake"
+
 //
 // cvars
 //
 
 int opengl_initialized = 0;
 
-typedef enum { mt_none = 0, mt_normal } mousetype_t;
-
-cvar_t in_mouse           = { "in_mouse",    "1", CVAR_ARCHIVE | CVAR_LATCH }; // NOTE: "1" is mt_normal
-cvar_t in_nograb          = { "in_nograb",   "0", CVAR_LATCH }; // this is strictly for developers
-
-cvar_t r_allowSoftwareGL  = { "vid_allowSoftwareGL", "0", CVAR_LATCH };   // don't abort out if the pixelformat claims software
-static cvar_t vid_flashonactivity = {"vid_flashonactivity", "1"};
-
-#define	WINDOW_CLASS_NAME	"ezQuake"
+typedef enum
+{
+	 mt_none = 0,
+	 mt_normal
+} mousetype_t;
 
 typedef enum
 {
@@ -101,30 +87,33 @@ typedef enum
 	RSERR_UNKNOWN
 } rserr_t;
 
+cvar_t in_mouse           = { "in_mouse",    "1", CVAR_ARCHIVE | CVAR_LATCH }; // NOTE: "1" is mt_normal
+cvar_t in_nograb          = { "in_nograb",   "0", CVAR_LATCH }; // this is strictly for developers
+cvar_t r_allowSoftwareGL  = { "vid_allowSoftwareGL", "0", CVAR_LATCH };   // don't abort out if the pixelformat claims software
+
+
 glwstate_t glw_state;
 
+static cvar_t vid_flashonactivity = {"vid_flashonactivity", "1"};
 static Display *dpy = NULL;
 static int scrnum;
 static Window win = 0;
 static GLXContext ctx = NULL;
-
 static Atom wm_delete_window_atom; //LordHavoc
-
 static int shift_down;
+static qbool mouse_active = false;
 
 #define KEY_MASK   ( KeyPressMask | KeyReleaseMask )
 #define MOUSE_MASK ( ButtonPressMask | ButtonReleaseMask | PointerMotionMask | ButtonMotionMask )
 #define X_MASK     ( VisibilityChangeMask | StructureNotifyMask | FocusChangeMask )
 
 qbool mouseinitialized = false; // unfortunately non static, lame...
-static qbool mouse_active = false;
 int mx, my;
 
 qbool vidmode_ext = false;
 static int vidmode_MajorVersion = 0, vidmode_MinorVersion = 0; // major and minor of XF86VidExtensions
 
 static XF86VidModeModeInfo **vidmodes;
-//static int default_dotclock_vidmode; // bk001204 - unused
 static int num_vidmodes;
 static qbool vidmode_active = false;
 
@@ -133,18 +122,14 @@ qbool Minimized = false;
 
 static int xi_opcode;
 
-static int (*swapInterval)(int); // Check if we support glXSwapIntervalSGI or perhaps MESA? 
+static int (*swapInterval)(int);
 
 //
 // function declaration
 //
 
-void	 QGL_EnableLogging( qbool enable ) { /* TODO */ };
-
-qbool QGL_Init( const char *dllname )
+qbool QGL_Init(const char *dllname)
 {
-	ST_Printf( PRINT_ALL, "...initializing QGL\n" );
-
 	qglActiveTextureARB       = 0;
 	qglClientActiveTextureARB = 0;
 	qglMultiTexCoord2fARB     = 0;
@@ -152,45 +137,10 @@ qbool QGL_Init( const char *dllname )
 	return true;
 }
 
-void QGL_Shutdown( void ) {
-	ST_Printf( PRINT_ALL, "...shutting down QGL\n" );
-}
-
-#if 0
-/*
- * Find the first occurrence of find in s.
- */
-// bk001130 - from cvs1.17 (mkv), const
-// bk001130 - made first argument const
-static const char *Q_stristr( const char *s, const char *find)
+void QGL_Shutdown(void)
 {
-	register char c, sc;
-	register size_t len;
-
-	if ((c = *find++) != 0)
-	{
-		if (c >= 'a' && c <= 'z')
-		{
-			c -= ('a' - 'A');
-		}
-		len = strlen(find);
-		do
-		{
-			do
-			{
-				if ((sc = *s++) == 0)
-					return NULL;
-				if (sc >= 'a' && sc <= 'z')
-				{
-					sc -= ('a' - 'A');
-				}
-			} while (sc != c);
-		} while (strncasecmp(s, find, len) != 0);
-		s--;
-	}
-	return s;
 }
-#endif
+
 // ========================================================================
 // makes a null cursor
 // ========================================================================
@@ -293,11 +243,12 @@ static void uninstall_grabs(void)
         XIFreeDeviceInfo(info);
 }
 
-void IN_Commands (void) {
+void IN_Commands(void)
+{
 }
 
-void IN_StartupMouse(void) {
-
+void IN_StartupMouse(void)
+{
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MOUSE);
 	// mouse variables
 	Cvar_Register (&in_mouse);
@@ -306,17 +257,21 @@ void IN_StartupMouse(void) {
 	Cvar_ResetCurrentGroup();
 
 	switch (in_mouse.integer) {
-		case mt_none:   mouseinitialized = false; break;
-		case mt_normal: mouseinitialized = true;  break;
+		case mt_none:
+			mouseinitialized = false;
+			break;
+		case mt_normal:
+			mouseinitialized = true;
+			break;
 		default:
-				Com_Printf("Unknow value %d of %s, using XInput2 mouse\n", in_mouse.integer, in_mouse.name);
-				Cvar_LatchedSetValue(&in_mouse, mt_normal);
-				mouseinitialized = true;
-				break;
+			Com_Printf("Unknow value %d of %s, using XInput2 mouse\n", in_mouse.integer, in_mouse.name);
+			Cvar_LatchedSetValue(&in_mouse, mt_normal);
+			mouseinitialized = true;
+			break;
 	}
 }
 
-void IN_ActivateMouse( void )
+void IN_ActivateMouse(void)
 {
 	if (!mouseinitialized || !dpy || !win || mouse_active)
 		return;
@@ -326,7 +281,7 @@ void IN_ActivateMouse( void )
 	mouse_active = true;
 }
 
-void IN_DeactivateMouse( void )
+void IN_DeactivateMouse(void)
 {
 	if (!mouseinitialized || !dpy || !win || !mouse_active)
 		return;
@@ -336,18 +291,12 @@ void IN_DeactivateMouse( void )
 	mouse_active = false;
 }
 
-void IN_Frame (void) {
-
+void IN_Frame(void)
+{
 	if (!r_fullscreen.integer && (key_dest != key_game || cls.state != ca_active))
-	{
-		// temporarily deactivate if not in the game and
-		// running on the desktop
 		IN_DeactivateMouse ();
-	}
 	else
-	{
 		IN_ActivateMouse();
-	}
 }
 
 void IN_Restart_f(void)
@@ -362,7 +311,8 @@ void IN_Restart_f(void)
 		IN_ActivateMouse();
 }
 
-static char *XLateKey(int keycode, int *key) {
+static char *XLateKey(int keycode, int *key)
+{
         KeySym keysym;
 
         keysym = XkbKeycodeToKeysym(dpy, keycode, 0, 0); /* Don't care about shift state for in game keycode, but... */
@@ -552,9 +502,7 @@ static void handle_key(XGenericEventCookie *cookie)
 {
         int down = cookie->evtype == XI_KeyPress;
         int keycode = ((XIDeviceEvent *)cookie->data)->detail;
-
         int key = 0;
-
         const char *name = XLateKey(keycode, &key);
 
         if (key == K_SHIFT || key == K_LSHIFT || key == K_RSHIFT)
@@ -566,10 +514,10 @@ static void handle_key(XGenericEventCookie *cookie)
 
 static void handle_raw_motion(XIRawEvent *ev)
 {
+        double *raw_valuator = ev->raw_values;
+
         if(!mouse_active)
                 return;
-
-        double *raw_valuator = ev->raw_values;
 
         if(XIMaskIsSet(ev->valuators.mask, 0)) {
                 mx += *raw_valuator++;
@@ -583,95 +531,91 @@ static void handle_raw_motion(XIRawEvent *ev)
 
 static void handle_cookie(XGenericEventCookie *cookie)
 {
-        switch(cookie->evtype) {
-        case XI_RawMotion:
-                handle_raw_motion(cookie->data);
-                break;
-        case XI_Enter:
-        case XI_Leave:
-                break;
-        case XI_ButtonPress:
-        case XI_ButtonRelease:
-                handle_button(cookie);
-                break;
-        case XI_KeyPress:
-        case XI_KeyRelease:
-                handle_key(cookie);
-                break;
-        default:
-                break;
-        }
+	switch(cookie->evtype) {
+		case XI_RawMotion:
+			handle_raw_motion(cookie->data);
+			break;
+		case XI_Enter:
+		case XI_Leave:
+			break;
+		case XI_ButtonPress:
+		case XI_ButtonRelease:
+			handle_button(cookie);
+			break;
+		case XI_KeyPress:
+		case XI_KeyRelease:
+			handle_key(cookie);
+			break;
+		default:
+			break;
+	}
 }
 
 static void HandleEvents(void)
 {
-        XEvent event;
+	XEvent event;
 
-        if (!dpy)
-                return;
+	if (!dpy)
+		return;
 
+	while (XPending(dpy))
+	{
+		XGenericEventCookie *cookie = &event.xcookie;
+		XNextEvent(dpy, &event);
 
-        while (XPending(dpy))
-        {
-                XGenericEventCookie *cookie = &event.xcookie;
-                XNextEvent(dpy, &event);
+		if(cookie->type == GenericEvent && cookie->extension == xi_opcode
+				&& XGetEventData(dpy, cookie)) {
+			handle_cookie(cookie);
+			XFreeEventData(dpy, cookie);
+			continue;
+		}
 
-                if(cookie->type == GenericEvent && cookie->extension == xi_opcode
-                                && XGetEventData(dpy, cookie)) {
-                        handle_cookie(cookie);
-                        XFreeEventData(dpy, cookie);
-                        continue;
-                }
+		switch (event.type)
+		{
+			case DestroyNotify:
+				// window has been destroyed
+				Host_Quit();
+				break;
 
-                switch (event.type)
-                {
-                        case DestroyNotify:
-                                // window has been destroyed
-                                Host_Quit();
-                                break;
+			case ClientMessage:
+				// window manager messages
+				if ((event.xclient.format == 32) && ((unsigned int)event.xclient.data.l[0] == wm_delete_window_atom))
+					Host_Quit();
+				break;
 
-                        case ClientMessage:
-                                // window manager messages
-                                if ((event.xclient.format == 32) && ((unsigned int)event.xclient.data.l[0] == wm_delete_window_atom))
-                                        Host_Quit();
-                                break;
+			case FocusIn:
+				if (!ActiveApp)
+				{
+					XWMHints wmhints;
+					ActiveApp = true;
+					// CLear urgency bit
+					wmhints.flags = 0;
+					XSetWMHints( dpy, win, &wmhints );
+				}
+				break;
 
-                        case FocusIn:
-                                if (!ActiveApp)
-                                {
-                                        XWMHints wmhints;
-                                        ActiveApp = true;
-                                        // CLear urgency bit
-                                        wmhints.flags = 0;
-                                        XSetWMHints( dpy, win, &wmhints );
-                                }
-                                break;
+			case FocusOut:
+				if (ActiveApp)
+				{
+					Key_ClearStates();
+					ActiveApp = false;
+					shift_down = 0;
+				}
+				break;
 
-                        case FocusOut:
-                                if (ActiveApp)
-                                {
-                                        Key_ClearStates();
-                                        ActiveApp = false;
-                                        shift_down = 0;
-                                }
-                                break;
+			case MapNotify:
+				Minimized = false;
+				break;
 
-                        case MapNotify:
-                                Minimized = false;
-                                break;
-
-                        case UnmapNotify:
-                                Minimized = true;
-                                break;
-
-                }
-        }
-
+			case UnmapNotify:
+				Minimized = true;
+				break;
+		}
+	}
 }
 
-void Sys_SendKeyEvents (void) {
-	// XEvent event; // bk001204 - unused
-
+void Sys_SendKeyEvents (void)
+{
 	if (!dpy)
 		return;
 
@@ -691,15 +635,14 @@ void Sys_SendKeyEvents (void) {
  ** for the window.  The state structure is also nulled out.
  **
  */
-void GLimp_Shutdown( void )
+void GLimp_Shutdown(void)
 {
 	if (!ctx || !dpy)
 		return;
+
 	IN_DeactivateMouse();
 	opengl_initialized = 0;
-	// bk001206 - replaced with H2/Fakk2 solution
-	// XAutoRepeatOn(dpy);
-	// autorepeaton = false; // bk001130 - from cvs1.17 (mkv)
+
 	if (dpy)
 	{
 		if (ctx)
@@ -725,7 +668,7 @@ void GLimp_Shutdown( void )
 	win = 0;
 	ctx = NULL;
 
-	memset( &glConfig, 0, sizeof( glConfig ) );
+	memset(&glConfig, 0, sizeof(glConfig));
 
 	QGL_Shutdown();
 }
@@ -733,31 +676,29 @@ void GLimp_Shutdown( void )
 /*
  ** GLW_StartDriverAndSetMode
  */
-// bk001204 - prototype needed
-int GLW_SetMode( const char *drivername, int mode, qbool fullscreen );
-static qbool GLW_StartDriverAndSetMode( const char *drivername,
-		int mode,
-		qbool fullscreen )
+int GLW_SetMode(const char *drivername, int mode, qbool fullscreen);
+
+static qbool GLW_StartDriverAndSetMode(const char *drivername, int mode, qbool fullscreen)
 {
 	rserr_t err;
 
 	if (fullscreen && in_nograb.value)
 	{
-		ST_Printf( PRINT_ALL, "Fullscreen not allowed with in_nograb 1\n");
-		Cvar_Set( &r_fullscreen, "0" );
+		ST_Printf(PRINT_ALL, "Fullscreen not allowed with in_nograb 1\n");
+		Cvar_Set(&r_fullscreen, "0");
 		r_fullscreen.modified = false;
 		fullscreen = false;
 	}
 
-	err = GLW_SetMode( drivername, mode, fullscreen );
+	err = GLW_SetMode(drivername, mode, fullscreen);
 
-	switch ( err )
+	switch (err)
 	{
 		case RSERR_INVALID_FULLSCREEN:
-			ST_Printf( PRINT_ALL, "...WARNING: fullscreen unavailable in this mode\n" );
+			ST_Printf(PRINT_ALL, "...WARNING: fullscreen unavailable in this mode\n");
 			return false;
 		case RSERR_INVALID_MODE:
-			ST_Printf( PRINT_ALL, "...WARNING: could not set the given mode (%d)\n", mode );
+			ST_Printf(PRINT_ALL, "...WARNING: could not set the given mode (%d)\n", mode);
 			return false;
 		case RSERR_UNKNOWN:
 			return false;
@@ -771,7 +712,7 @@ static qbool GLW_StartDriverAndSetMode( const char *drivername,
 /*
  ** GLW_SetMode
  */
-int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
+int GLW_SetMode(const char *drivername, int mode, qbool fullscreen)
 {
 	int attrib[] = {
 		GLX_RGBA,         // 0
@@ -803,16 +744,16 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
 	int i;
 	const char*   glstring; // bk001130 - from cvs1.17 (mkv)
 
-	ST_Printf( PRINT_ALL, "Initializing OpenGL display\n");
+	ST_Printf(PRINT_ALL, "Initializing OpenGL display\n");
 
-	ST_Printf( PRINT_ALL, "...setting mode %d:", mode );
+	ST_Printf(PRINT_ALL, "...setting mode %d:", mode);
 
-	if ( !R_GetModeInfo( &glConfig.vidWidth, &glConfig.vidHeight, &glConfig.windowAspect, mode ) )
+	if (!R_GetModeInfo( &glConfig.vidWidth, &glConfig.vidHeight, &glConfig.windowAspect, mode))
 	{
 		ST_Printf( PRINT_ALL, " invalid mode\n" );
 		return RSERR_INVALID_MODE;
 	}
-	ST_Printf( PRINT_ALL, " %d %d\n", glConfig.vidWidth, glConfig.vidHeight);
+	ST_Printf(PRINT_ALL, " %d %d\n", glConfig.vidWidth, glConfig.vidHeight);
 
 	if (!(dpy = XOpenDisplay(NULL)))
 	{
@@ -897,7 +838,7 @@ int GLW_SetMode( const char *drivername, int mode, qbool fullscreen )
 	else
 		colorbits = r_colorbits.value;
 
-	if ( !strcasecmp( r_glDriver.string, _3DFX_DRIVER_NAME ) )
+	if (!strcasecmp( r_glDriver.string, _3DFX_DRIVER_NAME))
 		colorbits = 16;
 
 	if (!r_depthbits.value)
@@ -1106,7 +1047,6 @@ static qbool GLW_LoadOpenGL( const char *name )
 {
 	qbool fullscreen;
 
-	// load the QGL layer
 	if ( QGL_Init( name ) )
 	{
 		fullscreen = r_fullscreen.integer;
@@ -1120,12 +1060,16 @@ static qbool GLW_LoadOpenGL( const char *name )
 				{
 					goto fail;
 				}
-			} else
+			}
+			else
+			{
 				goto fail;
+			}
 		}
 
 		return true;
-	} else
+	}
+	else
 	{
 		ST_Printf( PRINT_ALL, "failed\n" );
 	}
@@ -1167,7 +1111,6 @@ void GLimp_Init( void )
 	qbool attemptedlibGL = false;
 	qbool success = false;
 	char  buf[1024];
-	//  cvar_t *lastValidRenderer = ri.Cvar_Get( "vid_lastValidRenderer", "(uninitialized)", CVAR_ARCHIVE );
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
 	Cvar_Register (&vid_flashonactivity);
@@ -1176,24 +1119,20 @@ void GLimp_Init( void )
 
 	InitSig();
 
-	// set up our custom error handler for X failures
 	XSetErrorHandler(&qXErrorHandler);
 
 	//
 	// load and initialize the specific OpenGL driver
 	//
-	if ( !GLW_LoadOpenGL( r_glDriver.string ) )
+	if (!GLW_LoadOpenGL(r_glDriver.string))
 	{
-		if ( !strcasecmp( r_glDriver.string, OPENGL_DRIVER_NAME ) )
-		{
+		if (!strcasecmp( r_glDriver.string, OPENGL_DRIVER_NAME))
 			attemptedlibGL = true;
-		}
 
-		// try ICD before trying 3Dfx standalone driver
-		if ( !attemptedlibGL && !success )
+		if (!attemptedlibGL && !success)
 		{
 			attemptedlibGL = true;
-			if ( GLW_LoadOpenGL( OPENGL_DRIVER_NAME ) )
+			if (GLW_LoadOpenGL( OPENGL_DRIVER_NAME))
 			{
 				Cvar_Set( &r_glDriver, OPENGL_DRIVER_NAME );
 				r_glDriver.modified = false;
@@ -1231,7 +1170,8 @@ void GLimp_Init( void )
 }
 
 
-void GL_BeginRendering (int *x, int *y, int *width, int *height) {
+void GL_BeginRendering (int *x, int *y, int *width, int *height)
+{
 	*x = *y = 0;
 	*width  = glConfig.vidWidth;
 	*height = glConfig.vidHeight;
@@ -1261,9 +1201,8 @@ void GL_EndRendering (void)
                 }
         }
 
-
-	if (!scr_skipupdate || block_drawing) {
-
+	if (!scr_skipupdate || block_drawing)
+	{
 		// Multiview - Only swap the back buffer to front when all views have been drawn in multiview.
 		if (cl_multiview.value && cls.mvdplayback) 
 		{
@@ -1302,7 +1241,8 @@ void VID_SetCaption (char *text)
 	XStoreName (dpy, win, text);
 }
 
-void VID_NotifyActivity(void) {
+void VID_NotifyActivity(void)
+{
 	XWMHints wmhints;
 
 	if (!dpy)
@@ -1333,35 +1273,33 @@ wchar *Sys_GetClipboardTextW(void)
 	wchar *s, *t;
 	Atom atom;
 
-	if( !dpy )
+	if(!dpy)
 		return NULL;
 
-	if( primary )
+	if(primary)
 	{
-		atom = XInternAtom( dpy, "PRIMARY", True );
+		atom = XInternAtom(dpy, "PRIMARY", True);
 	}
 	else
 	{
-		atom = XInternAtom( dpy, "CLIPBOARD", True );
+		atom = XInternAtom(dpy, "CLIPBOARD", True);
 	}
-	if( atom == None )
+	if(atom == None)
 		return NULL;
 
-	win = XGetSelectionOwner( dpy, atom );
-	if( win == None )
+	win = XGetSelectionOwner(dpy, atom);
+	if(win == None)
 		return NULL;
 
-	XConvertSelection( dpy, atom, XA_STRING, atom, win, CurrentTime );
-	XFlush( dpy );
+	XConvertSelection(dpy, atom, XA_STRING, atom, win, CurrentTime);
+	XFlush(dpy);
 
-	XGetWindowProperty( dpy, win, atom, 0, 0, False, AnyPropertyType, &type, &format, &nitems, &bytes_left,
-			&data );
-	if( bytes_left <= 0 )
+	XGetWindowProperty(dpy, win, atom, 0, 0, False, AnyPropertyType, &type, &format, &nitems, &bytes_left, &data);
+	if(bytes_left <= 0)
 		return NULL;
 
-	ret = XGetWindowProperty( dpy, win, atom, 0, bytes_left, False, AnyPropertyType, &type,
-			&format, &nitems, &bytes_after, &data );
-	if( ret != Success )
+	ret = XGetWindowProperty(dpy, win, atom, 0, bytes_left, False, AnyPropertyType, &type, &format, &nitems, &bytes_after, &data);
+	if(ret != Success)
 	{
 		XFree( data );
 		return NULL;
@@ -1375,13 +1313,12 @@ wchar *Sys_GetClipboardTextW(void)
 		*t++ = *s++;
 	*t = 0;
 
-	XFree( data );
+	XFree(data);
 
 	return clipboard_buffer;
 }
 
 void Sys_CopyToClipboard(char *text)
 {
-	; // TODO in 2019
 }
 
