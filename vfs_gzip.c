@@ -142,11 +142,10 @@ static void VFSGZIP_Close(vfsfile_t *file)
 
 static void VFSGZIP_Flush(vfsfile_t *file) 
 {
-	int r;
 	vfsgzipfile_t *vfsgz = (vfsgzipfile_t *)file;
 
 	//r = gzflush(vfsgz->parent->handle, Z_NO_FLUSH); 	// <-- Allows better compression
-	r = gzflush(vfsgz->parent->handle, Z_SYNC_FLUSH); 	// <-- All pending output is flushed
+	(void) gzflush(vfsgz->parent->handle, Z_SYNC_FLUSH); 	// <-- All pending output is flushed
 }
 
 static vfsfile_t *FSGZIP_OpenVFS(void *handle, flocation_t *loc, char *mode) 

@@ -540,16 +540,18 @@ Back from NetQuake
 */
 static void CL_ParseParticleEffect (void)
 {
-	vec3_t		org, dir;
-	int			i, count, color;
+	// More or less dummy, just moving offsets along
+	//vec3_t org, dir;
+	int i;//, count, color;
 
 	for (i = 0; i < 3; i++)
-		org[i] = MSG_ReadCoord ();
+		(void) MSG_ReadCoord();
 	for (i = 0; i < 3; i++)
-		dir[i] = MSG_ReadChar () * (1.0/16);
-	count = MSG_ReadByte ();
-	color = MSG_ReadByte ();
-
+		(void) MSG_ReadChar();// * (1.0/16);
+	//count = MSG_ReadByte ();
+	//color = MSG_ReadByte ();
+	(void) MSG_ReadByte ();
+	(void) MSG_ReadByte ();
 /* ##
 	// now run the effect
 	if (count == 255)

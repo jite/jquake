@@ -766,7 +766,9 @@
     <qasm Include="..\..\sys_x86.s" />
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="..\..\ezquake.exe.manifest" />
+    <Manifest Include="..\..\ezquake.exe.manifest">
+      <SubType>Designer</SubType>
+    </Manifest>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

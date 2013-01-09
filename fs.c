@@ -483,6 +483,7 @@ static int FS_AddPak(char *pathto, char *pakname, searchpath_t *search, searchpa
 }
 
 static qbool FS_RemovePak (const char *pakfile) {
+	/*FIXME? Very much broken
 	searchpath_t *prev = NULL;
 	searchpath_t *cur = fs_searchpaths;
 	qbool ret = false;
@@ -491,8 +492,8 @@ static qbool FS_RemovePak (const char *pakfile) {
 		prev = cur;
 		cur = cur->next;
 	}
-
-	return ret;
+*/
+	return false;
 }
 
 // ==============

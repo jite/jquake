@@ -1110,7 +1110,6 @@ void GLimp_Init( void )
 
 	qbool attemptedlibGL = false;
 	qbool success = false;
-	char  buf[1024];
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
 	Cvar_Register (&vid_flashonactivity);
@@ -1148,7 +1147,7 @@ void GLimp_Init( void )
 	glConfig.renderer_string       = glGetString(GL_RENDERER);
 	glConfig.version_string        = glGetString(GL_VERSION);
 	glConfig.extensions_string     = glGetString(GL_EXTENSIONS);
-	glConfig.glx_extensions_string = glXQueryExtensionsString(dpy, scrnum);
+	glConfig.glx_extensions_string = (const unsigned char*)glXQueryExtensionsString(dpy, scrnum);
 
 	//
 	// NOTE: if changing cvars, do it within this block.  This allows them
@@ -1157,9 +1156,9 @@ void GLimp_Init( void )
 	//
 
 	// Look up vsync-stuff
-        if (strstr(glConfig.glx_extensions_string, "GLX_SGI_swap_control"))
+        if (strstr((const char*)glConfig.glx_extensions_string, "GLX_SGI_swap_control"))
                 swapInterval = (int (*)(int)) glXGetProcAddress((const GLubyte*) "glXSwapIntervalSGI");
-        else if (strstr(glConfig.glx_extensions_string, "GLX_MESA_swap_control"))
+        else if (strstr((const char*)glConfig.glx_extensions_string, "GLX_MESA_swap_control"))
                 swapInterval = (int (*)(int)) glXGetProcAddress((const GLubyte*) "glXSwapIntervalMESA");
         else
                 swapInterval = NULL;
