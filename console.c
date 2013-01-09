@@ -59,8 +59,6 @@ int    con_notifylines;          // scan lines to clear for notify lines
 float  con_cursorspeed = 4;
 float  con_times[NUM_CON_TIMES]; // cls.realtime time the line was generated
 
-cvar_t con_particles_alpha     = {"con_particles_alpha",  "0"};
-cvar_t con_particles_images    = {"con_particles_images", "3"};
 cvar_t con_notify              = {"con_notify", "1"};
 cvar_t _con_notifylines        = {"con_notifylines","4"};
 cvar_t con_notifytime          = {"con_notifytime","3"};		//seconds
@@ -457,9 +455,6 @@ void Con_Init (void) {
 	Cvar_Register (&con_notify);
 	//Cvar_Register (&xyzh);
 
-	Cvar_Register (&con_particles_alpha);
-	Cvar_Register (&con_particles_images);
-
 	// added by jogi start
 	Cvar_Register (&con_highlight);
 	Cvar_Register (&con_highlight_mark);
@@ -819,8 +814,6 @@ void Con_DrawNotify (void) {
 		con_notifylines = v + bound(0, con_shift.value, 8);
 }
 
-void DrawCP (int lines);
-
 // Draws the last few lines of output as a custom HUD element.
 void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyLines, int notifyCols)
 {
@@ -996,10 +989,8 @@ void Con_DrawConsole (int lines) {
 	if (lines <= 0)
 		return;
 
-// draw the background
+	// draw the background
 	Draw_ConsoleBackground (lines);
-
-	DrawCP(lines);
 
 	// draw the text
 	con_vislines = lines;
