@@ -103,6 +103,7 @@ cvar_t  r_showextensions	= { "vid_showextensions", 	"0",	CVAR_SILENT };
 // aspect ratio for widescreens
 void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel);
 cvar_t	vid_wideaspect		= {"vid_wideaspect", "0", CVAR_NO_RESET | CVAR_SILENT, OnChange_vid_wideaspect};
+cvar_t  vid_wideaspect_verbose	= {"vid_wideaspect_verbose", "1", CVAR_SILENT };
 
 void ( APIENTRY * qglMultiTexCoord2fARB )( GLenum texture, GLfloat s, GLfloat t );
 void ( APIENTRY * qglActiveTextureARB )( GLenum texture );
@@ -427,7 +428,7 @@ void OnChange_r_con_xxx (cvar_t *var, char *string, qbool *cancel) {
 			height = floor(height * scale + 0.5);
 			//height &= 0xfff8; // make it a multiple of eight
 
-			if (vid_wideaspect.value != 0)
+			if (vid_wideaspect.value != 0 && vid_wideaspect_verbose.integer > 0)
 				Com_Printf("vid_wideaspect enabled - conheight recalculated to %i\n", height);
 		}
 		else if (host_initialized && vid_wideaspect.integer)
@@ -594,6 +595,7 @@ void R_Register( void )
 	Cvar_Register (&r_conwidth);
 	Cvar_Register (&r_conheight);
 	Cvar_Register (&vid_wideaspect);
+	Cvar_Register (&vid_wideaspect_verbose);
 	Cvar_Register (&r_conaspect);
 
 	if ( !host_initialized ) // compatibility with retarded cmd line, and actually this still needed for some other reasons

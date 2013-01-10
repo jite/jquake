@@ -248,6 +248,7 @@ extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_mipte
 extern cvar_t gl_externalTextures_world, gl_externalTextures_bmodels;
 
 extern cvar_t vid_wideaspect;
+extern cvar_t vid_wideaspect_verbose;
 
 extern	int		lightmode;		// set to gl_lightmode on mapchange
 
