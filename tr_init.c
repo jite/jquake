@@ -837,9 +837,9 @@ void VID_Restart_f (void)
 
 void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel) 
 {
-	extern float nonwidefov;
+	// FIXME conheight
 	extern int nonwideconheight;
-	extern cvar_t scr_fov, r_conheight;
+	extern cvar_t r_conheight;
 
 	if ( (Q_atoi(string) == vid_wideaspect.value) || (Q_atoi(string) > 1)  || (Q_atoi(string) < 0))
 	{
@@ -852,20 +852,11 @@ void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel)
 	if(!host_everything_loaded)
 		return;
 
-	if (nonwidefov != 0 && nonwideconheight != 0)
-	{
+	if (nonwideconheight != 0)
 		if (vid_wideaspect.integer == 0)
-		{
-			scr_fov.OnChange(&scr_fov, Q_ftos(nonwidefov), cancel);
 			r_conheight.OnChange(&r_conheight, Q_ftos(nonwideconheight), cancel);
-
-		}
 		else
-		{
-			scr_fov.OnChange(&scr_fov, Q_ftos(scr_fov.value), cancel);
 			r_conheight.OnChange(&r_conheight, Q_ftos(r_conheight.value), cancel);
-		}
-	}
 }
 
 void OnChange_vid_pos(cvar_t *var, char *string, qbool *cancel)
