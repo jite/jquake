@@ -4,7 +4,7 @@
 #include "pmove.h"
 
 cvar_t cl_easymove = {"cl_easymove", "0"};
-cvar_t cl_autohop = {"cl_autohop", "1"};
+cvar_t cl_autohop = {"cl_autohop", "0"};
 qbool em_touch_wall;
 qbool em_jump_held;
 

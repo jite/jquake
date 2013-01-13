@@ -606,6 +606,9 @@
     <ClCompile Include="..\..\utils.c">
       <Filter>Source Files\Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\cl_easymove.c">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\adivtab.h">

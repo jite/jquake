@@ -371,6 +371,7 @@
     <ResourceCompile Include="..\..\winquake.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\cl_easymove.c" />
     <ClCompile Include="..\..\gl_bloom.c" />
     <ClCompile Include="..\..\gl_draw.c" />
     <ClCompile Include="..\..\gl_md3.c" />
