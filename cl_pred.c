@@ -291,6 +291,7 @@ static void check_standing_on_entity(void)
 }
 
 void CL_PredictMove (void) {
+	extern qbool em_touch_wall, em_jump_held;
 	int i, oldphysent;
 	frame_t *from = NULL, *to;
 	double playertime;
@@ -374,6 +375,8 @@ void CL_PredictMove (void) {
 		VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
 		cl.onground = pmove.onground;
 		cl.waterlevel = pmove.waterlevel;
+		em_touch_wall = pmove.touch_wall;
+		em_jump_held = pmove.jump_held;
 		check_standing_on_entity();
 	}
 
@@ -423,6 +426,7 @@ foundsomeone:
 }
 
 void CL_InitPrediction (void) {
+	extern cvar_t cl_easymove, cl_autohop;
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register(&cl_nopred);
 	Cvar_Register(&cl_pushlatency);
@@ -437,5 +441,7 @@ void CL_InitPrediction (void) {
 	Cvar_Register (&cam_lockpos);
 	Cvar_ResetCurrentGroup();
 #endif
+	Cvar_Register(&cl_easymove);
+	Cvar_Register(&cl_autohop);
 }
  

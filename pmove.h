@@ -62,6 +62,7 @@ typedef struct {
 	usercmd_t	cmd;
 
 	// results
+	qbool			touch_wall;
 	int			numtouch;
 	int			touchindex[MAX_PHYSENTS];
 	int			groundent; // index in physents array, only valid when onground is true
