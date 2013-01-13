@@ -906,7 +906,7 @@ int UDP_OpenSocket (netadrtype_t type, int port)
 	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1)
 	{ // O'Rly?! @@@
 		ST_Printf (PRINT_FAIL, "UDP_OpenSocket: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
-		close(newsocket);
+		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
 #endif
