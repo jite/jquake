@@ -101,6 +101,7 @@ cvar_t	scr_scoreboard_showfrags = {"scr_scoreboard_showfrags", "1"};
 cvar_t	scr_scoreboard_drawtitle = {"scr_scoreboard_drawtitle", "1"};
 cvar_t	scr_scoreboard_borderless = {"scr_scoreboard_borderless", "1"};
 cvar_t	scr_scoreboard_spectator_name = {"scr_scoreboard_spectator_name", "&cf20s&cf50p&cf80e&c883c&ca85t&c668a&c55at&c33bo&c22dr&r"};
+cvar_t	scr_scoreboard_spectator_shortname = {"scr_scoreboard_spectator_shortname", "&cF20s&cF80p&c668e&c22Dc&r"};
 cvar_t	scr_scoreboard_kill_color = {"scr_scoreboard_kill_color", "0B4"};
 cvar_t	scr_scoreboard_death_color = {"scr_scoreboard_death_color", "F00"};
 cvar_t	scr_scoreboard_tk_color = {"scr_scoreboard_tk_color", "FF0"};
@@ -266,6 +267,7 @@ void Sbar_Init (void) {
 	Cvar_Register (&scr_scoreboard_drawtitle);
 	Cvar_Register (&scr_scoreboard_borderless);
 	Cvar_Register (&scr_scoreboard_spectator_name);
+	Cvar_Register (&scr_scoreboard_spectator_shortname);
 	Cvar_Register (&scr_scoreboard_kill_color);
 	Cvar_Register (&scr_scoreboard_death_color);
 	Cvar_Register (&scr_scoreboard_tk_color);
@@ -1322,12 +1324,8 @@ static void Sbar_DeathmatchOverlay (int start) {
 			x += 8*5; // move "spectator" 5 symbols right, so time column is not occupied
 			if (cl.teamplay) // use columns frags and team
 				Draw_ColoredString (x, y, scr_scoreboard_spectator_name.string, 0);
-			else {// use only frags column
-				#define SHORT_SPECTATOR_NAME_LEN 5 // if it's not teamplay, there is only room for 4 characters here
-				char short_spectator_name[SHORT_SPECTATOR_NAME_LEN];
-				strlcpy(short_spectator_name, scr_scoreboard_spectator_name.string, SHORT_SPECTATOR_NAME_LEN);
-				Draw_ColoredString (x, y, short_spectator_name, 0);
-			}
+			else // use only frags column
+				Draw_ColoredString (x, y, scr_scoreboard_spectator_shortname.string, 0);
 
 			x += cl.teamplay ? 88 : 48; // move across to print the name
 

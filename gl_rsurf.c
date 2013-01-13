@@ -832,7 +832,7 @@ void DrawTextureChains (model_t *model, int contents)
 
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	 
-	if(model->isworldmodel || 1) {
+/*	if(model->isworldmodel || 1) { */
 		shader = glsl_shaders[SHADER_WORLD].shader;
 		glUseProgram(shader);
  
@@ -845,7 +845,7 @@ void DrawTextureChains (model_t *model, int contents)
 		glUniform1i(u_lightmap_tex, 1);
 		glUniform1f(u_gamma, v_gamma.value);
 		glUniform1f(u_contrast, v_contrast.value);
-	}
+/*	}
 	else {
 		shader = glsl_shaders[SHADER_MODEL].shader;
 		glUseProgram(shader);
@@ -854,6 +854,7 @@ void DrawTextureChains (model_t *model, int contents)
 		glUniform1f(u_gamma, v_gamma.value);
 		glUniform1f(u_contrast, v_contrast.value);
 	}
+*/
 
 	for (i = 0; i < model->numtextures; i++)
 	{

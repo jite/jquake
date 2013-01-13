@@ -173,7 +173,7 @@ static const char *fragshader[] = {
 	{\
 		vec3 color = texture2D(model_tex, tex_coord).rgb;\
 		gl_FragColor.rgb = pow(vec3(gl_Color) * contrast * color, vec3(gamma));\
-		gl_FragColor.a = 1.0;\
+		gl_FragColor.a = gl_Color.a;\
 	}\
 	",
 	/* TURB.FRAG */
@@ -205,7 +205,7 @@ static const char *fragshader[] = {
 };
 
 static const char *vertshader[] = {
-	/* MODEL.VERT */
+	/* WORLD.VERT */
 	"varying vec2 tex_coord;\
 	varying vec2 lightmap_coord;\
 	void\
@@ -216,7 +216,7 @@ static const char *vertshader[] = {
 	        lightmap_coord = vec2(gl_MultiTexCoord1);\
 	}\
 	",
-	/* WORLD.VERT */
+	/* MODEL.VERT */
 	"varying vec2 tex_coord;\
 	void\
 	main()\
