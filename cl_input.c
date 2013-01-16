@@ -794,6 +794,7 @@ int MakeChar (int i)
 	return i;
 }
 
+extern void CL_EasyMove(usercmd_t *cmd);
 void CL_FinishMove (usercmd_t *cmd)
 {
 	int i, ms;
@@ -833,6 +834,8 @@ void CL_FinishMove (usercmd_t *cmd)
 	cmd->msec = ms;
 
 	VectorCopy (cl.viewangles, cmd->angles);
+
+	CL_EasyMove(cmd);
 
 	// shaman RFE 1030281 {
 	// KTPro's KFJump == impulse 156

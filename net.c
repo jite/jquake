@@ -921,7 +921,7 @@ int UDP_OpenSocket (netadrtype_t type, int port)
 
 	if (bind (newsocket, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
 		ST_Printf (PRINT_FAIL, "UDP_OpenSocket: bind: (%i): %s\n", qerrno, strerror(qerrno));
-		close(newsocket);
+		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
 

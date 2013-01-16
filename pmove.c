@@ -117,11 +117,19 @@ int PM_SlideMove (void) {
 		PM_AddTouchedEnt (trace.e.entnum);
 
 		if (trace.plane.normal[2] >= MIN_STEP_NORMAL)
+		{
 			blocked |= BLOCKED_FLOOR;
+		}
 		else if (!trace.plane.normal[2])
+		{
 			blocked |= BLOCKED_STEP;
+			pmove.touch_wall = true;
+		}
 		else
+		{
 			blocked |= BLOCKED_OTHER;
+			pmove.touch_wall = true;
+		}
 
 		time_left -= time_left * trace.fraction;
 
@@ -538,6 +546,8 @@ void PM_CategorizePosition (void) {
 		trace = PM_PlayerTrace (pmove.origin, point);
 		if (trace.fraction == 1 || trace.plane.normal[2] < MIN_STEP_NORMAL) {
 			pmove.onground = false;
+			if (trace.fraction != 1)
+				pmove.touch_wall = true;
 		} else {
 			pmove.onground = true;
 			pmove.groundent = trace.e.entnum;
@@ -784,6 +794,7 @@ void PM_PlayerMove (void)
 
 	pm_frametime = pmove.cmd.msec * 0.001;
 	pmove.numtouch = 0;
+	pmove.touch_wall = false;
 
 	if (pmove.pm_type == PM_NONE || pmove.pm_type == PM_LOCK) {
 		PM_CategorizePosition ();
