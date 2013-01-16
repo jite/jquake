@@ -1,4 +1,22 @@
-// cl_easymove.c
+/*
+Copyright (C) 2013 Anton (tonik) Gavrilov.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+*/
 
 #include "quakedef.h"
 #include "pmove.h"
@@ -24,7 +42,8 @@ static float FindMax (float start, float end, float (*f)(float))
 {
 	float p1, p2;
 
-	while (end - start > 0.01) {
+	while (end - start > 0.01)
+	{
 		p1 = start + (end - start) / 3.0;
 		p2 = start + (end - start) * 2.0 / 3.0;
 
@@ -40,24 +59,25 @@ static float FindMax (float start, float end, float (*f)(float))
 
 static void Friction (vec3_t velocity)
 {
-	float	speed, newspeed, control;
-	float	friction;
-	float	drop;
+	float speed, newspeed, control;
+	float friction;
+	float drop;
 	
 	speed = VectorLength(velocity);
-	if (speed < 1) {
+	if (speed < 1)
+	{
 		velocity[0] = 0;
 		velocity[1] = 0;
 		return;
 	}
 
-// apply ground friction
+	/* apply ground friction */
 	friction = movevars.friction;
 
 	control = speed < movevars.stopspeed ? movevars.stopspeed : speed;
 	drop = control*friction*pm_frametime;
 
-// scale the velocity
+	/* scale the velocity */
 	newspeed = speed - drop;
 	if (newspeed < 0)
 		newspeed = 0;
@@ -67,14 +87,15 @@ static void Friction (vec3_t velocity)
 
 static void Accelerate (vec3_t wishdir, float wishspd, vec3_t velocity)
 {
-	int			i;
-	float		addspeed, accelspeed, currentspeed;
-	float		wishspd_orig = wishspd;
+	int   i;
+	float addspeed, accelspeed, currentspeed;
+	float wishspd_orig = wishspd;
 
 	currentspeed = DotProduct (velocity, wishdir); 
 	addspeed = wishspd - currentspeed;
 	if (addspeed <= 0)
 		return;
+
 	accelspeed = movevars.accelerate * wishspd_orig * pm_frametime;
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
@@ -87,7 +108,7 @@ static vec3_t ra_curvel, ra_intentions;
 static float RankAngle (float a)
 {
 	vec3_t wishdir;
-	float delta;
+	float  delta;
 	vec3_t ang1, ang2;
 	vec3_t newvel;
 
@@ -109,16 +130,17 @@ static float RankAngle (float a)
 
 static float BestAngle (vec3_t curvel, vec3_t intentions, qbool onground)
 {
-	float a1, a2;
+	float  a1, a2;
 	vec3_t cross;
 	vec3_t tmp;
-	float ba;
-	float max;
+	float  ba;
+	float  max;
 
 	a1 = 0;
 	a2 = 95;
 	CrossProduct (curvel, intentions, cross);
-	if (cross[2] < 0) {
+	if (cross[2] < 0)
+	{
 		a1 = -a1;
 		a2 = -a2;
 	}
@@ -141,6 +163,7 @@ static float ZeroAngle (float speed)
 {
 	if (!speed)
 		return 0;
+
 	return acos(30/speed)/M_PI*180;
 }
 
@@ -161,16 +184,14 @@ static void TweakMovement (usercmd_t *cmd)
 	static qbool olddelta_valid = false;
 	static short oldmove[2];
 
-	if (cl.waterlevel)
+	if (!cl_easymove.value || cl.waterlevel)
 		return;
 
-	if (!cmd->forwardmove && !cmd->sidemove) {
+	if (!cmd->forwardmove && !cmd->sidemove)
+	{
 		oldmove[0] = oldmove[1] = 0;
 		return;
 	}
-
-	if (!cl_easymove.value)
-		return;
 
 	onground = (cl.onground && !((cmd->buttons & BUTTON_JUMP) && !em_jump_held));
 
@@ -183,6 +204,7 @@ static void TweakMovement (usercmd_t *cmd)
 	vectoangles (intentions, intentions_a);
 
 	VectorCopy (cl.simvel, v1);
+
 	v1[2] = 0;
 
 	if (VectorLength(v1) < 30)
@@ -219,19 +241,19 @@ static void TweakMovement (usercmd_t *cmd)
 		return;
 	}
 
-	if (!locked)
+	if (!locked || em_touch_wall)
 		return;
 
-	if (em_touch_wall)
-		return;
-
-	if (onground) {
+	if (onground)
+	{
 		if (fabs(delta) < 0.5)
 			return;
 		a = BestAngle (v1, intentions, onground);
 	}
 	else
+	{
 		a = intentions_a[YAW] + (delta > 0 ? 1 : -1)*ZeroAngle(VectorLength(v1));
+	}
 
 	VectorClear (ang);
 	ang[YAW] = a;
@@ -240,12 +262,12 @@ static void TweakMovement (usercmd_t *cmd)
 	cmd->sidemove = DotProduct (movevec, rt) * 500;
 }
 
-
 static void Autohop (usercmd_t *cmd)
 {
 	static float oldzvel;
 
-	if (!(cmd->buttons & 2)) {
+	if (!(cmd->buttons & 2))
+	{
 		oldzvel = cl.simvel[2];
 		return;
 	}
@@ -255,7 +277,6 @@ static void Autohop (usercmd_t *cmd)
 		cmd->buttons &= ~2;
 	oldzvel = cl.simvel[2];
 }
-
 
 void CL_EasyMove (usercmd_t *cmd)
 {
