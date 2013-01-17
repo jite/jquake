@@ -81,7 +81,6 @@ float	unzoomedsensitivity;
 void OnFovChange (cvar_t *var, char *value, qbool *cancel);
 void OnDefaultFovChange (cvar_t *var, char *value, qbool *cancel);
 void OnChange_scr_clock_format (cvar_t *var, char *value, qbool *cancel);
-void OnChange_scr_teaminfo (cvar_t *var, char *value, qbool *cancel);
 cvar_t	scr_fov					= {"fov", "90", CVAR_NONE, OnFovChange};	// 10 - 140
 cvar_t	default_fov				= {"default_fov", "90", CVAR_NONE, OnDefaultFovChange};
 cvar_t	scr_viewsize			= {"viewsize", "100", CVAR_NONE};
@@ -159,7 +158,7 @@ cvar_t	scr_teaminfo_powerup_style	= {"scr_teaminfo_powerup_style", "2"};
 cvar_t	scr_teaminfo_weapon_style= {"scr_teaminfo_weapon_style","1"};
 cvar_t  scr_teaminfo_show_enemies= {"scr_teaminfo_show_enemies","0"};
 cvar_t  scr_teaminfo_show_self   = {"scr_teaminfo_show_self",   "2"};
-cvar_t  scr_teaminfo			 = {"scr_teaminfo",             "1", CVAR_NONE, OnChange_scr_teaminfo};
+cvar_t  scr_teaminfo			 = {"scr_teaminfo",     "1"};
 
 cvar_t  scr_shownick_order		 = {"scr_shownick_order", "%p%n %a/%H %w", CVAR_NONE, OnChange_scr_clock_format};
 cvar_t	scr_shownick_frame_color = {"scr_shownick_frame_color", "10 0 0 120", CVAR_COLOR};
@@ -744,12 +743,6 @@ void OnChange_scr_clock_format (cvar_t *var, char *value, qbool *cancel) {
 		*cancel = true; // prevent stick notes
 		return;
 	}
-}
-
-void OnChange_scr_teaminfo(cvar_t *var, char *value, qbool *cancel)
-{
-	extern void CL_UserinfoChanged (char *key, char *value);
-	CL_UserinfoChanged("ti", strncmp(value, "0", 1) ? "1" : "");
 }
 
 void SCR_DrawClock (void) {

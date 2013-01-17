@@ -1938,6 +1938,9 @@ void CL_InitLocal (void)
 		Cvar_SetValue (&allow_scripts, 0);
 
  	Info_SetValueForStarKey (cls.userinfo, "*client", st, MAX_INFO_STRING);
+	
+	/* Always enable teaminfo by default to tell server we want the data */
+	Info_SetValueForKey (cls.userinfo, "ti", "1", MAX_INFO_STRING);
 
 	if (COM_CheckParm("-noindphys")) 
 	{
