@@ -192,7 +192,7 @@ void GL_BuildSkySurfacePolys (msurface_t *fa)
 #define TURBSINSIZE 128
 #define TURBSCALE ((float) TURBSINSIZE / (2 * M_PI))
 
-byte turbsin[TURBSINSIZE] = {
+static const byte turbsin[TURBSINSIZE] = {
 	127, 133, 139, 146, 152, 158, 164, 170, 176, 182, 187, 193, 198, 203, 208, 213, 
 		217, 221, 226, 229, 233, 236, 239, 242, 245, 247, 249, 251, 252, 253, 254, 254, 
 		255, 254, 254, 253, 252, 251, 249, 247, 245, 242, 239, 236, 233, 229, 226, 221, 

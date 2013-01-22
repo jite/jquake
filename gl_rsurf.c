@@ -1131,8 +1131,6 @@ void R_DrawFlat (model_t *model) {
 	memcpy(w, r_wallcolor.color, 3);
 	memcpy(f, r_floorcolor.color, 3);
 	
-	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
-	
 	GL_DisableMultitexture();
 
 	// START shaman BUG /fog not working with /r_drawflat {
@@ -1212,7 +1210,6 @@ void R_DrawFlat (model_t *model) {
 		glDisable(GL_FOG);
 
 	glColor3f(1.0f, 1.0f, 1.0f);
-	glPopAttrib();
  // START shaman FIX /r_drawflat + /gl_caustics {
 	EmitCausticsPolys();
  // } END shaman FIX /r_drawflat + /gl_caustics
