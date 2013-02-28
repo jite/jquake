@@ -15,11 +15,7 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- 
-	$Id: host.c,v 1.60 2007-10-17 17:07:08 dkure Exp $
 */
-// this should be the only file that includes both server.h and client.h
-
 #ifdef _WIN32
 #include <windows.h>
 #endif
