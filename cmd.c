@@ -941,7 +941,7 @@ qbool Cmd_IsLegacyCommand (char *oldname)
 
 static qbool Cmd_LegacyCommand (void)
 {
-	qbool recursive = false;
+	static qbool recursive = false;
 	legacycmd_t *cmd;
 	char text[1024];
 
