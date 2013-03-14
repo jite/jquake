@@ -853,10 +853,12 @@ void OnChange_vid_wideaspect (cvar_t *var, char *string, qbool *cancel)
 		return;
 
 	if (nonwideconheight != 0)
+	{
 		if (vid_wideaspect.integer == 0)
 			r_conheight.OnChange(&r_conheight, Q_ftos(nonwideconheight), cancel);
 		else
 			r_conheight.OnChange(&r_conheight, Q_ftos(r_conheight.value), cancel);
+	}
 }
 
 void OnChange_vid_pos(cvar_t *var, char *string, qbool *cancel)
