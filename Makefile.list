@@ -196,7 +196,6 @@ COMMON_S_FILES := \
 	math \
 	snd_mixa \
 	sys_x86 \
-	worlda
 
 GL_S_FILES :=
 endif
