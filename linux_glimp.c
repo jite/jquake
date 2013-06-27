@@ -197,8 +197,6 @@ static void install_grabs(void)
                                         GrabModeSync, True, &mask);
                 }
                 else if(info[i].use == XIMasterPointer) {
-                        /* FIXME: Ugly hack, XIWarpPointer is fucking with me if using fullscreen.. I get 
-                         *        like "scrolling of screen" like cursor window is bigger than the gl window */
                         if (r_fullscreen.integer)
                                 XIWarpPointer(dpy, id, None, win, 0, 0, 0, 0, 0, 0);
                         else
@@ -206,7 +204,6 @@ static void install_grabs(void)
                 }
                 else if(info[i].use == XIMasterKeyboard)
                 {
-                        Con_DPrintf("input: grabbing master keyboard...\n");
                         XIGrabDevice(dpy, id, win, CurrentTime, None, GrabModeAsync, GrabModeAsync, False, &mask);
                 }
         }
@@ -214,7 +211,7 @@ static void install_grabs(void)
 
         mask.deviceid = XIAllDevices;
         memset(mask.mask, 0, mask.mask_len);
-        XISetMask(mask.mask, XI_RawMotion);
+	XISetMask(mask.mask, XI_RawMotion);
 
         XISelectEvents(dpy, DefaultRootWindow(dpy), &mask, 1);
 
@@ -742,6 +739,9 @@ int GLW_SetMode(const char *drivername, int mode, qbool fullscreen)
 	int actualWidth, actualHeight;
 	int event, error;
 	int i;
+	int xi2_major = 2;
+	int xi2_minor = 0;
+
 	const char*   glstring; // bk001130 - from cvs1.17 (mkv)
 
 	ST_Printf(PRINT_ALL, "Initializing OpenGL display\n");
@@ -1028,6 +1028,15 @@ int GLW_SetMode(const char *drivername, int mode, qbool fullscreen)
 	{
 		ST_Printf(PRINT_ALL, "ERROR: XInput Extension not available.\n");
 		return RSERR_UNKNOWN;
+	}
+
+	if (XIQueryVersion(dpy, &xi2_major, &xi2_minor) == BadRequest) {
+		ST_Printf(PRINT_ALL, "ERROR: Can't initialize XInput2. Server supports %d.%d\n", xi2_major, xi2_minor);
+		return RSERR_UNKNOWN;
+	}
+	else
+	{
+		ST_Printf(PRINT_ALL, "Successfully initialized XInput2 %d.%d\n", xi2_major, xi2_minor);
 	}
 
 	install_grabs();
